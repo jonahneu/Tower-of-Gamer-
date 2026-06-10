@@ -1,0 +1,181 @@
+[gd_scene load_steps=6 format=3 uid="uid://zone_desert_mid"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/coyote.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/adolescent_coyote.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/rock.gd" id="6"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(40, 75)
+
+[node name="AdolescentCoyote" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(32, 40)
+
+[node name="Coyote1" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(12, 15)
+
+[node name="Coyote2" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(58, 22)
+
+[node name="Coyote3" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(10, 65)
+
+[node name="BoulderA1" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 20
+X2 = 25
+Y1 = 28
+Y2 = 29
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="BoulderA2" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 22
+X2 = 26
+Y1 = 26
+Y2 = 27
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="BoulderA3" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 23
+X2 = 24
+Y1 = 24
+Y2 = 25
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="BoulderB1" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 53
+X2 = 59
+Y1 = 40
+Y2 = 41
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="BoulderB2" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 51
+X2 = 56
+Y1 = 38
+Y2 = 39
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="BoulderB3" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 55
+X2 = 58
+Y1 = 42
+Y2 = 43
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="BoulderC1" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 21
+X2 = 25
+Y1 = 62
+Y2 = 63
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="BoulderC2" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 23
+X2 = 27
+Y1 = 64
+Y2 = 65
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="Rock1" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(5, 15)
+rock_size = "large"
+
+[node name="Rock2" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(65, 55)
+rock_size = "large"
+
+[node name="Rock3" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(45, 68)
+rock_size = "large"
+
+[node name="Rock4" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(30, 15)
+rock_size = "large"
+
+[node name="Rock5" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(40, 28)
+rock_size = "small"
+
+[node name="Rock6" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(18, 50)
+rock_size = "small"
+
+[node name="Rock7" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(70, 30)
+rock_size = "small"
+
+[node name="Rock8" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(38, 70)
+rock_size = "small"
+
+[node name="Rock9" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(15, 8)
+rock_size = "small"
+
+[node name="Rock10" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(50, 12)
+rock_size = "small"
+
+[node name="Rock11" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(25, 55)
+rock_size = "small"
+
+[node name="Rock12" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(72, 45)
+rock_size = "small"
+
+[node name="RubbleMain" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 47
+X2 = 57
+Y1 = 61
+Y2 = 65
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="RubbleWing" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 50
+X2 = 56
+Y1 = 65
+Y2 = 68
+DOOR_X = 999
+DOOR_Y = -1

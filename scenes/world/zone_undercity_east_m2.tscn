@@ -1,0 +1,67 @@
+[gd_scene load_steps=5 format=3 uid="uid://zone_undercity_east_m2"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/world/undercity_water.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/jammed_door.gd" id="5"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(40, 60)
+
+[node name="WallEast" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 45
+X2 = 79
+Y1 = 0
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallNW" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 34
+Y1 = 0
+Y2 = 42
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallSW" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 34
+Y1 = 53
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="ChokeLeft" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 35
+X2 = 39
+Y1 = 38
+Y2 = 38
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="ChokeRight" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 41
+X2 = 44
+Y1 = 38
+Y2 = 38
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="JammedDoor" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(40, 38)
+
+[node name="UndercityWater" type="Node2D" parent="."]
+script = ExtResource("4")
+draw_ew = false

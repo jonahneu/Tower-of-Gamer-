@@ -1,0 +1,222 @@
+[gd_scene load_steps=4 format=3 uid="uid://zone_undercity_north2"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/world/undercity_water.gd" id="4"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(40, 60)
+
+[node name="WallWestA" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 5
+Y1 = 0
+Y2 = 34
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallWestB" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 5
+Y1 = 45
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallEastA" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 74
+X2 = 79
+Y1 = 0
+Y2 = 34
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallEastB" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 74
+X2 = 79
+Y1 = 45
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="RocksA" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 6
+X2 = 21
+Y1 = 13
+Y2 = 21
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="RocksB" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 17
+X2 = 35
+Y1 = 15
+Y2 = 19
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="RocksC" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 30
+X2 = 50
+Y1 = 12
+Y2 = 22
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="RocksD" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 45
+X2 = 60
+Y1 = 15
+Y2 = 20
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="RocksE" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 55
+X2 = 73
+Y1 = 13
+Y2 = 21
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockA" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 6
+X2 = 8
+Y1 = 9
+Y2 = 11
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockB" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 19
+X2 = 21
+Y1 = 8
+Y2 = 10
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockC" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 61
+X2 = 63
+Y1 = 9
+Y2 = 11
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockD" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 71
+X2 = 73
+Y1 = 8
+Y2 = 10
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockE" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 6
+X2 = 8
+Y1 = 23
+Y2 = 25
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockF" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 15
+X2 = 17
+Y1 = 24
+Y2 = 26
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockG" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 63
+X2 = 65
+Y1 = 23
+Y2 = 25
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="SmRockH" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 71
+X2 = 73
+Y1 = 24
+Y2 = 26
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="UndercityWater" type="Node2D" parent="."]
+script = ExtResource("4")
+draw_ew = false

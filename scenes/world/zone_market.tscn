@@ -1,0 +1,83 @@
+[gd_scene load_steps=11 format=3 uid="uid://zone_market"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/smith.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/door.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/counter.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/entities/campfire.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/entities/straw_pile.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/entities/table.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/entities/chair.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/entities/sign.gd" id="11"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(40, 75)
+
+[node name="Smithy" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 3
+X2 = 17
+Y1 = 3
+Y2 = 14
+DOOR_X = 10
+DOOR_Y = 14
+
+[node name="SmithyDoor" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(10, 14)
+
+[node name="Smith" type="Node2D" parent="."]
+script = ExtResource("4")
+
+[node name="SmithCounter" type="Node2D" parent="."]
+script = ExtResource("6")
+X1 = 4
+X2 = 16
+Y  = 9
+
+[node name="SmithForge" type="Node2D" parent="."]
+script = ExtResource("7")
+grid_cell = Vector2i(5, 5)
+
+[node name="SmithBed" type="Node2D" parent="."]
+script = ExtResource("8")
+grid_cell = Vector2i(15, 5)
+
+[node name="SmithTable" type="Node2D" parent="."]
+script = ExtResource("9")
+grid_cell = Vector2i(13, 5)
+
+[node name="SmithChair" type="Node2D" parent="."]
+script = ExtResource("10")
+grid_cell = Vector2i(12, 6)
+
+[node name="SmithSign" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(9, 14)
+sign_text = "Smith"
+face = "sw"
+
+
+[node name="NorthWallWest" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 36
+Y1 = 3
+Y2 = 3
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="NorthWallEast" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 44
+X2 = 79
+Y1 = 3
+Y2 = 3
+DOOR_X = 999
+DOOR_Y = -1

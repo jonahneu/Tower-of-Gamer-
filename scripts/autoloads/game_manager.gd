@@ -1,0 +1,1219 @@
+extends Node
+# GameManager — global game state
+
+var current_layer: int = 0
+var combat_mode: bool = false
+var tactical_mode: bool = false
+var is_sneaking: bool = false
+var _player: Node = null
+var player: Node:
+	get:
+		if not is_instance_valid(_player):
+			_player = null
+		return _player
+	set(value):
+		_player = value
+var player_data: Dictionary = {}
+var current_zone: Node = null   # live TileScene; set by main.gd on every transition
+var smoke_zones: Array = []     # Array of {center:Vector2i, radius:int, turns_remaining:int}
+
+const SLOT_COUNT: int = 5        # manual slots 1–5
+const PREV_QUICK_SLOT: int = 6   # second-most-recent quick save (auto-shifted)
+const AUTO_SLOT: int = 7         # most-recent auto save
+const PREV_AUTO_SLOT: int = 8    # previous auto save (auto-shifted)
+
+# ── World map state ────────────────────────────────────────────────────────────
+var world_pos: Vector2i = Vector2i(10, 14)   # current tile on the 20×20 world map
+var world_layer: int = 0
+
+# Tile definitions per layer. Populated in _ready because Vector2i keys can't
+# be used in const Dictionaries.
+var world_map_data: Dictionary = {}
+
+# Exploration tracking: {layer_int: {Vector2i: {visited: bool, encounters: Array}}}
+var explored_tiles: Dictionary = {}
+
+func _ready() -> void:
+	world_map_data = {
+		0: {  # Surface layer
+			Vector2i(10, 14): {
+				"scene":          "res://scenes/world/zone_ditch.tscn",
+				"label":          "The Ditch",
+				"thumbnail_type": "slums",
+				"exits":          {
+					"north": Vector2i(10, 13),
+					"south": Vector2i(10, 15),
+					"west":  Vector2i(9, 14),
+				},
+			},
+			Vector2i(10, 11): {
+				"scene":          "res://scenes/world/zone_residential.tscn",
+				"label":          "Residential District",
+				"thumbnail_type": "city",
+				"exits":          {
+					"south": Vector2i(10, 12),
+					"east":  Vector2i(11, 11),
+				},
+			},
+			Vector2i(11, 11): {
+				"scene":          "res://scenes/world/zone_residential_east.tscn",
+				"label":          "Residential District — East",
+				"thumbnail_type": "city",
+				"exits":          {
+					"west": Vector2i(10, 11),
+				},
+			},
+			Vector2i(10, 12): {
+				"scene":          "res://scenes/world/zone_market.tscn",
+				"label":          "Market District",
+				"thumbnail_type": "city",
+				"exits":          {
+					"north": Vector2i(10, 11),
+					"south": Vector2i(10, 13),
+					"west":  Vector2i(9, 12),
+				},
+			},
+			Vector2i(9, 12): {
+				"scene":          "res://scenes/world/zone_market_gate.tscn",
+				"label":          "Market District — Gate",
+				"thumbnail_type": "city",
+				"exits":          {
+					"west": Vector2i(8, 12),
+					"east": Vector2i(10, 12),
+				},
+			},
+			Vector2i(8, 12): {
+				"scene":                    "res://scenes/world/zone_desert_road.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"west": Vector2i(7, 12),
+					"east": Vector2i(9, 12),
+				},
+			},
+			Vector2i(10, 13): {
+				"scene":          "res://scenes/world/zone_market_lower.tscn",
+				"label":          "Lower Market District",
+				"thumbnail_type": "slums",
+				"exits":          {
+					"north": Vector2i(10, 12),
+					"south": Vector2i(10, 14),
+				},
+			},
+			Vector2i(10, 15): {
+				"scene":          "res://scenes/world/zone_ditch_lower.tscn",
+				"label":          "The Ditch — Lower",
+				"thumbnail_type": "slums",
+				"exits":          {
+					"north": Vector2i(10, 14),
+					"south": Vector2i(10, 16),
+				},
+			},
+			Vector2i(10, 16): {
+				"scene":          "res://scenes/world/zone_ditch_undercity.tscn",
+				"label":          "The Ditch — Undercity Entrance",
+				"thumbnail_type": "slums",
+				"exits":          {
+					"north": Vector2i(10, 15),
+					"down":  Vector2i(10, 16),
+				},
+			},
+			Vector2i(9, 14): {
+				"scene":          "res://scenes/world/zone_outside_gate.tscn",
+				"label":          "The Ditch — Exit Drain",
+				"thumbnail_type": "slums",
+				"exits":          {
+					"north": Vector2i(9, 13),
+					"east":  Vector2i(10, 14),
+					"west":  Vector2i(8, 14),
+					"south": Vector2i(9, 15),
+				},
+			},
+			Vector2i(8, 14): {
+				"scene":                    "res://scenes/world/zone_desert.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(8, 13),
+					"east":  Vector2i(9, 14),
+					"west":  Vector2i(7, 14),
+					"south": Vector2i(8, 15),
+				},
+			},
+			Vector2i(7, 14): {
+				"scene":                    "res://scenes/world/zone_river.tscn",
+				"label":                    "Riverbank",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(7, 13),
+					"east":  Vector2i(8, 14),
+					"south": Vector2i(7, 15),
+				},
+			},
+			Vector2i(7, 12): {
+				"scene":                    "res://scenes/world/zone_docks.tscn",
+				"label":                    "Riverbank — Docks",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(7, 13),
+					"east":  Vector2i(8, 12),
+				},
+			},
+			Vector2i(7, 13): {
+				"scene":                    "res://scenes/world/zone_river_north.tscn",
+				"label":                    "Riverbank — North",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(7, 12),
+					"south": Vector2i(7, 14),
+					"east":  Vector2i(8, 13),
+				},
+			},
+			Vector2i(8, 13): {
+				"scene":                    "res://scenes/world/zone_desert_mid.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 14),
+					"east":  Vector2i(9, 13),
+					"west":  Vector2i(7, 13),
+				},
+			},
+			Vector2i(9, 13): {
+				"scene":                    "res://scenes/world/zone_desert_north.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 14),
+					"west":  Vector2i(8, 13),
+				},
+			},
+			Vector2i(7, 15): {
+				"scene":                    "res://scenes/world/zone_river_south.tscn",
+				"label":                    "Riverbank — South",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(7, 14),
+					"east":  Vector2i(8, 15),
+					"south": Vector2i(7, 16),
+				},
+			},
+			Vector2i(8, 15): {
+				"scene":                    "res://scenes/world/zone_desert_east.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(8, 14),
+					"west":  Vector2i(7, 15),
+					"east":  Vector2i(9, 15),
+					"south": Vector2i(8, 16),
+				},
+			},
+			Vector2i(9, 15): {
+				"scene":                    "res://scenes/world/zone_desert_south.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(9, 14),
+					"west":  Vector2i(8, 15),
+					"south": Vector2i(9, 16),
+				},
+			},
+			Vector2i(7, 16): {
+				"scene":                    "res://scenes/world/zone_riverbank_deep.tscn",
+				"label":                    "Riverbank — Deep",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(7, 15),
+					"east":  Vector2i(8, 16),
+					"south": Vector2i(7, 17),
+				},
+			},
+			Vector2i(7, 17): {
+				"scene":                    "res://scenes/world/zone_river_marshes.tscn",
+				"label":                    "Riverbank — Marshes",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(7, 16),
+					"east":  Vector2i(8, 17),
+					"south": Vector2i(7, 18),
+				},
+			},
+			Vector2i(7, 18): {
+				"scene":                    "res://scenes/world/zone_river_delta.tscn",
+				"label":                    "Riverbank — Delta",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(7, 17),
+				},
+			},
+			Vector2i(8, 16): {
+				"scene":                    "res://scenes/world/zone_desert_deep.tscn",
+				"label":                    "The Desert — Deep",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(8, 15),
+					"west":  Vector2i(7, 16),
+					"east":  Vector2i(9, 16),
+					"south": Vector2i(8, 17),
+				},
+			},
+			Vector2i(9, 16): {
+				"scene":                    "res://scenes/world/zone_desert_wall.tscn",
+				"label":                    "The Desert — City Wall",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(9, 15),
+					"west":  Vector2i(8, 16),
+					"south": Vector2i(9, 17),
+				},
+			},
+			Vector2i(8, 17): {
+				"scene":                    "res://scenes/world/zone_desert_wastes.tscn",
+				"label":                    "The Desert — Wastes",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(8, 16),
+					"east":  Vector2i(9, 17),
+					"west":  Vector2i(7, 17),
+				},
+			},
+			Vector2i(9, 17): {
+				"scene":                    "res://scenes/world/zone_desert_den.tscn",
+				"label":                    "The Desert — Coyote Den",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(9, 16),
+					"west":  Vector2i(8, 17),
+				},
+			},
+		},
+		1: {  # Underground I
+			Vector2i(10, 16): {
+				"scene":                    "res://scenes/world/zone_undercity_depth1.tscn",
+				"label":                    "Undercity — Depth One",
+				"thumbnail_type":           "tunnel_ns",
+				"required_protection_level": 1,
+				"exits":                    {
+					"up":    Vector2i(10, 16),
+					"north": Vector2i(10, 15),
+				},
+			},
+			Vector2i(10, 15): {
+				"scene":                    "res://scenes/world/zone_undercity_room1.tscn",
+				"label":                    "Undercity — Chamber",
+				"thumbnail_type":           "tunnel_ns",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(10, 16),
+					"north": Vector2i(10, 14),
+				},
+			},
+			Vector2i(10, 14): {
+				"scene":                    "res://scenes/world/zone_undercity_fork.tscn",
+				"label":                    "Undercity — Crossroads",
+				"thumbnail_type":           "tunnel_x",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(10, 15),
+					"north": Vector2i(10, 13),
+					"east":  Vector2i(11, 14),
+					"west":  Vector2i(9, 14),
+				},
+			},
+			Vector2i(11, 14): {
+				"scene":                    "res://scenes/world/zone_undercity_east_arm.tscn",
+				"label":                    "Undercity — East Passage",
+				"thumbnail_type":           "tunnel_nw",
+				"required_protection_level": 1,
+				"exits":                    {
+					"west":  Vector2i(10, 14),
+					"north": Vector2i(11, 13),
+				},
+			},
+			Vector2i(11, 13): {
+				"scene":                    "res://scenes/world/zone_undercity_east_s1.tscn",
+				"label":                    "Undercity — East Tunnels",
+				"thumbnail_type":           "tunnel_te",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(11, 14),
+					"north": Vector2i(11, 12),
+					"east":  Vector2i(12, 13),
+				},
+			},
+			Vector2i(12, 13): {
+				"scene":                    "res://scenes/world/zone_undercity_east_s2.tscn",
+				"label":                    "Undercity — East Tunnels",
+				"thumbnail_type":           "tunnel_nw",
+				"required_protection_level": 1,
+				"exits":                    {
+					"west":  Vector2i(11, 13),
+					"north": Vector2i(12, 12),
+				},
+			},
+			Vector2i(11, 12): {
+				"scene":                    "res://scenes/world/zone_undercity_east_bypass.tscn",
+				"label":                    "Undercity — East Tunnels",
+				"thumbnail_type":           "tunnel_x",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(11, 13),
+					"north": Vector2i(11, 11),
+					"west":  Vector2i(10, 12),
+					"east":  Vector2i(12, 12),
+				},
+			},
+			Vector2i(12, 12): {
+				"scene":                    "res://scenes/world/zone_undercity_east_m2.tscn",
+				"label":                    "Undercity — East Tunnels",
+				"thumbnail_type":           "tunnel_tw",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(12, 13),
+					"north": Vector2i(12, 11),
+					"west":  Vector2i(11, 12),
+				},
+			},
+			Vector2i(11, 11): {
+				"scene":                    "res://scenes/world/zone_undercity_east_u1.tscn",
+				"label":                    "Undercity — East Tunnels",
+				"thumbnail_type":           "tunnel_te",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(11, 12),
+					"north": Vector2i(11, 10),
+					"east":  Vector2i(12, 11),
+				},
+			},
+			Vector2i(12, 11): {
+				"scene":                    "res://scenes/world/zone_undercity_east_u2.tscn",
+				"label":                    "Undercity — East Tunnels",
+				"thumbnail_type":           "tunnel_tw",
+				"required_protection_level": 1,
+				"exits":                    {
+					"west":  Vector2i(11, 11),
+					"south": Vector2i(12, 12),
+					"north": Vector2i(12, 10),
+				},
+			},
+			Vector2i(11, 10): {
+				"scene":                    "res://scenes/world/zone_undercity_east_exit.tscn",
+				"label":                    "Undercity — East Tunnels",
+				"thumbnail_type":           "tunnel_ts",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(11, 11),
+					"west":  Vector2i(10, 10),
+					"east":  Vector2i(12, 10),
+				},
+			},
+			Vector2i(12, 10): {
+				"scene":                    "res://scenes/world/zone_undercity_east_camp.tscn",
+				"label":                    "Undercity — Bandit Camp",
+				"thumbnail_type":           "tunnel_sw",
+				"required_protection_level": 1,
+				"exits":                    {
+					"west":  Vector2i(11, 10),
+					"south": Vector2i(12, 11),
+				},
+			},
+			Vector2i(10, 13): {
+				"scene":                    "res://scenes/world/zone_undercity_north1.tscn",
+				"label":                    "Undercity — Main Passage",
+				"thumbnail_type":           "tunnel_ns",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(10, 14),
+					"north": Vector2i(10, 12),
+				},
+			},
+			Vector2i(10, 12): {
+				"scene":                    "res://scenes/world/zone_undercity_north2.tscn",
+				"label":                    "Undercity — Main Passage",
+				"thumbnail_type":           "tunnel_ts",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(10, 13),
+					"east":  Vector2i(11, 12),
+					"west":  Vector2i(9, 12),
+				},
+			},
+			Vector2i(10, 11): {
+				"scene":                    "res://scenes/world/zone_undercity_north3.tscn",
+				"label":                    "Undercity — Main Passage",
+				"thumbnail_type":           "tunnel_ns",
+				"required_protection_level": 1,
+				"exits":                    {
+					"north": Vector2i(10, 10),
+				},
+			},
+			Vector2i(10, 10): {
+				"scene":                    "res://scenes/world/zone_undercity_north4.tscn",
+				"label":                    "Undercity — The Frog's Lair",
+				"thumbnail_type":           "tunnel_ts",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(10, 11),
+					"east":  Vector2i(11, 10),
+					"west":  Vector2i(9, 10),
+				},
+			},
+			Vector2i(9, 14): {
+				"scene":                    "res://scenes/world/zone_undercity_west_arm.tscn",
+				"label":                    "Undercity — West Passage",
+				"thumbnail_type":           "tunnel_tn",
+				"required_protection_level": 1,
+				"exits":                    {
+					"east":  Vector2i(10, 14),
+					"west":  Vector2i(8, 14),
+					"north": Vector2i(9, 13),
+				},
+			},
+			Vector2i(8, 14): {
+				"scene":                    "res://scenes/world/zone_undercity_west_arm2.tscn",
+				"label":                    "Undercity — West Passage",
+				"thumbnail_type":           "tunnel_ne",
+				"required_protection_level": 1,
+				"exits":                    {
+					"east":  Vector2i(9, 14),
+					"north": Vector2i(8, 13),
+				},
+			},
+			Vector2i(9, 13): {
+				"scene":                    "res://scenes/world/zone_undercity_west_s1.tscn",
+				"label":                    "Undercity — West Tunnels",
+				"thumbnail_type":           "tunnel_tw",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 14),
+					"north": Vector2i(9, 12),
+					"west":  Vector2i(8, 13),
+				},
+			},
+			Vector2i(8, 13): {
+				"scene":                    "res://scenes/world/zone_undercity_west_s2.tscn",
+				"label":                    "Undercity — West Tunnels",
+				"thumbnail_type":           "tunnel_te",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 14),
+					"east":  Vector2i(9, 13),
+					"north": Vector2i(8, 12),
+				},
+			},
+			Vector2i(9, 12): {
+				"scene":                    "res://scenes/world/zone_undercity_west_bypass.tscn",
+				"label":                    "Undercity — West Tunnels",
+				"thumbnail_type":           "tunnel_x",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 13),
+					"north": Vector2i(9, 11),
+					"east":  Vector2i(10, 12),
+					"west":  Vector2i(8, 12),
+				},
+			},
+			Vector2i(8, 12): {
+				"scene":                    "res://scenes/world/zone_undercity_west_m2.tscn",
+				"label":                    "Undercity — West Tunnels",
+				"thumbnail_type":           "tunnel_te",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 13),
+					"north": Vector2i(8, 11),
+					"east":  Vector2i(9, 12),
+				},
+			},
+			Vector2i(9, 11): {
+				"scene":                    "res://scenes/world/zone_undercity_west_u1.tscn",
+				"label":                    "Undercity — West Tunnels",
+				"thumbnail_type":           "tunnel_tw",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 12),
+					"north": Vector2i(9, 10),
+					"west":  Vector2i(8, 11),
+				},
+			},
+			Vector2i(8, 11): {
+				"scene":                    "res://scenes/world/zone_undercity_west_u2.tscn",
+				"label":                    "Undercity — West Tunnels",
+				"thumbnail_type":           "tunnel_te",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 12),
+					"north": Vector2i(8, 10),
+					"east":  Vector2i(9, 11),
+				},
+			},
+			Vector2i(9, 10): {
+				"scene":                    "res://scenes/world/zone_undercity_west_exit.tscn",
+				"label":                    "Undercity — West Tunnels",
+				"thumbnail_type":           "tunnel_ts",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 11),
+					"east":  Vector2i(10, 10),
+					"west":  Vector2i(8, 10),
+				},
+			},
+			Vector2i(8, 10): {
+				"scene":                    "res://scenes/world/zone_undercity_west_den.tscn",
+				"label":                    "Undercity — Animal Den",
+				"thumbnail_type":           "tunnel_se",
+				"required_protection_level": 1,
+				"exits":                    {
+					"east":  Vector2i(9, 10),
+					"south": Vector2i(8, 11),
+				},
+			},
+		},
+	}
+	EventBus.player_rested.connect(_on_player_rested)
+
+# ── NPC departure tracking ─────────────────────────────────────────────────────
+# Called on every rest regardless of which zone is loaded.
+# Sets departure flags so NPCs check them in _ready() and skip spawning.
+# When an NPC IS loaded in the current zone it handles its own departure via its
+# own player_rested connection — game_manager only steps in when the NPC is absent.
+func _on_player_rested() -> void:
+	# Taskmaster always leaves after the first rest
+	player_data["taskmaster_left"] = true
+
+	# Old Hunter: two-rest sequence once the kill quest thread is completed.
+	# Skip if the hunter is present — his own _on_player_rested handles it.
+	var hunter_present: bool = false
+	if current_zone != null and is_instance_valid(current_zone):
+		for child in current_zone.get_children():
+			if child.get("entity_name") == "Old Hunter":
+				hunter_present = true
+				break
+	if not hunter_present:
+		var hunter_thread_done: bool = false
+		for q in player_data.get("quests", []):
+			if q.get("id") == "find_spiritual_protection":
+				for t in q.get("threads", []):
+					if t.get("id") == "hunter_animal_kill" and t.get("completed", false):
+						hunter_thread_done = true
+		if hunter_thread_done:
+			if not player_data.get("hunter_can_leave", false):
+				player_data["hunter_can_leave"] = true
+			elif not player_data.get("hunter_left", false):
+				player_data["hunter_left"] = true
+
+# ── World map helpers ──────────────────────────────────────────────────────────
+func get_tile_data(layer: int, pos: Vector2i) -> Dictionary:
+	return world_map_data.get(layer, {}).get(pos, {})
+
+func get_adjacent_tile(direction: String) -> Vector2i:
+	var exits = get_tile_data(world_layer, world_pos).get("exits", {})
+	return exits.get(direction, Vector2i(-1, -1))
+
+func mark_tile_visited(layer: int, pos: Vector2i) -> void:
+	if not explored_tiles.has(layer):
+		explored_tiles[layer] = {}
+	if not explored_tiles[layer].has(pos):
+		explored_tiles[layer][pos] = {"visited": false, "encounters": []}
+	explored_tiles[layer][pos]["visited"] = true
+
+func add_encounter(layer: int, pos: Vector2i, entity_name: String) -> void:
+	if not explored_tiles.has(layer):
+		explored_tiles[layer] = {}
+	if not explored_tiles[layer].has(pos):
+		explored_tiles[layer][pos] = {"visited": true, "encounters": []}
+	var list: Array = explored_tiles[layer][pos]["encounters"]
+	if not (entity_name in list):
+		list.append(entity_name)
+
+func remove_encounter(layer: int, pos: Vector2i, entity_name: String) -> void:
+	var list: Array = explored_tiles.get(layer, {}).get(pos, {}).get("encounters", [])
+	list.erase(entity_name)
+
+# ── XP / Level system ─────────────────────────────────────────────────────────
+# Cumulative XP required to reach each level (index = level number).
+# Level 1 starts at 0; level 2 requires 350 total XP; etc.
+const XP_THRESHOLDS: Array = [0, 0, 350, 1050, 2250, 4050]
+
+func add_xp(base_xp: int, enemy_level: int = -1) -> void:
+	var scaled: int = base_xp if enemy_level < 0 else _scale_enemy_xp(base_xp, enemy_level)
+	player_data["xp"] = player_data.get("xp", 0) + scaled
+	EventBus.xp_gained.emit(scaled)
+	_check_level_up()
+
+func add_note(note: Dictionary, xp: int = 5) -> void:
+	var notes: Array = player_data.get("notes", [])
+	for n in notes:
+		if n.get("id") == note.get("id"):
+			return
+	notes.append(note)
+	player_data["notes"] = notes
+	add_xp(xp)
+	EventBus.note_added.emit(note.get("id", ""), note.get("title", ""))
+	EventBus.journal_updated.emit("note")
+
+func xp_for_next_level() -> int:
+	var lvl: int = player_data.get("level", 1)
+	if lvl >= XP_THRESHOLDS.size() - 1:
+		return 0
+	return XP_THRESHOLDS[lvl + 1] - player_data.get("xp", 0)
+
+func _scale_enemy_xp(base_xp: int, enemy_level: int) -> int:
+	var diff: int = enemy_level - player_data.get("level", 1)
+	var mult: float
+	if   diff >= 3:  mult = 2.0
+	elif diff == 2:  mult = 1.5
+	elif diff == 1:  mult = 1.25
+	elif diff == 0:  mult = 1.0
+	elif diff == -1: mult = 0.6
+	elif diff == -2: mult = 0.25
+	else:            mult = 0.125
+	return maxi(1, int(base_xp * mult))
+
+func _check_level_up() -> void:
+	var lvl: int = player_data.get("level", 1)
+	var xp: int  = player_data.get("xp", 0)
+	while lvl < XP_THRESHOLDS.size() - 1 and xp >= XP_THRESHOLDS[lvl + 1]:
+		lvl += 1
+		_apply_level_up(lvl)
+	player_data["level"] = lvl
+
+func _apply_level_up(new_level: int) -> void:
+	var stats_dict: Dictionary = player_data.get("stats", {})
+
+	# Set player level now so CON spending during allocation uses the correct level.
+	# HP gain is deferred to confirm_levelup_allocation — spending CON during allocation
+	# will retroactively recalculate max_hp for the new level, so no double-apply.
+	if player != null and is_instance_valid(player):
+		player.level = new_level
+
+	# Skill points: half the creation pool, using current INT (not retroactive)
+	var int_stat: int   = stats_dict.get("intelligence", 5)
+	var skill_pts: int  = 30 + (int_stat - 5) * 5 / 2
+	player_data["unspent_skill_points"] = player_data.get("unspent_skill_points", 0) + skill_pts
+
+	# Stat points + feat pick on even levels
+	if new_level % 2 == 0:
+		player_data["unspent_stat_points"] = player_data.get("unspent_stat_points", 0) + 2
+		player_data["unspent_feat_points"] = player_data.get("unspent_feat_points", 0) + 1
+
+	# Snapshot for refund — preserve only if none exists yet (multi-level-up accumulates)
+	if not player_data.has("levelup_snapshot"):
+		player_data["levelup_snapshot"] = {
+			"stats":  player_data.get("stats",  {}).duplicate(),
+			"skills": player_data.get("skills", {}).duplicate(),
+		}
+
+	EventBus.leveled_up.emit(new_level)
+
+func grant_feat(feat_id: String) -> bool:
+	if player_data.get("unspent_feat_points", 0) <= 0:
+		return false
+	if has_feat(feat_id):
+		return false
+	var f: Dictionary = DataManager.feats.get(feat_id, {})
+	if f.is_empty():
+		return false
+	var feats: Array = player_data.get("feats", [])
+	feats.append({"id": feat_id, "name": f.get("name", feat_id), "description": f.get("description", "")})
+	player_data["feats"] = feats
+	player_data["unspent_feat_points"] = player_data.get("unspent_feat_points", 0) - 1
+	return true
+
+# Spend one unspent stat point on a given stat. Handles CON/INT side-effects.
+func spend_stat_point(stat: String) -> bool:
+	if player_data.get("unspent_stat_points", 0) <= 0:
+		return false
+	# Each stat may only receive one point per level-up allocation session.
+	var snapshot: Dictionary = player_data.get("levelup_snapshot", {})
+	if not snapshot.is_empty():
+		var snap_val: int = snapshot.get("stats", {}).get(stat, 5)
+		var stats_dict_check: Dictionary = player_data.get("stats", {})
+		if stats_dict_check.get(stat, 5) >= snap_val + 1:
+			return false
+	var stats_dict: Dictionary = player_data.get("stats", {})
+	var old_int: int = stats_dict.get("intelligence", 5)
+	stats_dict[stat] = stats_dict.get(stat, 5) + 1
+	player_data["stats"] = stats_dict
+	player_data["unspent_stat_points"] -= 1
+	_sync_stat_to_player(stat)
+
+	# CON retroactive: recalculate max HP for all past levels
+	if stat == "constitution":
+		var lvl: int    = player_data.get("level", 1)
+		var con_mod: int = stats_dict.get("constitution", 5) - 5
+		var new_max: float = 5.0 * (5 + con_mod) * (lvl + 1)
+		var delta: float   = new_max - float(player_data.get("max_hp", 0))
+		player_data["max_hp"] = new_max
+		if player != null and is_instance_valid(player):
+			player.max_hp     = new_max
+			player.current_hp = clampf(player.current_hp + delta, 1.0, new_max)
+
+	# INT immediate bonus: adds skill points for this level and going forward
+	if stat == "intelligence":
+		var new_int: int  = stats_dict.get("intelligence", 5)
+		var old_pts: int  = 25 + (old_int - 5) * 5 / 2
+		var new_pts: int  = 25 + (new_int - 5) * 5 / 2
+		var bonus: int    = new_pts - old_pts
+		if bonus > 0:
+			player_data["unspent_skill_points"] = player_data.get("unspent_skill_points", 0) + bonus
+
+	return true
+
+# Lock in all spent allocation points, apply deferred HP gain, and clear the refund snapshot.
+func confirm_levelup_allocation() -> void:
+	if player_data.has("levelup_snapshot"):
+		# Apply HP gain using the final stats after all allocation choices.
+		# If CON was spent during allocation, that already bumped max_hp retroactively
+		# for the new level, so hp_gain here may be 0 or close to it.
+		var lvl: int = player_data.get("level", 1)
+		var stats: Dictionary = player_data.get("stats", {})
+		var con_mod: int = stats.get("constitution", 5) - 5
+		var final_max: float = 5.0 * float(5 + con_mod) * float(lvl + 1)
+		var current_max: float = float(player_data.get("max_hp", 0.0))
+		var hp_gain: float = final_max - current_max
+		if hp_gain > 0.0:
+			player_data["max_hp"] = final_max
+			if player != null and is_instance_valid(player):
+				player.max_hp     = final_max
+				player.current_hp = clampf(player.current_hp + hp_gain, 1.0, final_max)
+	player_data.erase("levelup_snapshot")
+
+# Refund one point from a stat back to unspent_stat_points.
+# Blocked if the stat is already at or below the snapshot value.
+# INT refund blocked if the bonus skill points have already been spent.
+func refund_stat_point(stat: String) -> bool:
+	var snapshot: Dictionary   = player_data.get("levelup_snapshot", {})
+	if snapshot.is_empty():
+		return false
+	var snap_stats: Dictionary = snapshot.get("stats", {})
+	var stats_dict: Dictionary = player_data.get("stats", {})
+	if stats_dict.get(stat, 5) <= snap_stats.get(stat, 5):
+		return false
+
+	if stat == "intelligence":
+		var old_int: int = stats_dict.get("intelligence", 5)
+		var new_int: int = old_int - 1
+		var bonus: int   = (25 + (old_int - 5) * 5 / 2) - (25 + (new_int - 5) * 5 / 2)
+		if player_data.get("unspent_skill_points", 0) < bonus:
+			return false  # INT bonus skill points already spent; can't refund
+		player_data["unspent_skill_points"] = player_data.get("unspent_skill_points", 0) - bonus
+
+	stats_dict[stat] = stats_dict.get(stat, 5) - 1
+	player_data["stats"] = stats_dict
+	player_data["unspent_stat_points"] = player_data.get("unspent_stat_points", 0) + 1
+	_sync_stat_to_player(stat)
+
+	if stat == "constitution":
+		var lvl: int     = player_data.get("level", 1)
+		var con_mod: int = stats_dict.get("constitution", 5) - 5
+		var new_max: float = 5.0 * (5 + con_mod) * (lvl + 1)
+		var delta: float   = new_max - float(player_data.get("max_hp", 0))
+		player_data["max_hp"] = new_max
+		if player != null and is_instance_valid(player):
+			player.max_hp     = new_max
+			player.current_hp = clampf(player.current_hp + delta, 1.0, new_max)
+
+	return true
+
+# Refund one invested skill point back to unspent_skill_points.
+func refund_skill_point(skill: String) -> bool:
+	var snapshot: Dictionary    = player_data.get("levelup_snapshot", {})
+	if snapshot.is_empty():
+		return false
+	var snap_skills: Dictionary = snapshot.get("skills", {})
+	var skills_dict: Dictionary = player_data.get("skills", {})
+	if skills_dict.get(skill, 0) <= snap_skills.get(skill, 0):
+		return false
+	skills_dict[skill] = skills_dict.get(skill, 0) - 1
+	player_data["skills"] = skills_dict
+	player_data["unspent_skill_points"] = player_data.get("unspent_skill_points", 0) + 1
+	return true
+
+# Per-skill cap: 20 at level 1, +10 every level after that (level 2 → 30, level 3 → 40, …)
+func skill_cap_for_level(level: int) -> int:
+	return 20 + (level - 1) * 10
+
+# Spend one unspent skill point on a given skill.
+func spend_skill_point(skill: String) -> bool:
+	if player_data.get("unspent_skill_points", 0) <= 0:
+		return false
+	var skills_dict: Dictionary = player_data.get("skills", {})
+	var level: int = player_data.get("level", 1)
+	var cap: int = skill_cap_for_level(level)
+	if skills_dict.get(skill, 0) >= cap:
+		return false
+	skills_dict[skill] = skills_dict.get(skill, 0) + 1
+	player_data["skills"] = skills_dict
+	player_data["unspent_skill_points"] -= 1
+	return true
+
+func _sync_stat_to_player(stat: String) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	var val: int = player_data.get("stats", {}).get(stat, 5)
+	match stat:
+		"strength":     player.stat_strength     = val
+		"dexterity":    player.stat_dexterity    = val
+		"agility":      player.stat_agility      = val
+		"constitution": player.stat_constitution = val
+		"intelligence": player.stat_intelligence = val
+		"willpower":    player.stat_willpower    = val
+		"perception":   player.stat_perception   = val
+
+func toggle_sneak() -> void:
+	is_sneaking = not is_sneaking
+	EventBus.sneak_toggled.emit(is_sneaking)
+
+func exit_sneak() -> void:
+	if is_sneaking:
+		is_sneaking = false
+		EventBus.sneak_toggled.emit(false)
+
+# ── Quest helpers ─────────────────────────────────────────────────────────────
+func add_quest(quest: Dictionary) -> void:
+	if not player_data.has("quests"):
+		player_data["quests"] = []
+	var quests: Array = player_data["quests"]
+	for q in quests:
+		if q.get("id") == quest.get("id"):
+			return  # already tracked
+	quests.append(quest)
+	EventBus.journal_updated.emit("quest")
+
+# Appends a bullet-point update to an existing quest. No-op if quest not found.
+func update_quest(quest_id: String, update_text: String) -> void:
+	for q in player_data.get("quests", []):
+		if q.get("id") == quest_id:
+			if not q.has("updates"):
+				q["updates"] = []
+			if update_text not in q["updates"]:
+				q["updates"].append(update_text)
+				EventBus.journal_updated.emit("quest")
+			return
+
+func complete_quest(quest_id: String) -> void:
+	for q in player_data.get("quests", []):
+		if q.get("id") == quest_id:
+			q["completed"] = true
+			EventBus.journal_updated.emit("quest")
+			return
+
+# ── Thread helpers (sub-quests within a parent quest) ─────────────────────────
+func add_quest_thread(parent_id: String, thread: Dictionary) -> void:
+	for q in player_data.get("quests", []):
+		if q.get("id") == parent_id:
+			if not q.has("threads"):
+				q["threads"] = []
+			for t in q["threads"]:
+				if t.get("id") == thread.get("id"):
+					return  # already exists
+			q["threads"].append(thread)
+			EventBus.journal_updated.emit("quest")
+			return
+
+func update_quest_thread(parent_id: String, thread_id: String, update_text: String) -> void:
+	for q in player_data.get("quests", []):
+		if q.get("id") != parent_id:
+			continue
+		for t in q.get("threads", []):
+			if t.get("id") == thread_id:
+				if not t.has("updates"):
+					t["updates"] = []
+				if update_text not in t["updates"]:
+					t["updates"].append(update_text)
+					EventBus.journal_updated.emit("quest")
+				return
+
+func complete_quest_thread(parent_id: String, thread_id: String) -> void:
+	for q in player_data.get("quests", []):
+		if q.get("id") != parent_id:
+			continue
+		for t in q.get("threads", []):
+			if t.get("id") == thread_id:
+				t["completed"] = true
+				EventBus.journal_updated.emit("quest")
+				return
+
+func has_quest(quest_id: String) -> bool:
+	for q in player_data.get("quests", []):
+		if q.get("id") == quest_id:
+			return true
+	return false
+
+func has_quest_thread(parent_id: String, thread_id: String) -> bool:
+	for q in player_data.get("quests", []):
+		if q.get("id") != parent_id:
+			continue
+		for t in q.get("threads", []):
+			if t.get("id") == thread_id:
+				return true
+	return false
+
+# ── Faction contact helpers ───────────────────────────────────────────────────
+# Tracks which NPCs have explained their religion/path to the player.
+# Used after the premonition dream to build quest threads pointing back to them.
+func add_faction_contact(npc_id: String) -> void:
+	var contacts: Array = player_data.get("faction_contacts", [])
+	if npc_id not in contacts:
+		contacts.append(npc_id)
+		player_data["faction_contacts"] = contacts
+
+# ── Feat helpers ──────────────────────────────────────────────────────────────
+func add_feat(feat: Dictionary) -> void:
+	var feats: Array = player_data.get("feats", [])
+	for f in feats:
+		if f.get("id") == feat.get("id"):
+			return   # already have it
+	feats.append(feat)
+	player_data["feats"] = feats
+
+func has_feat(feat_id: String) -> bool:
+	for f in player_data.get("feats", []):
+		if f.get("id") == feat_id:
+			return true
+	return false
+
+# Hunter-Gatherer feat: chance to double the yield from a survival harvest (carving
+# a corpse or picking a plant). Scales linearly with invested survival skill —
+# 10% at 20, 100% at 200 (and clamped to that range outside it).
+func roll_harvest_double() -> bool:
+	if not has_feat("harvester"):
+		return false
+	var survival: float = float(player_data.get("skills", {}).get("survival", 0))
+	var chance: float = clampf(10.0 + (survival - 20.0) * (90.0 / 180.0), 0.0, 100.0)
+	return randf() * 100.0 < chance
+
+# ── Path helpers ───────────────────────────────────────────────────────────────
+func get_save_path(slot: int) -> String:
+	match slot:
+		0:              return "user://save_quick.json"
+		PREV_QUICK_SLOT: return "user://save_quick_prev.json"
+		AUTO_SLOT:       return "user://save_auto.json"
+		PREV_AUTO_SLOT:  return "user://save_auto_prev.json"
+		_:               return "user://save_%d.json" % slot
+
+# ── Serialization helpers for explored_tiles (Vector2i keys → strings) ────────
+func _serialize_explored() -> Dictionary:
+	var result: Dictionary = {}
+	for layer_key in explored_tiles:
+		result[str(layer_key)] = {}
+		for pos_key in explored_tiles[layer_key]:
+			result[str(layer_key)]["%d,%d" % [pos_key.x, pos_key.y]] = explored_tiles[layer_key][pos_key]
+	return result
+
+func _deserialize_explored(data: Dictionary) -> void:
+	explored_tiles = {}
+	for layer_str in data:
+		var layer_int = int(layer_str)
+		explored_tiles[layer_int] = {}
+		for pos_str in data[layer_str]:
+			var parts = pos_str.split(",")
+			var pos = Vector2i(int(parts[0]), int(parts[1]))
+			explored_tiles[layer_int][pos] = data[layer_str][pos_str]
+
+# ── Save ───────────────────────────────────────────────────────────────────────
+func _write_save(slot: int, slot_name: String) -> void:
+	var grid_cell = [40, 40]
+	if player != null and "grid_cell" in player:
+		grid_cell = [player.grid_cell.x, player.grid_cell.y]
+	elif player_data.has("_saved_grid_cell"):
+		var sc = player_data["_saved_grid_cell"]
+		grid_cell = [sc[0], sc[1]]
+
+	# Snapshot runtime state that lives on the Player node into player_data so
+	# it persists across saves. These are cleared back out after writing so the
+	# live player_data dict stays clean.
+	# Save fog-of-war for the current zone before writing
+	var cur_ts := current_zone as TileScene if is_instance_valid(current_zone) else null
+	if cur_ts != null:
+		var tile_data_fow: Dictionary = get_tile_data(world_layer, world_pos)
+		var scene_path_fow: String = tile_data_fow.get("scene", str(world_pos))
+		cur_ts.save_fov_data(scene_path_fow)
+
+	var stashed_keys: Array = []
+	if player != null and is_instance_valid(player):
+		player_data["_saved_hp"] = player.current_hp
+		stashed_keys.append("_saved_hp")
+		player_data["_saved_spirit"] = player.current_spirit
+		stashed_keys.append("_saved_spirit")
+		if player.get("status_effects") != null:
+			player_data["_saved_status_effects"] = player.status_effects.duplicate(true)
+			stashed_keys.append("_saved_status_effects")
+		var oc = player.get("_oc_status_timer")
+		if oc != null:
+			player_data["_saved_oc_timer"] = oc
+			stashed_keys.append("_saved_oc_timer")
+
+	var dt = Time.get_datetime_dict_from_system()
+	var data = {
+		"slot_name":      slot_name,
+		"character_name": player_data.get("name", "Unknown"),
+		"timestamp":      "%d-%02d-%02d %02d:%02d" % [dt.year, dt.month, dt.day, dt.hour, dt.minute],
+		"player_data":    player_data,
+		"grid_cell":      grid_cell,
+		"layer":          world_layer,
+		"world_pos":      [world_pos.x, world_pos.y],
+		"explored_tiles": _serialize_explored(),
+	}
+	var file = FileAccess.open(get_save_path(slot), FileAccess.WRITE)
+	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+
+	for key in stashed_keys:
+		player_data.erase(key)
+
+func save_to_slot(slot: int) -> void:
+	# Before overwriting the quick save, shift it to the previous-quick-save slot
+	if slot == 0 and FileAccess.file_exists(get_save_path(0)):
+		var src = FileAccess.open(get_save_path(0), FileAccess.READ)
+		var prev = JSON.parse_string(src.get_as_text())
+		src.close()
+		if prev != null:
+			prev["slot_name"] = "Prev. Quick Save"
+			var dst = FileAccess.open(get_save_path(PREV_QUICK_SLOT), FileAccess.WRITE)
+			dst.store_string(JSON.stringify(prev, "\t"))
+			dst.close()
+	var name: String = "Quick Save" if slot == 0 else "Save %d" % slot
+	_write_save(slot, name)
+
+func auto_save() -> void:
+	# Shift current auto save → previous auto save slot before writing new one
+	if FileAccess.file_exists(get_save_path(AUTO_SLOT)):
+		var src = FileAccess.open(get_save_path(AUTO_SLOT), FileAccess.READ)
+		var prev = JSON.parse_string(src.get_as_text())
+		src.close()
+		if prev != null:
+			prev["slot_name"] = "Prev. Auto Save"
+			var dst = FileAccess.open(get_save_path(PREV_AUTO_SLOT), FileAccess.WRITE)
+			dst.store_string(JSON.stringify(prev, "\t"))
+			dst.close()
+	_write_save(AUTO_SLOT, "Auto Save")
+
+# ── Load ───────────────────────────────────────────────────────────────────────
+func load_from_slot(slot: int) -> void:
+	var path = get_save_path(slot)
+	if not FileAccess.file_exists(path):
+		return
+	var file = FileAccess.open(path, FileAccess.READ)
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	if parsed == null:
+		return
+	player_data = parsed.get("player_data", {})
+	world_layer = parsed.get("layer", 0)
+	var cell    = parsed.get("grid_cell", [40, 40])
+	player_data["_saved_grid_cell"] = cell
+	var wp = parsed.get("world_pos", [10, 14])
+	world_pos = Vector2i(int(wp[0]), int(wp[1]))
+	_deserialize_explored(parsed.get("explored_tiles", {}))
+
+# ── Info / existence ───────────────────────────────────────────────────────────
+func get_save_info(slot: int) -> Dictionary:
+	var base = {
+		"exists": false, "slot": slot,
+		"slot_name": (
+			"Quick Save"      if slot == 0
+			else "Prev. Quick Save" if slot == PREV_QUICK_SLOT
+			else "Auto Save"       if slot == AUTO_SLOT
+			else "Prev. Auto Save" if slot == PREV_AUTO_SLOT
+			else "Save %d" % slot),
+		"character_name": "", "timestamp": "",
+	}
+	var path = get_save_path(slot)
+	if not FileAccess.file_exists(path):
+		return base
+	var file = FileAccess.open(path, FileAccess.READ)
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	if parsed == null:
+		return base
+	return {
+		"exists":         true,
+		"slot":           slot,
+		"slot_name":      parsed.get("slot_name",      base["slot_name"]),
+		"character_name": parsed.get("character_name", "Unknown"),
+		"timestamp":      parsed.get("timestamp",      ""),
+	}
+
+func delete_save(slot: int) -> void:
+	var path = get_save_path(slot)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
+
+func has_any_save() -> bool:
+	for i in range(SLOT_COUNT + 1):   # slots 0–5
+		if FileAccess.file_exists(get_save_path(i)):
+			return true
+	for slot in [PREV_QUICK_SLOT, AUTO_SLOT, PREV_AUTO_SLOT]:
+		if FileAccess.file_exists(get_save_path(slot)):
+			return true
+	return false
+
+# ── Smoke zone helpers ────────────────────────────────────────────────────────
+
+func add_smoke_zone(center: Vector2i, radius: int, turns: int) -> void:
+	smoke_zones.append({"center": center, "radius": radius, "turns_remaining": turns})
+	EventBus.smoke_zones_changed.emit()
+	if current_zone != null and current_zone.has_method("queue_redraw"):
+		current_zone.queue_redraw()
+
+func is_in_smoke(cell: Vector2i) -> bool:
+	for zone in smoke_zones:
+		var c: Vector2i = zone["center"]
+		var r: int = zone["radius"]
+		if maxi(abs(cell.x - c.x), abs(cell.y - c.y)) <= r:
+			return true
+	return false
+
+func path_crosses_smoke(from_cell: Vector2i, to_cell: Vector2i) -> bool:
+	var dx: int = to_cell.x - from_cell.x
+	var dy: int = to_cell.y - from_cell.y
+	var steps: int = maxi(abs(dx), abs(dy))
+	if steps == 0:
+		return is_in_smoke(from_cell)
+	for i in range(steps + 1):
+		var t: float = float(i) / float(steps)
+		var cx: int = int(round(from_cell.x + dx * t))
+		var cy: int = int(round(from_cell.y + dy * t))
+		if is_in_smoke(Vector2i(cx, cy)):
+			return true
+	return false
+
+func tick_smoke_zones() -> void:
+	var changed := false
+	var i: int = smoke_zones.size() - 1
+	while i >= 0:
+		smoke_zones[i]["turns_remaining"] -= 1
+		if smoke_zones[i]["turns_remaining"] <= 0:
+			smoke_zones.remove_at(i)
+			changed = true
+		i -= 1
+	if changed:
+		EventBus.smoke_zones_changed.emit()
+		if current_zone != null and current_zone.has_method("queue_redraw"):
+			current_zone.queue_redraw()
+
+func clear_weapon_poison() -> void:
+	var equip: Dictionary = player_data.get("equipment", {})
+	for slot in ["hand_1", "hand_2"]:
+		var item = equip.get(slot)
+		if item != null and item.get("poisoned", false):
+			item.erase("poisoned")

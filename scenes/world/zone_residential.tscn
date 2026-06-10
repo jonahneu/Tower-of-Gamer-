@@ -1,0 +1,88 @@
+[gd_scene load_steps=5 format=3 uid="uid://zone_residential"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/thug.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/scripture_customer.gd" id="5"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(40, 75)
+
+[node name="NorthWall" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 79
+Y1 = 2
+Y2 = 2
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WestWall" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 0
+Y1 = 2
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="SouthWallWest" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 37
+Y1 = 74
+Y2 = 74
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="SouthWallEast" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 43
+X2 = 79
+Y1 = 74
+Y2 = 74
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WestStreetHouse" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 24
+X2 = 37
+Y1 = 55
+Y2 = 73
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="EastStreetHouse" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 43
+X2 = 56
+Y1 = 55
+Y2 = 73
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="NEHouse" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 58
+X2 = 77
+Y1 = 4
+Y2 = 22
+DOOR_X = 67
+DOOR_Y = -1
+
+[node name="Thug1" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(39, 63)
+
+[node name="Thug2" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(41, 63)
+
+[node name="ScriptureCustomer" type="Node2D" parent="."]
+script = ExtResource("5")

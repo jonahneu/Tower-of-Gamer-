@@ -1,12 +1,12 @@
 extends NPC
-# The Innkeeper — runs the inn on the west side of the ditch.
+# The Hearthkeeper — runs the rest house on the west side of the ditch.
 # Completes the apothecary delivery quest (small pouch → 3 coins).
 
 const MEAT_DAILY_LIMIT: int = 3
 const MEAT_DAILY_KEY: String = "innkeeper_meat_sold_today"
 
 func _ready() -> void:
-	grid_cell             = Vector2i(10, 20)   # against the west wall of the inn
+	grid_cell             = Vector2i(10, 20)   # against the west wall of the rest house
 	interaction_reach     = 2                  # player can talk across the bar counter
 	stat_strength         = 6
 	stat_dexterity        = 5
@@ -21,7 +21,7 @@ func _ready() -> void:
 	pocket_items          = [DataManager.get_item("coin"), DataManager.get_item("coin"), DataManager.get_item("coin")]
 	drops_loot            = true
 	super._ready()
-	entity_name = "Innkeeper"
+	entity_name = "Hearthkeeper"
 	_update_dialogue(false)
 	EventBus.player_rested.connect(func(): GameManager.player_data.erase(MEAT_DAILY_KEY))
 
@@ -34,7 +34,7 @@ func _reopen_dialogue() -> void:
 	EventBus.interaction_triggered.emit(self, "talk")
 
 # record_visit is false for the _ready() priming call, so it doesn't mark the
-# player as "met" before they've actually talked to the innkeeper.
+# player as "met" before they've actually talked to the keeper of the rest house.
 func _update_dialogue(record_visit: bool = true) -> void:
 	var pd: Dictionary = GameManager.player_data
 	if pd.get("innkeeper_show_hunter_hint", false):
@@ -89,7 +89,7 @@ func _build_options() -> Array:
 				GameManager.add_note({
 					"id":    "the_ditch",
 					"title": "The Ditch",
-					"body":  "A shantytown built over an ancient drainage pipe. North leads to the Market District; west, the old drain exit opens onto the path out of the city; south, the slope descends deeper into the Ditch and eventually into the Undercity — the innkeeper warns against it. Spirits here are especially aggressive at night.",
+					"body":  "A shantytown built over an ancient drainage pipe. North leads to the Market District; west, the old drain exit opens onto the path out of the city; south, the slope descends deeper into the Ditch and eventually into the Undercity — the keeper of the rest house warns against it. Spirits here are especially aggressive at night.",
 				}, 10),
 			"response": "The Ditch? Not all too much to know. Its a shantytown, slums. It's home though. I guess its built on top an ancient drainage pipe, thats why it leads out to the beach in one direction, and down to the undercity in the other. Lot of interesting characters here. North of here leads to the market district. South is the lower ditch and beyond it the undercity, don't go there. To the west is the old drainage pipe exit if you want to leave the city.",
 			"next_options": [{"label": "Continue", "closes": true, "action": reopen}],

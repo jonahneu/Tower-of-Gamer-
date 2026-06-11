@@ -183,5 +183,5 @@ Y2 = 22
 [node name="InnSign" type="Node2D" parent="."]
 script = ExtResource("16")
 grid_cell = Vector2i(22, 19)
-sign_text = "Inn"
+sign_text = "Rest House"
 face = "se"

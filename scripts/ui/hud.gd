@@ -5020,7 +5020,7 @@ func _refresh_rest() -> void:
 			Color(0.45, 0.80, 0.45) if can_afford else Color(0.75, 0.35, 0.35))
 		has_food = can_afford
 		location_ok = true
-		_rest_location_lbl.text = "Inn  ✓"
+		_rest_location_lbl.text = "Rest House  ✓"
 		_rest_location_lbl.add_theme_color_override("font_color", Color(0.45, 0.80, 0.45))
 		_rest_rest_btn.text = "Rest (1 coin)"
 	elif _rest_hunter_camp:
@@ -5094,7 +5094,7 @@ func _refresh_rest() -> void:
 	var shortfall_p: int = zone_req_p - ward_lvl
 	var effects: PackedStringArray = ["• HP will be restored to full."]
 	if _rest_inn_mode:
-		effects.append("• Innkeeper's Stew — +10% max HP until next rest.")
+		effects.append("• Hearthkeeper's Stew — +10% max HP until next rest.")
 	elif _rest_elder_mode:
 		effects.append("• Elder's Roast Meat — +10% max SP until next rest.")
 	elif _rest_smith_mode:
@@ -5486,7 +5486,7 @@ func _do_rest() -> void:
 	GameManager.player_data.erase("active_meal_buff")
 	if _rest_inn_mode:
 		GameManager.player_data["active_meal_buff"] = {
-			"id": "innkeepers_stew", "name": "Innkeeper's Stew", "hp_pct": 0.10
+			"id": "innkeepers_stew", "name": "Hearthkeeper's Stew", "hp_pct": 0.10
 		}
 	elif _rest_elder_mode:
 		GameManager.player_data["active_meal_buff"] = {

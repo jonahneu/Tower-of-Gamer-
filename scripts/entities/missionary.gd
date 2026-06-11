@@ -28,17 +28,17 @@ func _ready() -> void:
 					"label": "A sermon? Who do you serve?",
 					"response": "The undying flame. The fire that does not need fuel. Very old. Very patient. The cult doesn't ask you to give anything up — not yet. Tonight is just a fire and some words and somewhere to sleep that isn't the open street. That's all.",
 					"next_options": [
-						{"label": "Where is this sermon?", "response": "The inn, after dark. Ask for Brother Nesim. I'll be there.", "closes": true},
+						{"label": "Where is this sermon?", "response": "The rest house, after dark. Ask for Brother Nesim. I'll be there.", "closes": true},
 						{"label": "I'll think about it.", "response": "Don't think too long. The night here comes on fast.", "closes": true},
 						{"label": "I'm not interested.", "response": "I understand. The offer stands if you change your mind.", "closes": true},
 					],
 				},
-				{"label": "I'll manage on my own.", "response": "Of course. But if you're still out after dark and you reconsider — the inn. Ask for Brother Nesim.", "closes": true},
+				{"label": "I'll manage on my own.", "response": "Of course. But if you're still out after dark and you reconsider — the rest house. Ask for Brother Nesim.", "closes": true},
 			],
 		},
 		{
 			"label": "I'm fine. Leave me alone.",
-			"response": "Of course. Forgive the intrusion. If you find yourself at the inn tonight — the offer stands.",
+			"response": "Of course. Forgive the intrusion. If you find yourself at the rest house tonight — the offer stands.",
 			"closes": true,
 		},
 		{

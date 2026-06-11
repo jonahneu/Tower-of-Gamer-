@@ -80,6 +80,18 @@ func _build_options() -> Array:
 
 	var options: Array = []
 
+	# ── Dream question — appears once the dream points the player back here ──
+	if GameManager.has_quest_thread("the_dream", "dream_ask_apothecary") \
+			and not pd.get("apothecary_dream_asked", false):
+		options.append({
+			"label":  "I had a dream I wanted to ask you about.",
+			"action": func():
+				pd["apothecary_dream_asked"] = true
+				GameManager.complete_quest_thread("the_dream", "dream_ask_apothecary"),
+			"response": "[DIALOGUE TBD — Apothecary's response when asked about the dream]",
+			"next_options": [{"label": "Continue", "closes": true, "action": reopen}],
+		})
+
 	# ── Talisman question — disappears once asked ─────────────────────────────
 	if not pd.get("apothecary_talisman_asked", false):
 		options.append({

@@ -170,6 +170,18 @@ func _update_dialogue() -> void:
 		],
 	})
 
+	# Dream question — appears once the dream points the player back here
+	if GameManager.has_quest_thread("the_dream", "dream_ask_scribe") \
+			and not pd.get("scribe_dream_asked", false):
+		dialogue_options.append({
+			"label":  "I had a dream I wanted to ask you about.",
+			"action": func():
+				pd["scribe_dream_asked"] = true
+				GameManager.complete_quest_thread("the_dream", "dream_ask_scribe"),
+			"response": "[DIALOGUE TBD — Scribe's response when asked about the dream]",
+			"next_options": [{"label": "Continue", "closes": true, "action": reopen}],
+		})
+
 	# Spiritual protection exposition — first time only, hidden once asked or taught
 	if not asked_protection and not already_taught:
 		dialogue_options.append({

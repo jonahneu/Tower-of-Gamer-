@@ -43,7 +43,10 @@ func get_interaction_options() -> Array:
 # ── State machine ──────────────────────────────────────────────────────────────
 func _update_dialogue() -> void:
 	var craft_taught: bool = GameManager.player_data.get("hunter_craft_taught", false)
-	if not _has_thread():
+	if GameManager.has_quest_thread("the_dream", "dream_ask_hunter") \
+			and not GameManager.player_data.get("hunter_dream_asked", false):
+		_set_dream_question_dialogue()
+	elif not _has_thread():
 		_set_intro_dialogue()
 	elif not craft_taught and not _has_animal_loot():
 		_set_go_hunt_dialogue()
@@ -183,6 +186,20 @@ func _set_intro_dialogue() -> void:
 			"label":        "Continue",
 			"response":     "Heh. I see you eyin' my hunt. You ever kill anything like this? Doesn't look like it.",
 			"next_options": main_options,
+		},
+	]
+
+func _set_dream_question_dialogue() -> void:
+	var pd: Dictionary = GameManager.player_data
+	dialogue_text = "The old man looks up from his work as you approach."
+	dialogue_options = [
+		{
+			"label":  "I had a dream I wanted to ask you about.",
+			"action": func():
+				pd["hunter_dream_asked"] = true
+				GameManager.complete_quest_thread("the_dream", "dream_ask_hunter"),
+			"response": "Hmm, yes. I have heard something has been disturbing the beasts in the caves below the undercity. I don't think you'll make it that deep though, weak as you are, but start heading in that direction. The journey will toughen you up.",
+			"closes":   true,
 		},
 	]
 

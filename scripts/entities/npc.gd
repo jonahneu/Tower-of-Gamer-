@@ -95,10 +95,12 @@ func _process(_delta: float) -> void:
 	if _in_combat:
 		position = _visual_pos + _lunge_offset
 		return
-	# When hostile outside of active combat, re-engage the player if they're close
+	# When hostile outside of active combat, re-engage the player if they're close.
+	# Skip once the player is dead — otherwise this re-triggers combat every
+	# frame (it ends instantly since the player isn't alive), looping forever.
 	if is_hostile and not GameManager.combat_mode:
 		var player := GameManager.player as Player
-		if player != null:
+		if player != null and player.current_hp > 0:
 			var dx: int = abs(grid_cell.x - player.grid_cell.x)
 			var dy: int = abs(grid_cell.y - player.grid_cell.y)
 			if maxi(dx, dy) <= sight_range:

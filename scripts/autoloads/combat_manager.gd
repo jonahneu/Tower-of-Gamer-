@@ -266,7 +266,10 @@ func max_mp_for(entity: Node) -> int:
 func current_entity() -> Node:
 	if participants.is_empty():
 		return null
-	return participants[turn_index]
+	var e = participants[turn_index]
+	if not is_instance_valid(e):
+		return null
+	return e
 
 func is_player_turn() -> bool:
 	return current_entity() == GameManager.player

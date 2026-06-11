@@ -156,8 +156,13 @@ func _process(delta: float) -> void:
 		return
 
 	# ── Detection / aggro check ──────────────────────────────────────────────
+	# Skip entirely once the player is dead — otherwise a nearby enemy keeps
+	# re-triggering combat every frame (combat ends instantly because the
+	# player isn't alive, _on_combat_ended resets _in_combat, and the next
+	# _process re-detects them), looping forever and leaving CombatManager
+	# state in a way that crashes the next scene reload.
 	var player_typed: Player = GameManager.player as Player
-	if player_typed != null:
+	if player_typed != null and player_typed.current_hp > 0:
 		if GameManager.combat_mode:
 			# Combat already active — join it if any participant is in aggro range
 			if _check_join_active_combat():

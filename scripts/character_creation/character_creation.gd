@@ -890,6 +890,19 @@ func _on_begin() -> void:
 		"feats":                  [{"id": _feats[selected_feat]["id"], "name": selected_feat, "description": _feats[selected_feat]["effect"]}] if selected_feat != "" else [],
 	}
 	GameManager.player_data["_saved_grid_cell"] = [18, 6]
+
+	# Reset world/run state so a new game always starts fresh in The Ditch,
+	# regardless of where a previous playthrough ended.
+	GameManager.world_pos = Vector2i(10, 14)
+	GameManager.world_layer = 0
+	GameManager.current_layer = 0
+	GameManager.explored_tiles = {}
+	GameManager.smoke_zones = []
+	GameManager.current_zone = null
+	GameManager.combat_mode = false
+	GameManager.tactical_mode = false
+	GameManager.is_sneaking = false
+
 	GameManager.auto_save()
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 

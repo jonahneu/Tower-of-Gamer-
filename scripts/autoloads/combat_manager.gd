@@ -596,7 +596,7 @@ func _begin_turn() -> void:
 
 	# Dazed: halve AP and MP, schedule clearing at end of this turn
 	if e.has_method("get") and e.get("status_effects") != null \
-			and e.status_effects.get("dazed", false):
+			and not e.status_effects.get("dazed", []).is_empty():
 		ts["ap"] = maxi(1, ts["ap"] / 2)
 		ts["mp"] = ts["mp"] / 2
 		e.current_ap = ts["ap"]

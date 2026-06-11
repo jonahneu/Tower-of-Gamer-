@@ -22,7 +22,7 @@ func _ready() -> void:
 	drops_loot            = true
 	super._ready()
 	entity_name = "Innkeeper"
-	_update_dialogue()
+	_update_dialogue(false)
 	EventBus.player_rested.connect(func(): GameManager.player_data.erase(MEAT_DAILY_KEY))
 
 func get_interaction_options() -> Array:
@@ -33,7 +33,9 @@ func _reopen_dialogue() -> void:
 	_update_dialogue()
 	EventBus.interaction_triggered.emit(self, "talk")
 
-func _update_dialogue() -> void:
+# record_visit is false for the _ready() priming call, so it doesn't mark the
+# player as "met" before they've actually talked to the innkeeper.
+func _update_dialogue(record_visit: bool = true) -> void:
 	var pd: Dictionary = GameManager.player_data
 	if pd.get("innkeeper_show_hunter_hint", false):
 		pd.erase("innkeeper_show_hunter_hint")
@@ -41,7 +43,8 @@ func _update_dialogue() -> void:
 		dialogue_options = [{"label": "Good to know.", "closes": true}]
 		return
 	if not pd.get("innkeeper_met", false):
-		pd["innkeeper_met"] = true
+		if record_visit:
+			pd["innkeeper_met"] = true
 		dialogue_text = "Never seen you before. *looks you over* Ah ok, I get it. What're you looking for?"
 	else:
 		dialogue_text = "Welcome back."

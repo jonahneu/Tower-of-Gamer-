@@ -146,8 +146,8 @@ func _try_ram(player_typed: Player) -> bool:
 
 	# Apply Dazed (non-stacking)
 	if player_typed.has_method("get") and player_typed.get("status_effects") != null:
-		if not player_typed.status_effects.get("dazed", false):
-			player_typed.status_effects["dazed"] = true
+		if player_typed.status_effects.get("dazed", []).is_empty():
+			player_typed.status_effects["dazed"] = [1]
 			EventBus.status_applied.emit(player_typed, "dazed")
 			EventBus.damage_floater.emit(player_typed, "dazed", Color(0.85, 0.65, 0.10))
 			log_lines.append("  %s is Dazed — AP and MP halved next turn!" % def_name)

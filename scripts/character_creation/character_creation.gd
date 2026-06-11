@@ -117,6 +117,14 @@ var _feat_buttons: Dictionary = {}
 var _feat_req_lbls: Dictionary = {}
 var _feat_desc_lbl: Label
 var _begin_btn: Button
+
+# ── Panel navigation (left-to-right wizard at the bottom of the screen) ─────────
+const PANEL_NAMES: Array = ["Background", "Stats", "Skills", "Feat"]
+var _panels: Array = []
+var _tab_btns: Array = []
+var _prev_btn: Button
+var _next_btn: Button
+var _current_panel: int = 0
 var _hp_bar: ProgressBar
 var _hp_label: Label
 var _skill_tooltip_panel: PanelContainer = null
@@ -205,19 +213,40 @@ func _build_ui() -> void:
 	title_row.add_child(title_lbl)
 	_spacer(title_row, 80, 0)
 
-	var cols = HBoxContainer.new()
-	cols.add_theme_constant_override("separation", 16)
-	cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root_vbox.add_child(cols)
-	cols.add_child(_build_left_panel())
-	cols.add_child(_build_middle_panel())
-	cols.add_child(_build_right_panel())
+	var name_row = HBoxContainer.new()
+	name_row.add_theme_constant_override("separation", 8)
+	root_vbox.add_child(name_row)
+	var name_lbl = Label.new()
+	name_lbl.text = "NAME"
+	name_lbl.add_theme_font_size_override("font_size", 13)
+	name_lbl.custom_minimum_size = Vector2(60, 0)
+	name_row.add_child(name_lbl)
+	_name_input = LineEdit.new()
+	_name_input.placeholder_text = "Enter character name..."
+	_name_input.custom_minimum_size = Vector2(0, 34)
+	_name_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_row.add_child(_name_input)
 
-	_begin_btn = Button.new()
-	_begin_btn.text = "BEGIN"
-	_begin_btn.custom_minimum_size = Vector2(0, 48)
-	_begin_btn.pressed.connect(_on_begin)
-	root_vbox.add_child(_begin_btn)
+	_hsep(root_vbox)
+
+	# Panel area — only one of the four pages is visible at a time, switched via
+	# the bottom nav bar (left-to-right: Background → Stats → Skills → Feat).
+	var panel_root = Control.new()
+	panel_root.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	panel_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root_vbox.add_child(panel_root)
+
+	_panels = [
+		_build_background_panel(),
+		_build_stats_panel(),
+		_build_skills_panel(),
+		_build_feat_panel(),
+	]
+	for p in _panels:
+		(p as Control).set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		panel_root.add_child(p)
+
+	root_vbox.add_child(_build_bottom_nav())
 
 	# Floating skill/stat tooltip (shown on label hover)
 	_skill_tooltip_panel = PanelContainer.new()
@@ -244,21 +273,111 @@ func _build_ui() -> void:
 	_skill_tooltip_panel.add_child(_skill_tooltip_lbl)
 	add_child(_skill_tooltip_panel)
 
-# ── Left panel: name + stats ───────────────────────────────────────────────────
-func _build_left_panel() -> VBoxContainer:
+	_show_panel(0)
+
+# ── Bottom nav: page tabs + prev/next + begin ──────────────────────────────────
+func _build_bottom_nav() -> Control:
+	var nav = HBoxContainer.new()
+	nav.add_theme_constant_override("separation", 8)
+
+	_prev_btn = Button.new()
+	_prev_btn.text = "< Prev"
+	_prev_btn.custom_minimum_size = Vector2(100, 44)
+	_prev_btn.pressed.connect(func(): _show_panel(_current_panel - 1))
+	nav.add_child(_prev_btn)
+
+	var tabs_box = HBoxContainer.new()
+	tabs_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tabs_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs_box.add_theme_constant_override("separation", 8)
+	for i in range(PANEL_NAMES.size()):
+		var tab_btn = Button.new()
+		tab_btn.text = "%d. %s" % [i + 1, PANEL_NAMES[i]]
+		tab_btn.toggle_mode = true
+		tab_btn.custom_minimum_size = Vector2(140, 40)
+		tab_btn.pressed.connect(_show_panel.bind(i))
+		_tab_btns.append(tab_btn)
+		tabs_box.add_child(tab_btn)
+	nav.add_child(tabs_box)
+
+	_next_btn = Button.new()
+	_next_btn.text = "Next >"
+	_next_btn.custom_minimum_size = Vector2(100, 44)
+	_next_btn.pressed.connect(func(): _show_panel(_current_panel + 1))
+	nav.add_child(_next_btn)
+
+	_begin_btn = Button.new()
+	_begin_btn.text = "BEGIN"
+	_begin_btn.custom_minimum_size = Vector2(120, 44)
+	_begin_btn.pressed.connect(_on_begin)
+	nav.add_child(_begin_btn)
+
+	return nav
+
+func _show_panel(idx: int) -> void:
+	idx = clampi(idx, 0, _panels.size() - 1)
+	_current_panel = idx
+	for i in range(_panels.size()):
+		(_panels[i] as Control).visible = (i == idx)
+	for i in range(_tab_btns.size()):
+		(_tab_btns[i] as Button).button_pressed = (i == idx)
+	_prev_btn.disabled = (idx == 0)
+	_next_btn.visible  = (idx < _panels.size() - 1)
+	_begin_btn.visible = (idx == _panels.size() - 1)
+
+# ── Panel: background ───────────────────────────────────────────────────────────
+func _build_background_panel() -> Control:
+	var scroll = ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
+	var row = HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 16)
+	scroll.add_child(row)
+
+	var list_col = VBoxContainer.new()
+	list_col.custom_minimum_size = Vector2(240, 0)
+	list_col.add_theme_constant_override("separation", 6)
+	_section_label(list_col, "BACKGROUND")
+	for bg_name in BACKGROUNDS.keys():
+		var btn = Button.new()
+		btn.text = bg_name
+		btn.toggle_mode = true
+		btn.custom_minimum_size = Vector2(0, 36)
+		btn.pressed.connect(_on_background.bind(bg_name))
+		_bg_buttons[bg_name] = btn
+		list_col.add_child(btn)
+	row.add_child(list_col)
+
+	_vsep(row)
+
+	var desc_col = VBoxContainer.new()
+	desc_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc_col.add_theme_constant_override("separation", 6)
+	_section_label(desc_col, "DESCRIPTION")
+	_bg_desc_lbl = Label.new()
+	_bg_desc_lbl.text = "Select a background."
+	_bg_desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_bg_desc_lbl.add_theme_font_size_override("font_size", 14)
+	desc_col.add_child(_bg_desc_lbl)
+	row.add_child(desc_col)
+
+	return scroll
+
+# ── Panel: stats ─────────────────────────────────────────────────────────────────
+func _build_stats_panel() -> Control:
+	var scroll = ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
+	var center = CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
+
 	var col = VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.custom_minimum_size = Vector2(440, 0)
 	col.add_theme_constant_override("separation", 6)
-
-	_section_label(col, "NAME")
-	_name_input = LineEdit.new()
-	_name_input.placeholder_text = "Enter character name..."
-	_name_input.custom_minimum_size = Vector2(0, 34)
-	col.add_child(_name_input)
-
-	_spacer(col, 0, 8)
-	_hsep(col)
-	_spacer(col, 0, 4)
+	center.add_child(col)
 
 	var hdr = HBoxContainer.new()
 	col.add_child(hdr)
@@ -293,7 +412,7 @@ func _build_left_panel() -> VBoxContainer:
 	_crit_lbl.add_theme_color_override("font_color", Color(0.9, 0.75, 0.2))
 	col.add_child(_crit_lbl)
 
-	return col
+	return scroll
 
 func _build_hp_bar() -> Control:
 	var container = Control.new()
@@ -369,55 +488,6 @@ func _build_stat_row(stat: String) -> HBoxContainer:
 		row.add_child(n)
 	return row
 
-# ── Middle panel: background + feats (scrollable) ─────────────────────────────
-func _build_middle_panel() -> Control:
-	var scroll = ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-
-	var col = VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 6)
-	scroll.add_child(col)
-
-	_section_label(col, "BACKGROUND")
-	for bg_name in BACKGROUNDS.keys():
-		var btn = Button.new()
-		btn.text = bg_name
-		btn.toggle_mode = true
-		btn.custom_minimum_size = Vector2(0, 36)
-		btn.pressed.connect(_on_background.bind(bg_name))
-		_bg_buttons[bg_name] = btn
-		col.add_child(btn)
-
-	_spacer(col, 0, 6)
-	_hsep(col)
-	_spacer(col, 0, 4)
-
-	_bg_desc_lbl = Label.new()
-	_bg_desc_lbl.text = "Select a background."
-	_bg_desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(_bg_desc_lbl)
-
-	_spacer(col, 0, 8)
-	_hsep(col)
-	_spacer(col, 0, 4)
-	_section_label(col, "FEAT  (pick 1)")
-
-	for feat_name in _feats.keys():
-		col.add_child(_build_feat_row(feat_name))
-
-	_spacer(col, 0, 4)
-	_hsep(col)
-	_spacer(col, 0, 4)
-
-	_feat_desc_lbl = Label.new()
-	_feat_desc_lbl.text = "Select a feat."
-	_feat_desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	col.add_child(_feat_desc_lbl)
-	return scroll
-
 func _build_feat_row(feat_name: String) -> HBoxContainer:
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
@@ -449,34 +519,87 @@ func _build_feat_row(feat_name: String) -> HBoxContainer:
 
 	return row
 
-# ── Right panel: skills ────────────────────────────────────────────────────────
-func _build_right_panel() -> VBoxContainer:
-	var col = VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 4)
+# ── Panel: feat ────────────────────────────────────────────────────────────────
+func _build_feat_panel() -> Control:
+	var scroll = ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
+	var row = HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 16)
+	scroll.add_child(row)
+
+	var list_col = VBoxContainer.new()
+	list_col.custom_minimum_size = Vector2(280, 0)
+	list_col.add_theme_constant_override("separation", 6)
+	_section_label(list_col, "FEAT  (pick 1)")
+	for feat_name in _feats.keys():
+		list_col.add_child(_build_feat_row(feat_name))
+	row.add_child(list_col)
+
+	_vsep(row)
+
+	var desc_col = VBoxContainer.new()
+	desc_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc_col.add_theme_constant_override("separation", 6)
+	_section_label(desc_col, "DESCRIPTION")
+	_feat_desc_lbl = Label.new()
+	_feat_desc_lbl.text = "Select a feat."
+	_feat_desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_feat_desc_lbl.add_theme_font_size_override("font_size", 14)
+	desc_col.add_child(_feat_desc_lbl)
+	row.add_child(desc_col)
+
+	return scroll
+
+# ── Panel: skills (split into two columns) ─────────────────────────────────────
+func _build_skills_panel() -> Control:
+	var scroll = ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
+	var outer = VBoxContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.add_theme_constant_override("separation", 6)
+	scroll.add_child(outer)
 
 	var hdr = HBoxContainer.new()
-	col.add_child(hdr)
+	outer.add_child(hdr)
 	_section_label(hdr, "SKILLS", true)
 	_skill_point_lbl = Label.new()
 	_skill_point_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hdr.add_child(_skill_point_lbl)
 
-	var sub_hdr = HBoxContainer.new()
-	sub_hdr.add_theme_constant_override("separation", 4)
-	col.add_child(sub_hdr)
-	for pair in [["Skill",true,0],["Gov.",false,52],["",false,28],["Pts",false,28],["",false,28],["Tot.",false,34]]:
-		var l = Label.new()
-		l.text = pair[0]
-		if pair[1]: l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		else: l.custom_minimum_size = Vector2(pair[2], 0)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.add_theme_font_size_override("font_size", 11)
-		sub_hdr.add_child(l)
+	var cols = HBoxContainer.new()
+	cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cols.add_theme_constant_override("separation", 24)
+	outer.add_child(cols)
 
-	for skill in SKILL_NAMES:
-		col.add_child(_build_skill_row(skill))
-	return col
+	var half: int = SKILL_NAMES.size() / 2
+	for col_idx in range(2):
+		var col = VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_theme_constant_override("separation", 4)
+
+		var sub_hdr = HBoxContainer.new()
+		sub_hdr.add_theme_constant_override("separation", 4)
+		col.add_child(sub_hdr)
+		for pair in [["Skill",true,0],["Gov.",false,52],["",false,28],["Pts",false,28],["",false,28],["Tot.",false,34]]:
+			var l = Label.new()
+			l.text = pair[0]
+			if pair[1]: l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			else: l.custom_minimum_size = Vector2(pair[2], 0)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			l.add_theme_font_size_override("font_size", 11)
+			sub_hdr.add_child(l)
+
+		var start: int = col_idx * half
+		var end: int   = SKILL_NAMES.size() if col_idx == 1 else half
+		for i in range(start, end):
+			col.add_child(_build_skill_row(SKILL_NAMES[i]))
+		cols.add_child(col)
+
+	return scroll
 
 func _build_skill_row(skill: String) -> HBoxContainer:
 	var row = HBoxContainer.new()
@@ -724,6 +847,9 @@ func _spacer(parent: Control, w: int, h: int) -> void:
 func _hsep(parent: Control) -> void:
 	parent.add_child(HSeparator.new())
 
+func _vsep(parent: Control) -> void:
+	parent.add_child(VSeparator.new())
+
 # ══════════════════════════════════════════════════════════════════════════════
 # LOGIC
 # ══════════════════════════════════════════════════════════════════════════════
@@ -859,9 +985,11 @@ func _on_begin() -> void:
 		return
 	if background.is_empty():
 		_begin_btn.text = "Choose a background first!"
+		_show_panel(0)
 		return
 	if bonus_choices.size() > 1 and bonus_stat.is_empty():
 		_begin_btn.text = "Choose your bonus stat (★) first!"
+		_show_panel(1)
 		return
 
 	var final_stats = stats.duplicate()

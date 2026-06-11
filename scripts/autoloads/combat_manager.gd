@@ -364,6 +364,7 @@ func _make_turn_state(entity: Node) -> Dictionary:
 		"mp":           mp,
 		"cooldowns":    {},
 		"weapon_loaded": {},
+		"spells_cast":  0,
 	}
 
 func begin_smoke_deploy(item: Dictionary, inv_idx: int) -> void:
@@ -594,6 +595,7 @@ func _begin_turn() -> void:
 	ts["ap"] = maxi(1, e.stat_agility - ex)
 	ts["mp"] = floori(base_mp * 0.2) if e.is_overburdened() else base_mp
 	ts["runner_bonus_mp"] = 0
+	ts["spells_cast"] = 0
 	e.current_ap = ts["ap"]
 	e.current_mp = ts["mp"]
 
@@ -706,6 +708,11 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 
 	# Spirit cost check for spells (must pass before spending AP)
 	var spirit_cost: int = weapon.get("spirit_cost", 0)
+	var is_spell: bool = weapon.get("type", "") == "spell"
+	if spirit_cost > 0 and is_spell and attacker == GameManager.player and GameManager.has_feat("chain_caster"):
+		var chain_count: int = turn_state.get(attacker, {}).get("spells_cast", 0)
+		if chain_count > 0:
+			spirit_cost = int(round(float(spirit_cost) * pow(0.9, chain_count)))
 	if spirit_cost > 0 and attacker == GameManager.player:
 		var p_node = GameManager.player
 		if p_node == null or p_node.current_spirit < spirit_cost:
@@ -723,6 +730,8 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 	if spirit_cost > 0 and attacker == GameManager.player:
 		GameManager.player.current_spirit -= spirit_cost
 		EventBus.resources_changed.emit(attacker)
+	if is_spell and attacker == GameManager.player and turn_state.has(attacker):
+		turn_state[attacker]["spells_cast"] = turn_state[attacker].get("spells_cast", 0) + 1
 
 	EventBus.attack_started.emit(attacker, defender)
 	var skill_name: String = weapon.get("skill", "melee")

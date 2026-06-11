@@ -502,6 +502,10 @@ func _slot_display_info(def: Dictionary, ap: int, is_player_turn: bool) -> Dicti
 				return {"label": "?", "cost": "", "enabled": false, "bg_color": Color(0.08, 0.08, 0.12), "range": 1}
 			var s_ap: int = spell.get("ap_cost", 0)
 			var s_sp: int = spell.get("spirit_cost", 0)
+			if s_sp > 0 and GameManager.player != null and GameManager.has_feat("chain_caster"):
+				var chain_count: int = CombatManager.turn_state.get(GameManager.player, {}).get("spells_cast", 0)
+				if chain_count > 0:
+					s_sp = int(round(float(s_sp) * pow(0.9, chain_count)))
 			var cur_spirit: int = 0
 			if GameManager.player != null and is_instance_valid(GameManager.player):
 				cur_spirit = GameManager.player.current_spirit

@@ -77,6 +77,12 @@ func _load_feats() -> void:
 		"requirements": {"stats": {}, "skills": {"survival": 15}},
 		"effect_tag": "harvest_double_chance",
 	}
+	feats["chain_caster"] = {
+		"id": "chain_caster", "name": "Chain Caster", "source": "level_up",
+		"description": "Each spell you cast leaves the weave primed for the next. Every spell already cast this turn reduces the Spirit cost of your next spell by 10%, multiplicatively.",
+		"requirements": {"stats": {"agility": 8}, "skills": {"occultism": 20}},
+		"effect_tag": "chain_caster_sp_discount",
+	}
 
 	# ── Story-granted (not selectable at level-up) ────────────────────────────
 	feats["inner_flame"] = {
@@ -1241,7 +1247,7 @@ func _load_items() -> void:
 		"type":        "quest_item",
 		"slot":        null,
 		"weight":      0.2,
-		"description": "A small cloth pouch sealed with twine. The apothecary asked you to deliver this to the innkeeper at the inn next door.",
+		"description": "A small cloth pouch sealed with twine. The apothecary asked you to deliver this to the keeper of the rest house next door.",
 		"properties": [], "abilities": [],
 	}
 

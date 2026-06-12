@@ -4185,6 +4185,7 @@ func _on_open_spell_pick_ui(spell_ids: Array) -> void:
 			pd["pending_pyromancy_picks"] = pending
 			_spell_pick_panel.visible = false
 			mouse_filter = Control.MOUSE_FILTER_IGNORE
+			EventBus.inventory_changed.emit()
 		)
 		col.add_child(pick_btn)
 

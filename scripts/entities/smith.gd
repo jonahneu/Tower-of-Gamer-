@@ -239,7 +239,7 @@ func _update_dialogue() -> void:
 				}),
 			# TODO: replace [Name TBD] and [fire cult name] once finalized
 			"response": "Sure. Take this invoice down to the Lower Ditch — there's a [fire cult name] man there, [Name TBD]. He makes flame accelerant. Tell him it's for the smithy. He'll give you a jar; bring it back here.",
-			"next_options": [{"label": "Got it.", "closes": true}],
+			"next_options": [{"label": "Got it.", "closes": true, "action": reopen}],
 		})
 
 	options.append({"label": "Goodbye.", "response": "Take care.", "closes": true})

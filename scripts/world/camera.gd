@@ -4,10 +4,10 @@ const PAN_SPEED: float = 600.0
 const ZOOM_STEP: float = 0.1
 const ZOOM_MIN: float = 0.25
 const ZOOM_MAX: float = 3.0
-# Dialogue panel is 360px tall; at default zoom 1.5 that's 240 world units.
+# Dialogue panel is 360px tall; at default zoom 1.3 that's ~277 world units.
 # Shift the follow target down by half that so the player sits in the center
 # of the usable area above the dialogue box.
-const DIALOGUE_OFFSET_Y: float = 120.0
+const DIALOGUE_OFFSET_Y: float = 138.5
 const FOLLOW_SPEED: float = 6.0
 
 var _follow_player: bool = true
@@ -23,7 +23,7 @@ func _ready() -> void:
 		position = GameManager.player.position + Vector2(0, DIALOGUE_OFFSET_Y)
 	else:
 		position = Vector2(0, 1280)
-	zoom = Vector2(1.5, 1.5)
+	zoom = Vector2(1.3, 1.3)
 	make_current()
 
 func _process(delta: float) -> void:

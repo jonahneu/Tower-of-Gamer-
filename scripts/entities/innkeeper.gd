@@ -5,6 +5,17 @@ extends NPC
 const MEAT_DAILY_LIMIT: int = 3
 const MEAT_DAILY_KEY: String = "innkeeper_meat_sold_today"
 
+# Cooking recipes the Hearthkeeper can teach, in the order they're offered.
+# simple_meal is known from the start and isn't taught here.
+const COOKING_RECIPE_ORDER: Array = ["stick_roast", "sun_dry", "cure_meat", "ash_bake", "pottage"]
+const COOKING_RECIPE_PRICES: Dictionary = {
+	"stick_roast": 1,
+	"sun_dry":     2,
+	"cure_meat":   3,
+	"ash_bake":    3,
+	"pottage":     4,
+}
+
 func _ready() -> void:
 	grid_cell             = Vector2i(10, 20)   # against the west wall of the rest house
 	interaction_reach     = 2                  # player can talk across the bar counter
@@ -76,8 +87,8 @@ func _build_options() -> Array:
 
 	options.append({
 		"label":    "Your stew smells good, can you teach me anything about cooking while I travel?",
-		"response": "You'll need to preserve your food if you want to travel with it. I can teach you that, and how to cook it into meals.",
-		"next_options": [{"label": "Continue", "closes": true, "action": reopen}],
+		"response": "You'll need to preserve your food if you want to travel with it. I can teach you that, and how to cook it into meals. Costs a coin or two for my time, but it's worth it.",
+		"next_options": _build_cooking_recipe_options(pd, reopen),
 	})
 
 	# ── Area question — disappears once asked ─────────────────────────────────
@@ -186,6 +197,61 @@ func _build_after_delivery_options(pd: Dictionary) -> Array:
 			"next_options": after_tip,
 		},
 	]
+
+# ── Cooking recipe teaching ──────────────────────────────────────────────────
+func _build_cooking_recipe_options(pd: Dictionary, reopen: Callable) -> Array:
+	var known: Array = pd.get("known_cooking_recipes", [])
+	var your_cooking: int = int(pd.get("skills", {}).get("cooking", 0))
+	var options: Array = []
+
+	for recipe_id in COOKING_RECIPE_ORDER:
+		if recipe_id in known:
+			options.append({
+				"label":    "%s  (already learned)" % DataManager.get_cooking_recipe(recipe_id).get("name", recipe_id),
+				"disabled": true,
+				"closes":   true,
+			})
+			continue
+
+		var recipe: Dictionary = DataManager.get_cooking_recipe(recipe_id)
+		var price: int = COOKING_RECIPE_PRICES.get(recipe_id, 0)
+		var can_afford: bool = _coin_count() >= price
+		var price_str: String = "1 coin" if price == 1 else "%d coins" % price
+		var req: int = recipe.get("cooking_level", 0)
+
+		var label: String = "%s — %s" % [recipe.get("name", recipe_id), price_str]
+		if req > 0:
+			label += "  (Cooking %d | yours: %d)" % [req, your_cooking]
+		if not can_afford:
+			label += "  [not enough coin]"
+
+		var captured_id: String = recipe_id
+		var captured_price: int = price
+		options.append({
+			"label":    label,
+			"disabled": not can_afford,
+			"response": recipe.get("lore", ""),
+			"action":   func():
+				_spend_coins(captured_price)
+				var kc: Array = pd.get("known_cooking_recipes", [])
+				kc.append(captured_id)
+				pd["known_cooking_recipes"] = kc,
+			"next_options": [{"label": "Continue", "closes": true, "action": reopen}],
+		})
+
+	options.append({"label": "Maybe another time.", "closes": true, "action": reopen})
+	return options
+
+func _spend_coins(amount: int) -> void:
+	var inv: Array = GameManager.player_data.get("inventory", [])
+	var spent := 0
+	var i: int = inv.size() - 1
+	while i >= 0 and spent < amount:
+		if inv[i].get("type", "") == "currency":
+			inv.remove_at(i)
+			spent += 1
+		i -= 1
+	GameManager.player_data["inventory"] = inv
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 func _has_small_pouch() -> bool:

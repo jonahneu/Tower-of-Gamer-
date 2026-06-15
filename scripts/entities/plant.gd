@@ -50,9 +50,13 @@ func _display_name() -> String:
 func get_interaction_options() -> Array:
 	if _harvested:
 		return []
+	if plant_type == "fish":
+		return [
+			{"label": "Fish",    "id": "fish",    "priority": 100},
+			{"label": "Examine", "id": "examine", "priority": 50},
+		]
 	var label: String = "Pick Up"
 	match plant_type:
-		"fish":         label = "Fish"
 		"salt", "reed": label = "Gather"
 	return [
 		{"label": label, "id": "interact", "priority": 100},
@@ -80,11 +84,13 @@ func interact() -> void:
 			inv.append(item_data.duplicate(true))
 		GameManager.player_data["inventory"] = inv
 
-	# Mark as harvested with respawn counter
+	mark_harvested()
+
+# Mark this plant as harvested with a respawn counter, updating its visuals.
+func mark_harvested() -> void:
 	var harvested: Dictionary = GameManager.player_data.get("harvested_plants", {})
 	harvested[plant_id] = RESPAWN_RESTS
 	GameManager.player_data["harvested_plants"] = harvested
-
 	_harvested = true
 	is_interactable = false
 	queue_redraw()

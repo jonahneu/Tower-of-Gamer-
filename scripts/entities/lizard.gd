@@ -223,18 +223,20 @@ func _draw() -> void:
 	var h: float    = float(sprite_h)
 	var base_y: float = TileScene.TILE_H / 4.0
 	var body := Rect2(-w * 0.5, -h + base_y, w, h)
+	var draw_color: Color = _heated_tint(sprite_color)
 
 	# Body
-	draw_rect(body, sprite_color)
+	draw_rect(body, draw_color)
 
 	# Darker head bump on the left side
 	var head_w: float = w * 0.25
-	draw_rect(Rect2(-w * 0.5, -h + base_y - 2.0, head_w, h + 2.0), sprite_color.darkened(0.2))
+	draw_rect(Rect2(-w * 0.5, -h + base_y - 2.0, head_w, h + 2.0), draw_color.darkened(0.2))
 
 	# Acid-green belly stripe
 	draw_rect(Rect2(-w * 0.3, -h * 0.35 + base_y, w * 0.6, h * 0.35), Color(0.55, 0.85, 0.25, 0.60))
 
 	# Thin outline
-	draw_rect(body, sprite_color.darkened(0.35), false, 1.0)
+	draw_rect(body, draw_color.darkened(0.35), false, 1.0)
 
+	_draw_burning_aura(body)
 	_draw_aggro_ring()

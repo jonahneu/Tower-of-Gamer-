@@ -434,6 +434,7 @@ const MATERIAL_GROUPS: Dictionary = {
 	"bones":   ["bones"],                 # all bones — listed explicitly so group logic is uniform
 	"fangs":   ["fangs", "mandibles"],    # sharp/hard striking parts — fangs give melee bonus, mandibles give defense bonus
 	"protein": ["meat", "tuber"],         # pottage's primary slot — meat (incl. fish) or a starchy tuber
+	"scraps":  ["tuber", "vegetable"],    # pottage's optional slots — root or greens, but not a second cut of meat
 }
 
 # Returns the slot name from required_slots that accepts mat_type, or "" if none.
@@ -642,8 +643,9 @@ const COOKING_RECIPES: Dictionary = {
 		"name":               "Pottage",
 		"lore":               "Boil it low and slow with whatever scraps are at hand — meat or root, herbs if you've got them. You can always find water enough to make this work.",
 		"required_materials": ["protein"],
-		"optional_materials": ["vegetable"],
+		"optional_materials": ["scraps"],
 		"optional_max":       2,
+		"min_optional":       1,
 		"cooking_level":      25,
 		"is_rest_recipe":     true,
 		"base_buff":          {"hp_pct": 0.10, "sp_pct": 0.05},
@@ -727,8 +729,9 @@ const RECIPE_INGREDIENT_BONUSES: Dictionary = {
 	"lizard":     {"type": "stat_flat",   "stat": "per_flat", "amount": 1},
 	"tilapia":    {"type": "mp_pct_mult", "common": 1.25, "lo": 1.15, "hi": 1.35},
 	"catfish":    {"type": "phys_dr_pct", "common": 0.10, "lo": 0.08, "hi": 0.12},
-	"dates":      {"type": "stat_flat",   "stat": "agi_flat", "amount": 1},
-	"wild_onion": {"type": "stat_flat",   "stat": "wil_flat", "amount": 1},
+	"dates":       {"type": "stat_flat",   "stat": "agi_flat", "amount": 1},
+	"wild_onion":  {"type": "stat_flat",   "stat": "wil_flat", "amount": 1},
+	"sand_beetle": {"type": "stat_flat",   "stat": "phys_dr_flat", "amount": 1},
 }
 
 # Scales a quality-dependent value linearly around quality 2 ("Common"),
@@ -954,6 +957,62 @@ func _carve_desc(mat: String, q: int) -> String:
 				"Intact but badly chipped. Workable with effort.", "Solid plating, mostly clean.",
 				"Well-separated. Broad sections fully intact.", "Flawless. The full dorsal plate in one piece."][q]
 	return ""
+
+# ── Fishing ───────────────────────────────────────────────────────────────────
+# Roll is 1d100 + effective survival skill.
+# min_roll=40: a fish bites at all — below this, the line comes back empty.
+# quality_step=15: every 15 points above min_roll = +1 quality tier (0=Ruined … 5=Pristine)
+const FISH_TABLES: Dictionary = {
+	"river": {
+		"min_roll": 40,
+		"base_quality": 1,
+		"quality_step": 15,
+		"species": [
+			{"id": "tilapia", "weight": 65},
+			{"id": "catfish", "weight": 35},
+		],
+	},
+}
+
+# Returns {} on a failed catch, otherwise a quality-tiered copy of the caught fish item.
+func resolve_fish(table_id: String, roll: int, quality_mod: int) -> Dictionary:
+	var table: Dictionary = FISH_TABLES.get(table_id, {})
+	if table.is_empty() or roll < int(table["min_roll"]):
+		return {}
+	var excess: int  = roll - int(table["min_roll"])
+	var quality: int = clampi(int(table["base_quality"]) + int(excess / int(table["quality_step"])) + quality_mod, 0, 5)
+
+	var species: Array = table.get("species", [])
+	var total_weight: int = 0
+	for s in species:
+		total_weight += int(s.get("weight", 1))
+	var pick: int = randi_range(1, total_weight)
+	var chosen_id: String = ""
+	for s in species:
+		pick -= int(s.get("weight", 1))
+		if pick <= 0:
+			chosen_id = s.get("id", "")
+			break
+
+	var fish: Dictionary = get_item(chosen_id)
+	if fish.is_empty():
+		return {}
+	fish["name"] = "%s%s" % [_QUALITY_PREFIXES[quality], fish.get("name", "")]
+	fish["quality"] = quality
+	fish["quality_name"] = _QUALITY_NAMES[quality]
+	fish["description"] = _fish_desc(quality)
+	if quality >= 4:
+		fish["uses_remaining"] = 2
+		fish["max_uses"] = 2
+	return fish
+
+func _fish_desc(q: int) -> String:
+	return ["Ruined. The flesh has spoiled — not fit to eat.",
+		"Battered and bruised. Edible, but unappetizing.",
+		"A common river fish, freshly caught.",
+		"A good catch, firm and fresh.",
+		"An excellent catch — plump and perfectly fresh.",
+		"A pristine specimen. Worth showing off before it's cooked."][q]
 
 # ── Item helpers ──────────────────────────────────────────────────────────────
 
@@ -1502,6 +1561,18 @@ func _load_items() -> void:
 		"spirit_ward": true,
 		"defense_flat": 0, "defense_pct": 0.01,
 		"skill_bonus": {}, "governing_bonus": {}, "carry_weight_bonus": 0,
+		"properties": [], "abilities": [],
+	}
+
+	# Taboo mirror of the Way of Beasts trophies — worn by undercity cannibals
+	# who take the powers of those they personally killed. Not lootable: the
+	# power only belongs to the wearer (see Way of Beasts core rule).
+	items["human_skin_trophy"] = {
+		"id": "human_skin_trophy", "weight": 1.0, "name": "Skinned Trophy",
+		"type": "trinket", "slot": "back",
+		"description": "A cured human hide, worn like a cloak. A taboo mirror of the Way of Beasts.",
+		"defense_flat": 0, "defense_pct": 0.0,
+		"skill_bonus": {}, "governing_bonus": {"melee": 1}, "carry_weight_bonus": 0,
 		"properties": [], "abilities": [],
 	}
 

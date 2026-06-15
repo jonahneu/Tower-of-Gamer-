@@ -1,9 +1,17 @@
-[gd_scene load_steps=4 format=3 uid="uid://zone_undercity_east_camp"]
+[gd_scene load_steps=12 format=3 uid="uid://zone_undercity_east_camp"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/world/undercity_water.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/cannibal.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/cannibal_skinwearer.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/entities/cannibal_leader.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/entities/bonfire.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/entities/tanning_rack.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/entities/bone_pile.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/entities/skull_spike.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/entities/cannibal_scout.gd" id="12"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -68,3 +76,59 @@ DOOR_Y = -1
 
 [node name="UndercityWater" type="Node2D" parent="."]
 script = ExtResource("4")
+
+[node name="CannibalLeader" type="Node2D" parent="."]
+script = ExtResource("7")
+grid_cell = Vector2i(62, 20)
+
+[node name="CannibalSkinwearer1" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(58, 18)
+
+[node name="CannibalSkinwearer2" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(66, 22)
+
+[node name="Cannibal1" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(56, 24)
+
+[node name="Cannibal2" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(60, 26)
+
+[node name="CannibalScout1" type="Node2D" parent="."]
+script = ExtResource("12")
+grid_cell = Vector2i(64, 16)
+
+[node name="Cannibal4" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(4, 40)
+
+[node name="CampFire" type="Node2D" parent="."]
+script = ExtResource("8")
+grid_cell = Vector2i(62, 21)
+
+[node name="TanningRack" type="Node2D" parent="."]
+script = ExtResource("9")
+grid_cell = Vector2i(56, 19)
+
+[node name="BonePile" type="Node2D" parent="."]
+script = ExtResource("10")
+grid_cell = Vector2i(66, 25)
+
+[node name="SkullSpikeWest1" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(4, 36)
+
+[node name="SkullSpikeWest2" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(4, 44)
+
+[node name="SkullSpikeSouth1" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(37, 76)
+
+[node name="SkullSpikeSouth2" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(43, 76)

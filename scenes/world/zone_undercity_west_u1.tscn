@@ -65,6 +65,45 @@ col_se = Color(0.27, 0.24, 0.20, 1.0)
 col_top = Color(0.52, 0.48, 0.42, 1.0)
 col_out = Color(0.14, 0.11, 0.09, 1.0)
 
+[node name="CaveInRubble" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 32
+X2 = 42
+Y1 = 58
+Y2 = 66
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="CaveInDebrisA" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 45
+X2 = 48
+Y1 = 62
+Y2 = 65
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
+[node name="CaveInDebrisB" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 29
+X2 = 31
+Y1 = 69
+Y2 = 71
+DOOR_X = 999
+DOOR_Y = -1
+col_sw = Color(0.38, 0.34, 0.29, 1.0)
+col_se = Color(0.27, 0.24, 0.20, 1.0)
+col_top = Color(0.52, 0.48, 0.42, 1.0)
+col_out = Color(0.14, 0.11, 0.09, 1.0)
+
 [node name="UndercityWater" type="Node2D" parent="."]
 script = ExtResource("4")
 draw_ew = false

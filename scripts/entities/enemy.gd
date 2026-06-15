@@ -39,6 +39,7 @@ var _bump_entered: bool  = false
 # ── Beast identity (set by subclass before super._ready()) ────────────────────
 var beast_type: String = ""         # e.g. "coyote" — keys DataManager carve table
 var beast_quality_mod: int = 0      # quality offset applied to carving results
+var is_human: bool = false          # true = corpse is searched, never carved
 
 # ── XP (set by subclass before super._ready()) ────────────────────────────────
 var xp_value: int    = 0    # base XP awarded on death (scaled by level diff)
@@ -132,6 +133,7 @@ func _spawn_corpse() -> void:
 	corpse.entity_name       = entity_name + " Corpse"
 	corpse.beast_type        = beast_type
 	corpse.beast_quality_mod = beast_quality_mod
+	corpse.is_human          = is_human
 	_record_death()
 	_tile_scene.unregister_entity(grid_cell)
 	_tile_scene.add_child(corpse)
@@ -638,6 +640,26 @@ func _draw_aggro_ring() -> void:
 		else:
 			draw_line(pa["off"], pb["off"], Color(0.55, 0.55, 0.55, 0.18), 1.0)
 
+# Returns base_color tinted orange in proportion to Heated stack count — used
+# by subclasses with a custom _draw() so the tint applies to their sprite too.
+func _heated_tint(base_color: Color) -> Color:
+	var heat_stacks: int = status_effects.get("heated", []).size()
+	if heat_stacks <= 0:
+		return base_color
+	var tint_strength: float = minf(0.80, heat_stacks * 0.14)
+	return base_color.lerp(Color(0.90, 0.40, 0.06), tint_strength)
+
+# Draws a flickering red-orange outline around rect while Burning is active —
+# used by subclasses with a custom _draw() so the aura applies to their sprite too.
+func _draw_burning_aura(rect: Rect2) -> void:
+	if status_effects.get("burning", []).is_empty():
+		return
+	var t: float = fmod(Time.get_ticks_msec() / 180.0, 1.0)
+	var alpha: float = 0.55 + 0.35 * sin(t * TAU)
+	var fire_col: Color = Color(1.0, 0.30, 0.0, alpha).lerp(Color(1.0, 0.65, 0.0, alpha), t)
+	var aura := Rect2(rect.position - Vector2(3.0, 3.0), rect.size + Vector2(6.0, 6.0))
+	draw_rect(aura, fire_col, false, 2.5)
+
 func _draw() -> void:
 	var rect := Rect2(
 		-sprite_w / 2.0,
@@ -645,22 +667,8 @@ func _draw() -> void:
 		float(sprite_w),
 		float(sprite_h)
 	)
-	var draw_color: Color = sprite_color
-
-	# Heated tint — orange tint proportional to stack count
-	var heat_stacks: int = status_effects.get("heated", []).size()
-	if heat_stacks > 0:
-		var tint_strength: float = minf(0.80, heat_stacks * 0.14)
-		draw_color = draw_color.lerp(Color(0.90, 0.40, 0.06), tint_strength)
+	var draw_color: Color = _heated_tint(sprite_color)
 
 	draw_rect(rect, draw_color)
-
-	# Burning aura — flickering red-orange outline
-	if not status_effects.get("burning", []).is_empty():
-		var t: float = fmod(Time.get_ticks_msec() / 180.0, 1.0)
-		var alpha: float = 0.55 + 0.35 * sin(t * TAU)
-		var fire_col: Color = Color(1.0, 0.30, 0.0, alpha).lerp(Color(1.0, 0.65, 0.0, alpha), t)
-		var aura := Rect2(rect.position - Vector2(3.0, 3.0), rect.size + Vector2(6.0, 6.0))
-		draw_rect(aura, fire_col, false, 2.5)
-
+	_draw_burning_aura(rect)
 	_draw_aggro_ring()

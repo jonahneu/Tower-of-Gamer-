@@ -180,7 +180,7 @@ func end_turn() -> void:
 	var _ending_entity = current_entity()
 	EventBus.turn_ended.emit(_ending_entity)
 	_tick_cooldowns(_ending_entity)
-	# Clear dazed at the end of the turn it was active on
+	# Clear dazed/grappled at the end of the turn they were active on
 	if _ending_entity != null and is_instance_valid(_ending_entity):
 		var _ts_end = turn_state.get(_ending_entity, {})
 		if _ts_end.get("dazed_clearing", false):
@@ -188,6 +188,11 @@ func end_turn() -> void:
 			if _ending_entity.has_method("get") and _ending_entity.get("status_effects") != null:
 				_ending_entity.status_effects.erase("dazed")
 				EventBus.status_cleared.emit(_ending_entity, "dazed")
+		if _ts_end.get("grappled_clearing", false):
+			_ts_end.erase("grappled_clearing")
+			if _ending_entity.has_method("get") and _ending_entity.get("status_effects") != null:
+				_ending_entity.status_effects.erase("grappled")
+				EventBus.status_cleared.emit(_ending_entity, "grappled")
 
 	# In tactical mode there is no combat — skip win/lose check
 	if not tactical_mode:
@@ -610,6 +615,17 @@ func _begin_turn() -> void:
 		var dazed_name: String = e.get("entity_name") if e.get("entity_name") != null else "?"
 		EventBus.combat_log.emit("%s is Dazed — AP and MP halved this turn!" % dazed_name)
 		EventBus.damage_floater.emit(e, "dazed!", Color(0.85, 0.65, 0.10))
+		EventBus.resources_changed.emit(e)
+
+	# Grappled: held in place — MP forced to 0 this turn, schedule clearing at end of this turn
+	if e.has_method("get") and e.get("status_effects") != null \
+			and not e.status_effects.get("grappled", []).is_empty():
+		ts["mp"] = 0
+		e.current_mp = ts["mp"]
+		ts["grappled_clearing"] = true
+		var grappled_name: String = e.get("entity_name") if e.get("entity_name") != null else "?"
+		EventBus.combat_log.emit("%s is Grappled — held in place, MP set to 0 this turn!" % grappled_name)
+		EventBus.damage_floater.emit(e, "grappled!", Color(0.65, 0.25, 0.65))
 		EventBus.resources_changed.emit(e)
 
 	EventBus.turn_started.emit(e)

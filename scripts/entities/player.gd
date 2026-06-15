@@ -546,11 +546,23 @@ func _get_entity_at(mouse_local: Vector2, target_cell: Vector2i) -> Node:
 
 func _show_context_menu_for(entity: Node) -> void:
 	var options = entity.get_interaction_options()
+	# A non-blocking entity (plant, item, ...) can end up buried under this one
+	# (e.g. a corpse landing on top of a harvestable plant) — fold its options
+	# into the same menu, tagged so they route back to it on click.
+	var cell = entity.get("grid_cell")
+	if cell != null and entity.is_interactable:
+		var buried: Node = _tile_scene.get_displaced_entity_at(cell)
+		if buried != null and buried != entity and buried.is_interactable:
+			for opt in buried.get_interaction_options():
+				var tagged: Dictionary = opt.duplicate()
+				tagged["_entity"] = buried
+				tagged["label"] = "%s (%s)" % [tagged["label"], buried.get("entity_name")]
+				options.append(tagged)
 	if options.is_empty():
 		EventBus.interaction_triggered.emit(entity, "interact")
 		return
 	if options.size() == 1:
-		EventBus.interaction_triggered.emit(entity, options[0]["id"])
+		EventBus.interaction_triggered.emit(options[0].get("_entity", entity), options[0]["id"])
 	else:
 		EventBus.show_context_menu.emit(entity, options, get_viewport().get_mouse_position())
 

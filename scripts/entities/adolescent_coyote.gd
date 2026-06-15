@@ -182,12 +182,14 @@ func _draw() -> void:
 	var h: float      = float(sprite_h)
 	var base_y: float = TileScene.TILE_H / 4.0
 	var rect := Rect2(-w * 0.5, -h + base_y, w, h)
+	var draw_color: Color = _heated_tint(sprite_color)
 
 	# Body
-	draw_rect(rect, sprite_color)
+	draw_rect(rect, draw_color)
 	# Dark dorsal stripe
-	draw_rect(Rect2(-w * 0.18, -h + base_y, w * 0.36, h * 0.45), sprite_color.darkened(0.28))
+	draw_rect(Rect2(-w * 0.18, -h + base_y, w * 0.36, h * 0.45), draw_color.darkened(0.28))
 	# Outline — slightly thicker than the base coyote to read as larger
-	draw_rect(rect, sprite_color.darkened(0.42), false, 1.4)
+	draw_rect(rect, draw_color.darkened(0.42), false, 1.4)
 
+	_draw_burning_aura(rect)
 	_draw_aggro_ring()

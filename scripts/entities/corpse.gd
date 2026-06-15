@@ -10,6 +10,7 @@ var blocks_movement: bool = false
 var grid_cell: Vector2i = Vector2i(0, 0)
 var beast_type: String = ""
 var beast_quality_mod: int = 0
+var is_human: bool = false
 var _carved: bool = false
 var _tile_scene: TileScene = null
 
@@ -28,12 +29,21 @@ func mark_carved() -> void:
 func get_interaction_options() -> Array:
 	if _carved:
 		return [{"label": "Inspect", "id": "examine", "priority": 50}]
+	if is_human:
+		return [
+			{"label": "Search",  "id": "search",  "priority": 100},
+			{"label": "Inspect", "id": "examine", "priority": 50},
+		]
 	return [
 		{"label": "Carve",   "id": "carve",   "priority": 100},
 		{"label": "Inspect", "id": "examine", "priority": 50},
 	]
 
 func get_description() -> String:
+	if is_human:
+		if _carved:
+			return "The body has been searched and stripped of anything useful."
+		return "The body lies still, already growing cold."
 	var name_cap: String = beast_type.capitalize()
 	if _carved:
 		return "The %s carcass has been picked clean." % name_cap

@@ -37,6 +37,10 @@ var _log_vbox: VBoxContainer = null
 var _log_scroll: ScrollContainer = null
 const LOG_MAX_ENTRIES: int = 60
 
+# ── Examine/object panel tracking (hides the combat info panel while open,
+# since both occupy the bottom band of the screen) ──────────────────────────
+var _examine_panel_open: bool = false
+
 # ── Turn order bar ────────────────────────────────────────────────────────────
 var _turn_order_bar: Control     = null
 var _turn_order_hbox: HBoxContainer = null
@@ -84,6 +88,16 @@ func _ready() -> void:
 	EventBus.dialogue_opened.connect(func(_e): _hotbar_panel.visible = false)
 	EventBus.dialogue_closed.connect(func(_e): _hotbar_panel.visible = true)
 	EventBus.inventory_changed.connect(_rebuild_hotbar)
+	# The examine/object panel occupies the same bottom band as the combat
+	# info panel (AP/MP bars + End Turn); hide it so its "Leave" button and
+	# other controls aren't covered by the combat info panel's input-blocking rect.
+	EventBus.examine_panel_opened.connect(func():
+		_examine_panel_open = true
+		_combat_info_panel.visible = false)
+	EventBus.examine_panel_closed.connect(func():
+		_examine_panel_open = false
+		if GameManager.combat_mode and CombatManager.is_player_turn():
+			_combat_info_panel.visible = true)
 
 	_rebuild_hotbar()
 
@@ -1116,7 +1130,7 @@ func _on_tactical_ended() -> void:
 func _on_turn_started(entity: Node) -> void:
 	_highlight_turn_order(entity)
 	if entity == GameManager.player:
-		_combat_info_panel.visible = true
+		_combat_info_panel.visible = not _examine_panel_open
 		_refresh()
 		if _status_lbl != null:
 			if CombatManager.tactical_mode:

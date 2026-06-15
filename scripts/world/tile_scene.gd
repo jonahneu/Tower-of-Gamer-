@@ -118,6 +118,7 @@ var blocked_cells: Dictionary = {}
 var los_blocked_cells: Dictionary = {}  # Vector2i → true  (structural only: walls, rocks, closed doors)
 var cover_cells: Dictionary = {}    # Vector2i -> float (cover size: 0.5 small, 0.8 large)
 var _entity_cells: Dictionary = {}  # Vector2i -> Node
+var _displaced_entities: Dictionary = {}  # Vector2i -> Node (bumped by a transient occupant; restored once that cell frees up)
 var _ground_items: Array = []        # GroundItem nodes (multiple per cell allowed)
 var cell_fill_colors: Dictionary = {}  # Vector2i -> Color (for terrain like river)
 var pit_tiles: Dictionary = {}       # Vector2i -> true (draw depth faces, no outline)
@@ -125,6 +126,12 @@ var channel_tiles: Dictionary = {}   # Vector2i -> true (shallow water channel)
 var _fog: FogOfWar = null
 
 func register_entity(cell: Vector2i, entity: Node) -> void:
+	# A mover (enemy/NPC) can step onto a non-blocking entity's cell (e.g. a
+	# plant) while passing through. Stash whatever was there so it can be
+	# restored once the mover leaves, instead of being permanently evicted.
+	var existing: Node = _entity_cells.get(cell, null)
+	if existing != null and existing != entity and is_instance_valid(existing):
+		_displaced_entities[cell] = existing
 	_entity_cells[cell] = entity
 	if entity.blocks_movement:
 		blocked_cells[cell] = true
@@ -132,6 +139,13 @@ func register_entity(cell: Vector2i, entity: Node) -> void:
 func unregister_entity(cell: Vector2i) -> void:
 	_entity_cells.erase(cell)
 	blocked_cells.erase(cell)
+	var displaced: Node = _displaced_entities.get(cell, null)
+	if displaced != null:
+		_displaced_entities.erase(cell)
+		if is_instance_valid(displaced):
+			_entity_cells[cell] = displaced
+			if displaced.blocks_movement:
+				blocked_cells[cell] = true
 
 func register_cover(cell: Vector2i, size: float) -> void:
 	cover_cells[cell] = size
@@ -155,6 +169,14 @@ func get_ground_items_at(cell: Vector2i) -> Array:
 
 func get_entity_at(cell: Vector2i) -> Node:
 	return _entity_cells.get(cell, null)
+
+# The entity buried under whatever's currently registered at this cell (e.g. a
+# plant a corpse landed on top of) — still present, just not the top occupant.
+func get_displaced_entity_at(cell: Vector2i) -> Node:
+	var d: Node = _displaced_entities.get(cell, null)
+	if d != null and is_instance_valid(d):
+		return d
+	return null
 
 func get_all_entities() -> Array:
 	return _entity_cells.values() + _ground_items

@@ -81,3 +81,21 @@ Y1 = 3
 Y2 = 3
 DOOR_X = 999
 DOOR_Y = -1
+
+[node name="WallWestNorth" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 0
+Y1 = 0
+Y2 = 35
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallWestSouth" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 0
+Y1 = 44
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1

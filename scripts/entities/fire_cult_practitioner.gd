@@ -220,8 +220,13 @@ func _dream_question_option() -> Dictionary:
 		"action": func():
 			pd["elder_dream_asked"] = true
 			GameManager.update_quest_thread("the_dream", "dream_ask_fire_cult_elder",
-				"The elder directed me to the Fire Cult temple in the undercity. He warned me the scribes will shun anyone they can tell carries the flame.")
-			GameManager.complete_quest_thread("the_dream", "dream_ask_fire_cult_elder"),
+				"The elder directed me to the Fire Cult temple in the undercity.")
+			GameManager.complete_quest_thread("the_dream", "dream_ask_fire_cult_elder")
+			GameManager.add_note({
+				"id":    "scribes_shun_the_flame",
+				"title": "Marked by the Flame",
+				"body":  "The Fire Cult Elder warned that the scribes can sense the flame in those who carry it, and will shun them — refusing them entry to their libraries.",
+			}, 5),
 		"response": "Hmm, I have heard a little of Godless having such dreams. Many of us practitioners were Godless as well. The strength of the flame is very appealing to one who's lost the protection of the City's gods. Unfortunately, I do not know the meaning of your dream. It seems to be connected to the Undercity ruins, and the spirits that curse this land. If you want to learn more, you will have to venture below. Seek out our temple as your first stop, the masters there will know more.",
 		"next_options": [
 			{

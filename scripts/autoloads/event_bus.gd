@@ -28,6 +28,8 @@ signal crafting_ui_closed(entity: Node) # entity = same NPC, fired when player c
 signal open_shop_ui(merchant: Node, shop_items: Array, sellable: Array, daily_remaining: int, on_sale: Callable)
 signal dialogue_opened(entity: Node)    # fired when the dialogue panel becomes visible
 signal dialogue_closed(entity: Node)    # fired when the dialogue panel is dismissed
+signal examine_panel_opened             # fired when the object/examine panel becomes visible
+signal examine_panel_closed             # fired when the object/examine panel is dismissed
 signal player_died                      # fired once when player HP first reaches 0
 signal damage_floater(entity: Node, text: String, color: Color)  # floating combat text
 signal open_rest_ui(hunter_camp: bool)  # fired to open the rest panel (hunter_camp = complete quest on rest)

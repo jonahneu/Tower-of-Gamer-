@@ -499,6 +499,7 @@ func _toggle(name: String) -> void:
 func _close_all() -> void:
 	var dialogue_was_open: bool = _dialogue_panel.visible
 	var crafting_was_open: bool = (_open == "crafting")
+	var object_panel_was_open: bool = _object_panel.visible
 	for p in _panels.values(): p.visible = false
 	_pause_panel.visible = false
 	_dialogue_panel.visible = false
@@ -527,6 +528,8 @@ func _close_all() -> void:
 		var opener = _crafting_opener
 		_crafting_opener = null
 		call_deferred("_emit_crafting_closed", opener)
+	if object_panel_was_open:
+		EventBus.examine_panel_closed.emit()
 
 func _on_escape() -> void:
 	if _context_menu != null:
@@ -1189,6 +1192,10 @@ func _on_interaction_triggered(entity: Node, action_id: String) -> void:
 				GameManager.add_encounter(GameManager.world_layer, GameManager.world_pos, enc_name)
 		"carve":
 			_handle_carve(entity)
+		"search":
+			_handle_search(entity)
+		"fish":
+			_handle_fish(entity)
 		"open":
 			if entity.has_method("interact"):
 				entity.interact()
@@ -1291,6 +1298,73 @@ func _handle_carve(corpse: Node) -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	EventBus.dialogue_opened.emit(null)
 
+func _handle_search(corpse: Node) -> void:
+	# Guard against double-dispatch (double-click, object panel + context menu, etc.)
+	if corpse.get("_carved"):
+		return
+	if corpse.has_method("mark_carved"):
+		corpse.mark_carved()
+
+	_close_all()
+	_dialogue_name_lbl.text = "Search"
+	_dialogue_text_lbl.text = "You search the body, but there's nothing worth taking."
+	_populate_dialogue_options([{"label": "OK", "response": "", "closes": true}])
+	_dialogue_panel.visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	EventBus.dialogue_opened.emit(null)
+
+func _handle_fish(plant: Node) -> void:
+	var inv: Array = GameManager.player_data.get("inventory", [])
+	var has_rod: bool = false
+	for item in inv:
+		if item.get("id", "") == "fishing_rod":
+			has_rod = true
+			break
+
+	_close_all()
+	_dialogue_name_lbl.text = "Fishing"
+
+	if not has_rod:
+		_dialogue_text_lbl.text = "You need a fishing rod to fish here."
+		_populate_dialogue_options([{"label": "OK", "response": "", "closes": true}])
+		_dialogue_panel.visible = true
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		EventBus.dialogue_opened.emit(null)
+		return
+
+	var skills: Dictionary = GameManager.player_data.get("skills", {})
+	var invested: float    = float(skills.get("survival", 0))
+	var stats: Dictionary  = GameManager.player_data.get("stats", {})
+	var con_mod: int = stats.get("constitution", 5) - 5
+	var wil_mod: int = stats.get("willpower", 5) - 5
+	var gov_mod: int = maxi(con_mod, wil_mod)
+	var effective: int = int(invested * (1.0 + gov_mod * 0.1))
+	var roll: int = randi_range(1, 100) + effective
+
+	var caught: Dictionary = DataManager.resolve_fish("river", roll, 0)
+
+	var result_text: String
+	if caught.is_empty():
+		result_text = "You wait at the water's edge, but nothing bites.\n\n[Survival roll: %d]" % roll
+	else:
+		inv.append(caught)
+		var doubled: bool = GameManager.roll_harvest_double()
+		if doubled:
+			inv.append(caught.duplicate(true))
+		GameManager.player_data["inventory"] = inv
+		result_text = "You reel something in.\n\n[Survival roll: %d]\n\nYou catch: %s" % [roll, caught["name"]]
+		if doubled:
+			result_text += "\n\nYour eye for the land pays off — you catch an extra fish."
+
+	if plant.has_method("mark_harvested"):
+		plant.mark_harvested()
+
+	_dialogue_text_lbl.text = result_text
+	_populate_dialogue_options([{"label": "OK", "response": "", "closes": true}])
+	_dialogue_panel.visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	EventBus.dialogue_opened.emit(null)
+
 func _open_examine_panel(entity: Node) -> void:
 	_close_all()
 	_object_entity = entity
@@ -1312,6 +1386,7 @@ func _open_examine_panel(entity: Node) -> void:
 		_object_action_btn.visible = false
 	_object_panel.visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	EventBus.examine_panel_opened.emit()
 
 func _on_object_action() -> void:
 	if _object_entity == null:
@@ -1436,9 +1511,10 @@ func _build_context_menu(entity: Node, options: Array, screen_pos: Vector2) -> C
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.custom_minimum_size = Vector2(140, 28)
 		var captured_id = opt["id"]
+		var captured_entity = opt.get("_entity", entity)
 		btn.pressed.connect(func():
 			_close_context_menu()
-			EventBus.interaction_triggered.emit(entity, captured_id))
+			EventBus.interaction_triggered.emit(captured_entity, captured_id))
 		vbox.add_child(btn)
 
 	# Position panel near cursor, clamped to viewport
@@ -5283,10 +5359,31 @@ func _refresh_rest_cook(inv: Array) -> bool:
 		var buff: Dictionary = DataManager.compute_meal_buff(_rest_cook_recipe, _rest_cook_slots["primary"]["item"], secondary_items)
 		var lines: Array = DataManager.format_meal_buff_lines(buff)
 		_rest_cook_preview_lbl.text = "%s — %s until next rest" % [buff.get("name", recipe.get("name", "?")), ", ".join(PackedStringArray(lines))]
+		var min_optional: int = recipe.get("min_optional", 0)
+		if secondary_items.size() < min_optional:
+			var need_slot: String = recipe.get("optional_materials", [""])[0]
+			_rest_cook_preview_lbl.text += "\n(Needs at least %d %s.)" % [min_optional, DataManager.slot_display_name(need_slot)]
 	else:
 		_rest_cook_preview_lbl.text = "Choose ingredients to see the buff."
 
-	return _rest_cook_slots.has("primary")
+	return _cook_recipe_ready()
+
+# A cook recipe is ready to make once its required slot is filled and at
+# least `min_optional` of its optional slots are filled too (e.g. Pottage
+# needs a protein AND a vegetable, even though the vegetable slots are
+# individually marked optional to allow a second bonus ingredient).
+func _cook_recipe_ready() -> bool:
+	if not _rest_cook_slots.has("primary"):
+		return false
+	var recipe: Dictionary = DataManager.get_cooking_recipe(_rest_cook_recipe)
+	var min_optional: int = recipe.get("min_optional", 0)
+	if min_optional <= 0:
+		return true
+	var secondary_count: int = 0
+	for key in _rest_cook_slots:
+		if key.begins_with("secondary"):
+			secondary_count += 1
+	return secondary_count >= min_optional
 
 # Builds a single ingredient-slot row for the cook UI: a label, the currently
 # slotted item (or a prompt), and a clear button if filled.
@@ -5313,7 +5410,10 @@ func _build_cook_slot_row(slot_key: String, label_text: String) -> HBoxContainer
 
 	if _rest_cook_slots.has(slot_key):
 		var clear_btn := Button.new()
-		clear_btn.text = "x"
+		clear_btn.text = "×"
+		clear_btn.custom_minimum_size = Vector2(28, 0)
+		clear_btn.tooltip_text = "Remove this ingredient"
+		clear_btn.add_theme_color_override("font_color", Color(0.85, 0.45, 0.45))
 		var captured_key: String = slot_key
 		clear_btn.pressed.connect(func():
 			_rest_cook_slots.erase(captured_key)
@@ -5464,7 +5564,7 @@ func _do_rest() -> void:
 		if not GameManager.player_data.get("inn_first_sleep_done", false):
 			GameManager.player_data["inn_first_sleep_done"] = true
 			GameManager.add_xp(10)
-	elif _rest_mode == "cook" and _rest_cook_slots.has("primary"):
+	elif _rest_mode == "cook" and _cook_recipe_ready():
 		_consume_cook_slots(inv)
 	else:
 		# Consume one food use
@@ -5501,7 +5601,7 @@ func _do_rest() -> void:
 		GameManager.player_data["active_meal_buff"] = {
 			"id": "dinner_with_old_hunter", "name": "Dinner with the Old Hunter", "hit_flat": 10
 		}
-	elif _rest_mode == "cook" and _rest_cook_slots.has("primary"):
+	elif _rest_mode == "cook" and _cook_recipe_ready():
 		var secondary_items: Array = []
 		for key in _rest_cook_slots:
 			if key.begins_with("secondary"):

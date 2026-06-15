@@ -1,0 +1,9 @@
+Ok, we're going to need a first enemy type. Lets add one of them, two tiles to the north of town for now. I would like to make coyote the first enemy type. Lets represent them as a smaller sideways rectangle similar to what we use for NPCs. Lets give it 10 hp, an effective dodge and melee of 10, and a 1d3 attack (bite) with a chance to bleed. This could become a generic enemy type, with the one I just described as the baseline. We could also make slightly larger ones, with increased hp and effective levels for their combat skills. Also lets give them 4 ap and the same movement points, that'll probably be static for all coyotes. 
+
+They will also need a move some ammount while outside of combat. They should wander around on an irregular patrol if possible. Lets let them see the player at about 1/3 the width of a tile away. Once they see the player, turn based combat will begin. Lets give the coyotes a +0 to their initiative rolls. 
+
+Did we ever discuss player movement speed? Lets give them one movement point for every action point, one movement point moves one tile in combat.
+
+For turn based mode, lets have a turn order indicator pop up on the top of the screen, indicating whos turn it is and cycling through a line in initiative order. 
+
+Lastly we need to create the formula for chance to hit in melee and ranged. You can implement all the other features before asking for clarity on this. I am giving you these directions while I am away from my machine, so please do as much as you can without my input. You can use placeholders here and then we can come back to it when all is done

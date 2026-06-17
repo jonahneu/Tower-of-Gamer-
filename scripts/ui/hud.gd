@@ -51,6 +51,10 @@ var _save_rows: Array = []   # [{char_lbl, time_lbl, btn}]
 var _load_rows: Array = []
 var _sneak_btn: Button = null
 var _tactical_btn: Button = null
+var _container_panel: Control = null
+var _container_entity: Node = null
+var _container_title_lbl: Label = null
+var _log_export_lbl: Label = null
 
 # ── Character sheet live labels ────────────────────────────────────────────────
 var _cs_name_lbl:   Label
@@ -323,6 +327,11 @@ func _ready() -> void:
 	_shop_panel.z_index = 2
 	add_child(_shop_panel)
 
+	_container_panel = _build_container_panel()
+	_container_panel.visible = false
+	_container_panel.z_index = 2
+	add_child(_container_panel)
+
 	# Death panel added last so it renders over everything
 	_death_panel = _build_death_panel()
 	_death_panel.visible = false
@@ -517,6 +526,8 @@ func _close_all() -> void:
 	_hide_item_info()
 	_hide_item_hover_tooltip()
 	if _pile_panel != null: _pile_panel.visible = false
+	if _container_panel != null: _container_panel.visible = false
+	_container_entity = null
 	if _pickpocket_panel != null: _pickpocket_panel.visible = false
 	_pickpocket_entity = null
 	_open = ""
@@ -1194,6 +1205,8 @@ func _on_interaction_triggered(entity: Node, action_id: String) -> void:
 			_handle_carve(entity)
 		"search":
 			_handle_search(entity)
+		"open_container":
+			_open_container_panel(entity)
 		"fish":
 			_handle_fish(entity)
 		"open":
@@ -2084,10 +2097,9 @@ func _build_inventory_panel() -> Control:
 
 # ── Inventory / equip logic ────────────────────────────────────────────────────
 # Returns [{item: Dictionary, count: int}] — identical items collapsed into one entry.
-func _compute_stacked_inv() -> Array:
-	var inv: Array = GameManager.player_data.get("inventory", [])
+func _compute_stacks(items: Array) -> Array:
 	var stacks: Array = []
-	for item in inv:
+	for item in items:
 		var merged: bool = false
 		for stack in stacks:
 			if stack["item"] == item:
@@ -2097,6 +2109,9 @@ func _compute_stacked_inv() -> Array:
 		if not merged:
 			stacks.append({"item": item, "count": 1})
 	return stacks
+
+func _compute_stacked_inv() -> Array:
+	return _compute_stacks(GameManager.player_data.get("inventory", []))
 
 # Finds the first raw inventory index of an item that equals `target` (deep equality).
 func _find_raw_inv_idx(target: Dictionary) -> int:
@@ -2656,6 +2671,150 @@ func _refresh_pile_panel() -> void:
 	_pile_panel.visible = true
 	var vp_size := get_viewport().get_visible_rect().size
 	_pile_panel.position = (vp_size - Vector2(220, 0)) / 2.0
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTAINER PANEL — generic two-pane transfer UI for lootable containers
+# ══════════════════════════════════════════════════════════════════════════════
+func _build_container_panel() -> Control:
+	var shell := _make_panel_shell("Container")
+	var root: Control       = shell["root"]
+	var vbox: VBoxContainer  = shell["vbox"]
+
+	var hdr: HBoxContainer = vbox.get_child(0) as HBoxContainer
+	_container_title_lbl = hdr.get_child(0) as Label
+
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 16)
+	vbox.add_child(body)
+
+	var container_vbox := _build_container_column(body, "Contents")
+	body.add_child(VSeparator.new())
+	var player_vbox := _build_container_column(body, "Inventory")
+
+	root.set_meta("container_vbox", container_vbox)
+	root.set_meta("player_vbox", player_vbox)
+	return root
+
+# Builds one scrollable list column for the container panel and adds it to `body`.
+func _build_container_column(body: HBoxContainer, title: String) -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 4)
+	body.add_child(col)
+
+	var hdr := Label.new()
+	hdr.text = title
+	hdr.add_theme_font_size_override("font_size", 13)
+	col.add_child(hdr)
+	col.add_child(HSeparator.new())
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	col.add_child(scroll)
+
+	var list_vbox := VBoxContainer.new()
+	list_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list_vbox.add_theme_constant_override("separation", 2)
+	scroll.add_child(list_vbox)
+	return list_vbox
+
+func _open_container_panel(entity: Node) -> void:
+	_close_all()
+	_container_entity = entity
+	if _container_title_lbl != null:
+		var title: String = entity.get("entity_name") if entity.get("entity_name") != null else "Container"
+		_container_title_lbl.text = title
+	_refresh_container_panel()
+	_container_panel.visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+
+func _refresh_container_panel() -> void:
+	if _container_entity == null or not is_instance_valid(_container_entity):
+		_container_panel.visible = false
+		return
+
+	var container_vbox: VBoxContainer = _container_panel.get_meta("container_vbox") as VBoxContainer
+	var player_vbox: VBoxContainer    = _container_panel.get_meta("player_vbox") as VBoxContainer
+	for child in container_vbox.get_children():
+		child.queue_free()
+	for child in player_vbox.get_children():
+		child.queue_free()
+
+	var container_stacks: Array = _compute_stacks(_container_entity.get_inventory())
+	_populate_container_column(container_vbox, container_stacks, "Take", _container_take_item)
+
+	var player_stacks: Array = _compute_stacked_inv()
+	_populate_container_column(player_vbox, player_stacks, "Store", _container_store_item)
+
+# Fills a container-panel column with one row per stack: [name ×count] + an action button.
+func _populate_container_column(list_vbox: VBoxContainer, stacks: Array, action_label: String, action: Callable) -> void:
+	if stacks.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "(empty)"
+		empty_lbl.add_theme_font_size_override("font_size", 12)
+		empty_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		list_vbox.add_child(empty_lbl)
+		return
+
+	for stack in stacks:
+		var item: Dictionary = stack["item"]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+
+		var lbl := Label.new()
+		var name_text: String = item.get("name", "Item")
+		if stack["count"] > 1:
+			name_text += " ×%d" % stack["count"]
+		lbl.text = name_text
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_color_override("font_color", Color(0.92, 0.88, 0.80))
+		row.add_child(lbl)
+
+		var btn := Button.new()
+		btn.text = action_label
+		var captured_item: Dictionary = item
+		btn.pressed.connect(func(): action.call(captured_item))
+		row.add_child(btn)
+
+		list_vbox.add_child(row)
+
+# Moves one copy of `item` from the open container into the player's inventory.
+func _container_take_item(item: Dictionary) -> void:
+	if _container_entity == null or not is_instance_valid(_container_entity):
+		return
+	var container_items: Array = _container_entity.get_inventory()
+	var idx: int = container_items.find(item)
+	if idx == -1:
+		return
+	container_items.remove_at(idx)
+	_container_entity.set_inventory(container_items)
+
+	var inv: Array = GameManager.player_data.get("inventory", [])
+	inv.append(item.duplicate())
+	GameManager.player_data["inventory"] = inv
+
+	EventBus.inventory_changed.emit()
+	_refresh_container_panel()
+
+# Moves one copy of `item` from the player's inventory into the open container.
+func _container_store_item(item: Dictionary) -> void:
+	var inv: Array = GameManager.player_data.get("inventory", [])
+	var idx: int = inv.find(item)
+	if idx == -1:
+		return
+	inv.remove_at(idx)
+	GameManager.player_data["inventory"] = inv
+
+	var container_items: Array = _container_entity.get_inventory()
+	container_items.append(item.duplicate())
+	_container_entity.set_inventory(container_items)
+
+	EventBus.inventory_changed.emit()
+	_refresh_container_panel()
 
 func _build_keyword_popup() -> Control:
 	var panel := PanelContainer.new()

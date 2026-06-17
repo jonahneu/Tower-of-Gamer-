@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://zone_ditch"]
+[gd_scene load_steps=17 format=3 uid="uid://zone_ditch"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://scripts/entities/door.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/entities/shopkeeper.gd" id="15"]
 [ext_resource type="Script" path="res://scripts/entities/sign.gd" id="16"]
+[ext_resource type="Script" path="res://scripts/entities/urn.gd" id="17"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -185,3 +186,9 @@ script = ExtResource("16")
 grid_cell = Vector2i(22, 19)
 sign_text = "Rest House"
 face = "se"
+
+[node name="DitchUrn" type="Node2D" parent="."]
+script = ExtResource("17")
+grid_cell = Vector2i(7, 1)
+container_id = "ditch_urn_nw"
+loot_item_ids = PackedStringArray("coin", "coin")

@@ -838,7 +838,7 @@ func _on_quit_to_desktop() -> void:
 	get_tree().quit()
 
 func _on_export_log() -> void:
-	var path := Logger.export_log()
+	var path := GameLogger.export_log()
 	if _log_export_lbl == null:
 		return
 	if path == "":

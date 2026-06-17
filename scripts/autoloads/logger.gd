@@ -1,11 +1,15 @@
 extends Node
-# Logger — writes a timestamped diagnostic log to user://logs/game_log.txt.
+# GameLogger — writes a timestamped diagnostic log to user://logs/game_log.txt.
 # Previous session's log is preserved as game_log_prev.txt.
 #
+# Autoload name is GameLogger, not Logger — Godot 4.6 ships a native
+# engine class literally called "Logger", which silently shadows an
+# autoload of the same name in other scripts' static analysis.
+#
 # Usage:
-#   Logger.info("CATEGORY", "message")
-#   Logger.warn("CATEGORY", "message")
-#   Logger.error("CATEGORY", "message")
+#   GameLogger.info("CATEGORY", "message")
+#   GameLogger.warn("CATEGORY", "message")
+#   GameLogger.error("CATEGORY", "message")
 #
 # Key game events are captured automatically via EventBus signal connections.
 

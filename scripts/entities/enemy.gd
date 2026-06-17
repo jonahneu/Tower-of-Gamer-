@@ -123,6 +123,7 @@ func _ready() -> void:
 	EventBus.sneak_toggled.connect(_on_sneak_toggled)
 	EventBus.status_applied.connect(func(e, _s): if e == self: queue_redraw())
 	EventBus.status_cleared.connect(func(e, _s): if e == self: queue_redraw())
+	EventBus.damage_floater.connect(func(e, _t, _c): if e == self: queue_redraw())
 	queue_redraw()
 
 func _spawn_corpse() -> void:
@@ -611,6 +612,8 @@ func _draw_aggro_ring() -> void:
 		var ly: float = top_y - 6.0
 		draw_rect(Rect2(lx - 3, ly - fs - 1, tw + 6, fs + 4), Color(0, 0, 0, 0.65))
 		draw_string(font, Vector2(lx, ly), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1.0, 0.95, 0.7))
+		var bar_w: float = float(sprite_w)
+		_draw_health_bar(-bar_w / 2.0, top_y - 24.0, bar_w)
 	if not GameManager.is_sneaking:
 		return
 	var r: int = aggro_range
@@ -660,6 +663,16 @@ func _draw_burning_aura(rect: Rect2) -> void:
 	var aura := Rect2(rect.position - Vector2(3.0, 3.0), rect.size + Vector2(6.0, 6.0))
 	draw_rect(aura, fire_col, false, 2.5)
 
+# Falls back to _attack_weapon when no hand_1 item is equipped — most human
+# enemies (Cannibal, Cannibal Scout, ...) only set _attack_weapon.
+func get_held_weapon() -> Dictionary:
+	var item := super.get_held_weapon()
+	if not item.is_empty():
+		return item
+	if _attack_weapon.get("type", "") == "weapon" and _attack_weapon.get("slot") != null:
+		return _attack_weapon
+	return {}
+
 func _draw() -> void:
 	var rect := Rect2(
 		-sprite_w / 2.0,
@@ -670,5 +683,7 @@ func _draw() -> void:
 	var draw_color: Color = _heated_tint(sprite_color)
 
 	draw_rect(rect, draw_color)
+	if is_human:
+		_draw_held_weapon(rect)
 	_draw_burning_aura(rect)
 	_draw_aggro_ring()

@@ -660,6 +660,17 @@ func _draw() -> void:
 	)
 	var body_color: Color = Color(0.45, 0.45, 0.45) if GameManager.is_sneaking else Color(0.75, 0.75, 0.75)
 	draw_rect(rect, body_color)
+	_draw_held_weapon(rect)
+
+# self.equipment is only synced from player_data at zone load (see _ready()),
+# so re-fetch hand_1 live from player_data — this stays correct immediately
+# after equipping/unequipping via the inventory UI.
+func get_held_weapon() -> Dictionary:
+	var equip: Dictionary = GameManager.player_data.get("equipment", {})
+	var item = equip.get("hand_1")
+	if item is Dictionary and item.get("type", "") == "weapon" and item.get("slot") != null:
+		return item
+	return {}
 
 # Re-fetches every stored item from DataManager (matching on "id") so that saves
 # made before a data update automatically get current field definitions.

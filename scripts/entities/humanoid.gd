@@ -226,3 +226,64 @@ func is_overburdened() -> bool:
 func skill_points_for_level(lvl: int) -> int:
 	var base = 60 if lvl == 1 else 35
 	return base + (mod_int() * 5)
+
+# ── Held weapon visual ────────────────────────────────────────────────────────
+# Returns the weapon in the primary hand, or {} if unarmed. Filters out
+# "unarmed" and ad-hoc fist/punch attack dicts (e.g. the Cannibal Leader's
+# Punch), which have no "slot" since they aren't real items.
+# Player overrides this since its equipment dict is only synced at zone load —
+# the live source of truth there is GameManager.player_data. NPC and Enemy
+# override it to fall back to _attack_weapon when no hand_1 item is equipped.
+func get_held_weapon() -> Dictionary:
+	var item = equipment.get("hand_1")
+	if item is Dictionary and item.get("type", "") == "weapon" and item.get("slot") != null:
+		return item
+	return {}
+
+# Draws a small icon for the held weapon beside the body rect so the player
+# can tell at a glance whether someone is armed at range (a bow) or in melee,
+# and roughly how big that melee weapon is — length and thickness scale with
+# the weapon's weight, so axes and greatswords read as visibly bigger than knives.
+func _draw_health_bar(bar_x: float, bar_y: float, bar_w: float) -> void:
+	const BAR_H: float = 4.0
+	var hp_pct: float = clampf(current_hp / max_hp, 0.0, 1.0) if max_hp > 0.0 else 0.0
+	var bar_color: Color
+	if hp_pct > 0.6:
+		bar_color = Color(0.20, 0.78, 0.20)
+	elif hp_pct > 0.3:
+		bar_color = Color(0.88, 0.73, 0.05)
+	else:
+		bar_color = Color(0.85, 0.15, 0.10)
+	draw_rect(Rect2(bar_x - 1.0, bar_y - 1.0, bar_w + 2.0, BAR_H + 2.0), Color(0, 0, 0, 0.70))
+	draw_rect(Rect2(bar_x, bar_y, bar_w, BAR_H), Color(0.22, 0.22, 0.22, 0.85))
+	if hp_pct > 0.0:
+		draw_rect(Rect2(bar_x, bar_y, bar_w * hp_pct, BAR_H), bar_color)
+
+func _draw_held_weapon(rect: Rect2) -> void:
+	var weapon: Dictionary = get_held_weapon()
+	if weapon.is_empty():
+		return
+	var weight: float = weapon.get("weight", 2.0)
+	var hand: Vector2 = Vector2(rect.position.x + rect.size.x, rect.position.y + rect.size.y * 0.58)
+
+	if weapon.get("skill", "melee") == "ranged":
+		# Bow: an outward-bulging curve with a taut string facing the body.
+		var radius: float = clampf(7.0 + weight * 0.6, 7.0, 11.0)
+		var top: Vector2 = hand + Vector2(0.0, -radius)
+		var bot: Vector2 = hand + Vector2(0.0, radius)
+		var bulge: Vector2 = hand + Vector2(radius, 0.0)
+		var pts := PackedVector2Array()
+		var steps := 8
+		for i in range(steps + 1):
+			var t: float = float(i) / float(steps)
+			pts.append(top * (1.0 - t) * (1.0 - t) + bulge * (2.0 * (1.0 - t) * t) + bot * (t * t))
+		draw_polyline(pts, Color(0.55, 0.40, 0.22), 1.5)
+		draw_line(top, bot, Color(0.85, 0.78, 0.60), 1.0)
+		return
+
+	# Melee: a held bar pointing down and away from the body — the "big
+	# weapon" tell is purely length/thickness scaling with weight.
+	var length: float = clampf(8.0 + weight * 3.0, 8.0, 26.0)
+	var width: float  = clampf(2.0 + weight * 0.5, 2.0, 6.0)
+	var tip: Vector2  = hand + Vector2(0.6, 0.8).normalized() * length
+	draw_line(hand, tip, Color(0.80, 0.82, 0.86), width)

@@ -66,6 +66,7 @@ func _ready() -> void:
 	EventBus.combat_ended.connect(_on_npc_combat_ended)
 	EventBus.turn_started.connect(_on_npc_turn_started)
 	EventBus.attack_started.connect(_on_npc_attack_started)
+	EventBus.damage_floater.connect(func(e, _t, _c): if e == self: queue_redraw())
 	queue_redraw()
 	# Hide NPCs that still have default placeholder dialogue
 	call_deferred("_check_if_placeholder")
@@ -329,6 +330,16 @@ func _draw_name_label(label_y: float) -> void:
 	draw_rect(Rect2(lx - 3, label_y - fs - 1, tw + 6, fs + 4), Color(0, 0, 0, 0.65))
 	draw_string(font, Vector2(lx, label_y), entity_name, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1.0, 0.95, 0.7))
 
+# Falls back to _attack_weapon when no hand_1 item is equipped — most NPCs
+# only set _attack_weapon (e.g. the Shopkeeper's knife), not equipment.
+func get_held_weapon() -> Dictionary:
+	var item := super.get_held_weapon()
+	if not item.is_empty():
+		return item
+	if _attack_weapon.get("type", "") == "weapon" and _attack_weapon.get("slot") != null:
+		return _attack_weapon
+	return {}
+
 func _draw() -> void:
 	var rect = Rect2(
 		-SPRITE_W / 2.0,
@@ -337,10 +348,12 @@ func _draw() -> void:
 		SPRITE_H
 	)
 	draw_rect(rect, Color(0.45, 0.45, 0.60))
+	_draw_held_weapon(rect)
 	if _highlighted:
 		draw_rect(rect, Color(1.0, 0.85, 0.0, 0.35))
 		draw_rect(rect, Color(1.0, 0.85, 0.0), false, 2.0)
 		_draw_name_label(rect.position.y - 4)
+		_draw_health_bar(-float(SPRITE_W) / 2.0, rect.position.y - 22.0, float(SPRITE_W))
 	# Show sight range ring when player is sneaking
 	if GameManager.is_sneaking:
 		var r: int = sight_range

@@ -1295,12 +1295,9 @@ func _try_apply_burning_direct(defender: Node) -> void:
 func _try_apply_heated(defender: Node, wil_mod: int, chance_mult: float = 1.0) -> PackedStringArray:
 	if not defender.has_method("get") or defender.get("status_effects") == null:
 		return PackedStringArray()
-	const MAX_STACKS: int = 6
 	if not defender.status_effects.has("heated"):
 		defender.status_effects["heated"] = []
 	var stacks: Array = defender.status_effects["heated"]
-	if stacks.size() >= MAX_STACKS:
-		return PackedStringArray(["  Heated: max stacks (%d) — no effect" % MAX_STACKS])
 	# Heated normally always applies on a hit — a graze only has a reduced chance to.
 	if chance_mult < 1.0 and randf() >= chance_mult:
 		return PackedStringArray(["  Heated: glancing — no stack applied"])
@@ -1310,7 +1307,7 @@ func _try_apply_heated(defender: Node, wil_mod: int, chance_mult: float = 1.0) -
 	defender.heated_wil_mod = wil_mod
 	EventBus.status_applied.emit(defender, "heated")
 	EventBus.damage_floater.emit(defender, "heated", Color(1.0, 0.65, 0.20))
-	return PackedStringArray(["  Heated: stack applied (%d/%d)" % [stacks.size(), MAX_STACKS]])
+	return PackedStringArray(["  Heated: stack applied (%d stacks)" % stacks.size()])
 
 # ── Damage floater color ─────────────────────────────────────────────────────
 # Interpolates grey → dark crimson based on damage, capping at 100.

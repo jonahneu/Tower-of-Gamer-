@@ -258,7 +258,13 @@ func spend_move() -> bool:
 		EventBus.resources_changed.emit(e)
 		return true
 	if spend_ap(1):
-		if e == GameManager.player and GameManager.has_feat("runner"):
+		var has_runner: bool
+		if e == GameManager.player:
+			has_runner = GameManager.has_feat("runner")
+		else:
+			var ef = e.get("feats")
+			has_runner = ef != null and "runner" in ef
+		if has_runner:
 			ts["runner_bonus_mp"] = ts.get("runner_bonus_mp", 0) + 1
 		return true
 	return false

@@ -93,8 +93,8 @@ grid_cell = Vector2i(66, 22)
 script = ExtResource("5")
 grid_cell = Vector2i(56, 24)
 
-[node name="Cannibal2" type="Node2D" parent="."]
-script = ExtResource("5")
+[node name="CannibalScout2" type="Node2D" parent="."]
+script = ExtResource("12")
 grid_cell = Vector2i(60, 26)
 
 [node name="CannibalScout1" type="Node2D" parent="."]
@@ -103,7 +103,11 @@ grid_cell = Vector2i(64, 16)
 
 [node name="Cannibal4" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(4, 40)
+grid_cell = Vector2i(8, 40)
+
+[node name="Cannibal5" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(40, 72)
 
 [node name="CampFire" type="Node2D" parent="."]
 script = ExtResource("8")

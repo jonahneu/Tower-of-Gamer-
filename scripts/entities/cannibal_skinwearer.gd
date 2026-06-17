@@ -22,7 +22,7 @@ func _ready() -> void:
 	level             = 3
 	stat_strength     = 6
 	stat_dexterity    = 6
-	stat_agility      = 5
+	stat_agility      = 6
 	stat_constitution = 6
 	stat_intelligence = 4
 	stat_willpower    = 5
@@ -38,6 +38,7 @@ func _ready() -> void:
 	sprite_color = Color(0.58, 0.48, 0.36)   # mottled with skin trophies
 
 	_attack_weapon = DataManager.get_item("knife")
+	feats.append("runner")
 
 	super._ready()
 

@@ -22,7 +22,7 @@ func _ready() -> void:
 	level             = 5
 	stat_strength     = 10
 	stat_dexterity    = 5
-	stat_agility      = 4
+	stat_agility      = 6
 	stat_constitution = 8
 	stat_intelligence = 3
 	stat_willpower    = 6
@@ -50,6 +50,7 @@ func _ready() -> void:
 		"half_dex_damage": true,
 	}
 
+	feats.append("runner")
 	super._ready()
 	EventBus.attack_resolved.connect(_on_attack_resolved)
 

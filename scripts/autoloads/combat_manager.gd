@@ -385,6 +385,7 @@ func _make_turn_state(entity: Node) -> Dictionary:
 		"cooldowns":    {},
 		"weapon_loaded": {},
 		"spells_cast":  0,
+		"melee_attacks": 0,
 	}
 
 func begin_smoke_deploy(item: Dictionary, inv_idx: int) -> void:
@@ -763,6 +764,10 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 	EventBus.attack_started.emit(attacker, defender)
 	var skill_name: String = weapon.get("skill", "melee")
 	var mod_adj: int       = -1 if "clumsy" in props else 0
+	# Track melee attacks for Heavy Hitter (count each attempt, hit or miss)
+	var is_melee_attack: bool = skill_name == "melee" and not is_spell and attacker == GameManager.player
+	if is_melee_attack and GameManager.has_feat("heavy_hitter") and turn_state.has(attacker):
+		turn_state[attacker]["melee_attacks"] = turn_state[attacker].get("melee_attacks", 0) + 1
 
 	# Capture full roll detail for the log
 	var atk_skill: float  = _get_skill_total(attacker, skill_name, mod_adj)
@@ -831,6 +836,7 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 			log_lines.append("  (graze — glancing blow: %d%% damage, %d%% effect chance)" \
 					% [int(GRAZE_DAMAGE_MULT * 100.0), int(GRAZE_EFFECT_CHANCE_MULT * 100.0)])
 		var effect_only: bool = "effect_only" in props
+		var total_dmg_dealt: float = 0.0
 		if not effect_only:
 			# ── Crit roll (a graze is already a glancing blow — it can't crit) ──────
 			var crit_chance: float = _calc_crit_chance(attacker) if hit else 0.0
@@ -871,6 +877,7 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 				if melee_mod != 0 and melee_stat != "":
 					log_lines.append("  (melee mod: %+d from %s)" % [melee_mod, melee_stat.capitalize()])
 				defender.current_hp -= melee_final
+				total_dmg_dealt += melee_final
 				EventBus.damage_dealt.emit(defender, melee_final, "attack")
 				if is_crit:
 					EventBus.damage_floater.emit(defender, "CRIT! -%.1f" % melee_final, Color(1.0, 0.85, 0.15))
@@ -898,6 +905,7 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 					if wil_mod != 0:
 						log_lines.append("  (fire mod: %+d from Willpower)" % wil_mod)
 					defender.current_hp -= fire_final
+					total_dmg_dealt += fire_final
 					EventBus.damage_dealt.emit(defender, fire_final, "attack")
 					EventBus.damage_floater.emit(defender, "-%.0f fire" % fire_final, Color(1.0, 0.55, 0.10))
 			else:
@@ -906,6 +914,14 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 				var gov_mod: int         = gov_info["mod"]
 				var gov_stat: String     = gov_info["stat"]
 				raw += gov_mod
+				# Heavy Hitter: first two melee attacks per turn gain an extra STR mod
+				var hh_bonus: int = 0
+				if is_melee_attack and GameManager.has_feat("heavy_hitter"):
+					if turn_state.get(attacker, {}).get("melee_attacks", 0) <= 2:
+						var str_sv = attacker.get("stat_strength")
+						var str_val: int = int(str_sv) if str_sv != null else 5
+						hh_bonus = maxi(0, str_val - 5)
+						raw += hh_bonus
 				raw  = max(1, raw)
 				if is_crit:
 					raw *= 2
@@ -916,11 +932,10 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 					raw = maxi(0, raw - int(shield_block["flat"]))
 				var dmg_weapon: Dictionary = weapon
 				if attacker == GameManager.player and GameManager.has_feat("brutal"):
-					var wprops: Array = weapon.get("properties", [])
-					if "armor_pierce" in wprops or "armor_pierce_light" in wprops:
+					if dmg_weapon == weapon:
 						dmg_weapon = weapon.duplicate()
-						dmg_weapon["pierce_multiplier"] = 1.3
-				if weapon.get("armor_ignore_pct", 0.0) > 0.0:
+					dmg_weapon["armor_ignore_pct"] = 1.0 - (1.0 - weapon.get("armor_ignore_pct", 0.0)) * 0.80
+				elif weapon.get("armor_ignore_pct", 0.0) > 0.0:
 					if dmg_weapon == weapon:
 						dmg_weapon = weapon.duplicate()
 					dmg_weapon["armor_ignore_pct"] = weapon.get("armor_ignore_pct", 0.0)
@@ -942,7 +957,10 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 					log_lines.append("  Damage: %.1f%s" % [final_dmg, dtype_tag])
 				if gov_mod != 0 and gov_stat != "":
 					log_lines.append("  (dmg mod: %+d from %s)" % [gov_mod, gov_stat.capitalize()])
+				if hh_bonus > 0:
+					log_lines.append("  (heavy hitter: +%d from Strength)" % hh_bonus)
 				defender.current_hp -= final_dmg
+				total_dmg_dealt += final_dmg
 				EventBus.damage_dealt.emit(defender, final_dmg, "attack")
 				if is_crit:
 					EventBus.damage_floater.emit(defender, "CRIT! -%.1f" % final_dmg, Color(1.0, 0.85, 0.15))
@@ -971,10 +989,13 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 					if sc_mod != 0:
 						log_lines.append("  (scripture mod: %+d from Willpower)" % sc_mod)
 					defender.current_hp -= sc_final
+					total_dmg_dealt += sc_final
 					EventBus.damage_dealt.emit(defender, sc_final, "attack")
 					EventBus.damage_floater.emit(defender, "-%.1f scripture" % sc_final, Color(0.60, 0.85, 1.0))
 
 		var effect_chance_mult: float = 1.0 if hit else GRAZE_EFFECT_CHANCE_MULT
+		if not effect_only and total_dmg_dealt < 0.01:
+			effect_chance_mult = 0.0
 		var on_hit_lines: PackedStringArray = _apply_on_hit_properties(attacker, defender, weapon, effect_chance_mult)
 		log_lines.append_array(on_hit_lines)
 	else:

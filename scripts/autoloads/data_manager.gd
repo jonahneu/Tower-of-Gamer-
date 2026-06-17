@@ -37,9 +37,15 @@ func _load_feats() -> void:
 	}
 	feats["brutal"] = {
 		"id": "brutal", "name": "Brutal", "source": "level_up",
-		"description": "You hit hard enough to make armor not matter. Any attack with armor penetration has its penetration increased by 30%.",
+		"description": "You hit hard enough to make armor not matter. All of your attacks ignore 20% of the target's armor (both flat and percentage), stacking multiplicatively with any other armor penetration.",
 		"requirements": {"stats": {"strength": 8}, "skills": {}},
-		"effect_tag": "pierce_x1.3",
+		"effect_tag": "armor_ignore_20pct",
+	}
+	feats["heavy_hitter"] = {
+		"id": "heavy_hitter", "name": "Heavy Hitter", "source": "level_up",
+		"description": "Your first two melee attacks each turn carry the full weight of your body behind them. Each of those strikes gains a bonus to damage equal to your Strength modifier, stacking on top of any other modifier already applied.",
+		"requirements": {"stats": {"strength": 8}, "skills": {"melee": 15}},
+		"effect_tag": "heavy_hitter",
 	}
 	feats["bloodletting"] = {
 		"id": "bloodletting", "name": "Bloodletting", "source": "level_up",

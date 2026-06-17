@@ -9,7 +9,7 @@ class_name SandBeetle
 # Innate armor: 2 flat + 30% physical damage reduction (chitinous shell)
 # Ram: 4 AP, straight-line charge to adjacent of target, deals 1d6+STR, applies Dazed
 
-const RAM_RANGE:   int   = 15
+const RAM_RANGE:   int   = 23  # 15 * 1.5, rounded up
 const RAM_AP_COST: int   = 4
 const RAM_DAMAGE:  String = "1d6"
 const RAM_SPEED:   float  = 580.0
@@ -92,11 +92,8 @@ func _try_ram(player_typed: Player) -> bool:
 	if _tile_scene == null:
 		return false
 	var dir := Vector2i(sign(dx), sign(dy))
-	var check: Vector2i = grid_cell + dir
-	while check != player_typed.grid_cell:
-		if not _tile_scene.is_walkable(check):
-			return false
-		check += dir
+	if not _ram_path_clear(grid_cell, dir, player_typed.grid_cell):
+		return false
 
 	if not CombatManager.spend_ap(RAM_AP_COST):
 		return false
@@ -160,6 +157,45 @@ func _try_ram(player_typed: Player) -> bool:
 	await get_tree().create_timer(0.28).timeout
 	return true
 
+# Path between (exclusive) from_cell and target_cell along dir must be walkable.
+func _ram_path_clear(from_cell: Vector2i, dir: Vector2i, target_cell: Vector2i) -> bool:
+	var check: Vector2i = from_cell + dir
+	while check != target_cell:
+		if not _tile_scene.is_walkable(check):
+			return false
+		check += dir
+	return true
+
+# Look for a cardinal-aligned cell (clear line to the player, in Ram range)
+# reachable within move_budget steps, so next turn's Ram has a shot.
+func _find_ram_setup_cell(player_typed: Player, move_budget: int) -> Vector2i:
+	if _tile_scene == null or move_budget <= 0:
+		return Vector2i(-1, -1)
+	var p_cell: Vector2i = player_typed.grid_cell
+
+	var candidates: Array[Vector2i] = []
+	for k in range(3, RAM_RANGE + 1):
+		candidates.append(Vector2i(p_cell.x - k, p_cell.y))
+		candidates.append(Vector2i(p_cell.x + k, p_cell.y))
+		candidates.append(Vector2i(p_cell.x, p_cell.y - k))
+		candidates.append(Vector2i(p_cell.x, p_cell.y + k))
+
+	var best: Vector2i = Vector2i(-1, -1)
+	var best_steps: int = 999999
+	for cell in candidates:
+		if cell == grid_cell or not _tile_scene.is_walkable(cell):
+			continue
+		var dir := Vector2i(sign(p_cell.x - cell.x), sign(p_cell.y - cell.y))
+		if not _ram_path_clear(cell, dir, p_cell):
+			continue
+		var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, cell, _tile_scene)
+		if path.is_empty() or path.size() > move_budget:
+			continue
+		if path.size() < best_steps:
+			best_steps = path.size()
+			best = cell
+	return best
+
 # Normal move + mandible attack (mirrors base Enemy AI logic)
 func _normal_turn(player_typed: Player) -> void:
 	var attack_cost: int = _attack_weapon.get("ap_cost", 1)
@@ -168,9 +204,10 @@ func _normal_turn(player_typed: Player) -> void:
 
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
-		var adj: Vector2i = _find_adjacent_to(p_cell)
-		if adj != Vector2i(-1, -1) and move_budget > 0:
-			var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene)
+		var align_cell: Vector2i = _find_ram_setup_cell(player_typed, move_budget)
+		var dest: Vector2i = align_cell if align_cell != Vector2i(-1, -1) else _find_adjacent_to(p_cell)
+		if dest != Vector2i(-1, -1) and move_budget > 0:
+			var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, dest, _tile_scene)
 			var steps: int = mini(move_budget, path.size())
 			for i in range(steps):
 				if not is_instance_valid(self) or not _in_combat:

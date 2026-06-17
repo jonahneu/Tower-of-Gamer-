@@ -194,6 +194,15 @@ func end_turn() -> void:
 				_ending_entity.status_effects.erase("grappled")
 				EventBus.status_cleared.emit(_ending_entity, "grappled")
 
+	# Tick status effects (bleed, burn, heat, poison) at the end of each combat turn
+	if not tactical_mode and _ending_entity != null and is_instance_valid(_ending_entity):
+		_process_status_effects(_ending_entity)
+		if not active:
+			return
+	# Decrement smoke zones at the end of each player turn
+	if _ending_entity == GameManager.player:
+		GameManager.tick_smoke_zones()
+
 	# In tactical mode there is no combat — skip win/lose check
 	if not tactical_mode:
 		var player_alive = _any_alive("player")
@@ -572,15 +581,7 @@ func _begin_turn() -> void:
 	var e = current_entity()
 	if e == null or not is_instance_valid(e):
 		return
-	# Don't tick status effects (bleed, etc.) in tactical mode — no combat is happening
-	if not tactical_mode:
-		_process_status_effects(e)
-	# Decrement smoke zones at the start of each player turn
-	if e == GameManager.player:
-		GameManager.tick_smoke_zones()
-	if not active:   # entity died from status effects, combat already ended
-		return
-	# Entity died from status effects but other combatants remain — skip to next turn
+	# Skip to next living combatant if this entity was killed before their turn began
 	if not _is_alive(e):
 		var attempts := 0
 		while attempts < participants.size():
@@ -590,6 +591,10 @@ func _begin_turn() -> void:
 			if _is_alive(participants[turn_index]):
 				break
 			attempts += 1
+		# Safety: no living entity found — ensure combat ends rather than recursing infinitely
+		if participants.is_empty() or not _is_alive(participants[turn_index]):
+			_check_combat_end()
+			return
 		_begin_turn()
 		return
 	var ts = turn_state.get(e)

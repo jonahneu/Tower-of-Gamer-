@@ -139,7 +139,11 @@ func _update_dialogue() -> void:
 		})
 
 	# ── Property pick "Ok now for the more interesting part" ─────────────────
-	elif pd.get("smith_armband_crafted", false) and not pd.get("smith_property_chosen", false):
+	elif (pd.get("smith_armband_crafted", false) \
+			or (pd.get("smith_armband_taught", false) and _has_item("bronze_spirit_armband"))) \
+			and not pd.get("smith_property_chosen", false):
+		if not pd.get("smith_armband_crafted", false):
+			pd["smith_armband_crafted"] = true
 		dialogue_text = "He glances at the armband you've made. A nod — small, but there."
 		options.append({
 			"label":    "What do I learn next?",
@@ -253,13 +257,13 @@ func _on_crafting_ui_closed(entity: Node) -> void:
 	if pd.get("smith_armband_taught", false) and not pd.get("smith_armband_crafted", false):
 		if _has_item("bronze_spirit_armband"):
 			pd["smith_armband_crafted"] = true
-			_reopen_dialogue()
+			call_deferred("_reopen_dialogue")
 	elif pd.get("smith_property_chosen", false) and not pd.get("smith_second_crafted", false):
 		if _has_item("bronze_shortsword_blessed") or _has_item("bronze_helmet_barrier"):
 			pd["smith_second_crafted"] = true
 			pd["smith_teaching_done"]  = true
 			GameManager.complete_quest("smith_protection")
-			_reopen_dialogue()
+			call_deferred("_reopen_dialogue")
 
 func _on_smithing_pick_made(pick_id: String) -> void:
 	var pd: Dictionary = GameManager.player_data

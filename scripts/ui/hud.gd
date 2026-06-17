@@ -766,6 +766,17 @@ func _build_pause_panel() -> Control:
 	_pause_btn(col, "Quit to Menu",     _on_quit_to_menu)
 	_pause_btn(col, "Quit to Desktop",  _on_quit_to_desktop)
 
+	_pause_spacer(col, 8)
+	_pause_btn(col, "Export Debug Log", _on_export_log)
+
+	_log_export_lbl = Label.new()
+	_log_export_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_log_export_lbl.add_theme_font_size_override("font_size", 11)
+	_log_export_lbl.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+	_log_export_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_log_export_lbl.custom_minimum_size = Vector2(260, 0)
+	col.add_child(_log_export_lbl)
+
 	return root
 
 func _pause_btn(parent: Control, label: String, cb: Callable) -> void:
@@ -825,6 +836,17 @@ func _on_quit_to_menu() -> void:
 
 func _on_quit_to_desktop() -> void:
 	get_tree().quit()
+
+func _on_export_log() -> void:
+	var path := Logger.export_log()
+	if _log_export_lbl == null:
+		return
+	if path == "":
+		_log_export_lbl.text = "Export failed — check Godot output"
+		_log_export_lbl.add_theme_color_override("font_color", Color(0.9, 0.4, 0.4))
+	else:
+		_log_export_lbl.text = "Saved to:\n%s" % path
+		_log_export_lbl.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SAVE / LOAD PANELS

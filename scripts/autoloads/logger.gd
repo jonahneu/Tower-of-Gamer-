@@ -69,6 +69,50 @@ func warn(category: String, msg: String) -> void:
 func error(category: String, msg: String) -> void:
 	_write("ERROR", category, msg)
 
+# ── Export ────────────────────────────────────────────────────────────────────
+# Copies the last 24 hours of log entries to Desktop (fallback: Documents).
+# Returns the export path, or "" on failure.
+func export_log() -> String:
+	if _file != null:
+		_file.flush()
+	# Lines older than 24h are stripped. Timestamps are [MM:SS.ss] relative to
+	# session start, so cutoff_minutes is the elapsed-minute mark for 24h ago.
+	var elapsed := Time.get_unix_time_from_system() - _start_time
+	var cutoff_minutes: float = maxf(0.0, elapsed / 60.0 - 1440.0)
+
+	var src := FileAccess.open(LOG_PATH, FileAccess.READ)
+	if src == null:
+		warn("LOGGER", "Export failed — could not open log for reading")
+		return ""
+	var lines: PackedStringArray = []
+	while not src.eof_reached():
+		var line := src.get_line()
+		if line == "":
+			continue
+		if cutoff_minutes > 0.0 and line.begins_with("["):
+			var end_b := line.find("]")
+			if end_b > 1:
+				var colon := line.find(":")
+				if colon > 0 and colon < end_b:
+					var line_minutes := float(line.substr(1, colon - 1))
+					if line_minutes < cutoff_minutes:
+						continue
+		lines.append(line)
+	src.close()
+
+	var ts := Time.get_datetime_string_from_system().replace(":", "").replace(" ", "_")
+	var filename := "tower_log_%s.txt" % ts
+	for dir_id in [OS.SYSTEM_DIR_DESKTOP, OS.SYSTEM_DIR_DOCUMENTS]:
+		var out_path := OS.get_system_dir(dir_id).path_join(filename)
+		var dst := FileAccess.open(out_path, FileAccess.WRITE)
+		if dst != null:
+			dst.store_string("\n".join(lines))
+			dst.close()
+			info("LOGGER", "Exported to %s" % out_path)
+			return out_path
+	warn("LOGGER", "Export failed — could not write to Desktop or Documents")
+	return ""
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 func _name(entity: Node) -> String:
@@ -146,6 +190,14 @@ func _connect_signals() -> void:
 	# Attacks
 	EventBus.attack_resolved.connect(func(attacker: Node, hit: bool):
 		info("ATTACK", "%s — %s" % [_name(attacker), "HIT" if hit else "MISS"]))
+
+	# Zone transitions
+	EventBus.zone_entered.connect(func():
+		info("ZONE", "Entered zone — world pos: %s" % str(GameManager.world_pos)))
+
+	# Combat participant added mid-combat (e.g. summoned via Howl)
+	EventBus.combat_participant_added.connect(func(entity: Node):
+		info("COMBAT", "Participant added mid-combat: %s  HP: %s" % [_name(entity), _hp_str(entity)]))
 
 	# Player death
 	EventBus.player_died.connect(func():

@@ -43,15 +43,15 @@ func get_interaction_options() -> Array:
 # ── State machine ──────────────────────────────────────────────────────────────
 func _update_dialogue() -> void:
 	var craft_taught: bool = GameManager.player_data.get("hunter_craft_taught", false)
-	if GameManager.has_quest_thread("the_dream", "dream_ask_hunter") \
-			and not GameManager.player_data.get("hunter_dream_asked", false):
-		_set_dream_question_dialogue()
-	elif not _has_thread():
+	if not _has_thread():
 		_set_intro_dialogue()
 	elif not craft_taught and not _has_animal_loot():
 		_set_go_hunt_dialogue()
 	elif not craft_taught:
 		_set_craft_teaching_dialogue()
+	elif GameManager.has_quest_thread("the_dream", "dream_ask_hunter") \
+			and not GameManager.player_data.get("hunter_dream_asked", false):
+		_set_dream_question_dialogue()
 	elif not _has_crafted_trophy():
 		_set_craft_failed_dialogue()
 	elif not _has_talisman_equipped():

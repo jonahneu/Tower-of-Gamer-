@@ -77,9 +77,11 @@ var _cs_skill_minus_btns: Dictionary = {} # skill -> Button (refund, hidden unle
 var _cs_confirm_btn: Button = null        # locks in level-up allocation
 var _cs_feats_box: VBoxContainer = null        # owned feats list
 var _cs_feat_picker_box: VBoxContainer = null  # pick-a-feat section (shown when unspent_feat_points > 0)
-var _cs_stats_page: Control = null             # stats/skills tab content
-var _cs_feats_page: Control = null             # feats tab content
-var _cs_tab_btns: Dictionary = {}              # "stats" / "feats" -> Button
+var _cs_stats_page:   Control = null             # stats/skills tab content
+var _cs_feats_page:   Control = null             # feats tab content
+var _cs_bonuses_page: Control = null             # active bonuses tab content
+var _cs_bonuses_vbox: VBoxContainer = null       # rebuilt on each refresh
+var _cs_tab_btns: Dictionary = {}               # "stats" / "feats" / "bonuses" -> Button
 var _cs_active_tab: String = "stats"
 var _levelup_banner: Control = null        # level-up notification overlay
 
@@ -1739,7 +1741,7 @@ func _build_stats_panel() -> Control:
 	var tab_row := HBoxContainer.new()
 	tab_row.add_theme_constant_override("separation", 0)
 	vbox.add_child(tab_row)
-	for tab_def in [["Stats & Skills", "stats"], ["Feats", "feats"]]:
+	for tab_def in [["Stats & Skills", "stats"], ["Feats", "feats"], ["Bonuses", "bonuses"]]:
 		var tbtn := Button.new()
 		tbtn.text = tab_def[0]
 		tbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1798,13 +1800,30 @@ func _build_stats_panel() -> Control:
 	_cs_feats_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	feats_inner.add_child(_cs_feats_box)
 
+	# ── Bonuses page ──────────────────────────────────────────────────────────
+	_cs_bonuses_page = Control.new()
+	_cs_bonuses_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_cs_bonuses_page.visible = false
+	content.add_child(_cs_bonuses_page)
+
+	var bonuses_scroll := ScrollContainer.new()
+	bonuses_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bonuses_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_cs_bonuses_page.add_child(bonuses_scroll)
+
+	_cs_bonuses_vbox = VBoxContainer.new()
+	_cs_bonuses_vbox.add_theme_constant_override("separation", 6)
+	_cs_bonuses_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bonuses_scroll.add_child(_cs_bonuses_vbox)
+
 	_cs_switch_tab("stats")
 	return shell["root"]
 
 func _cs_switch_tab(tab: String) -> void:
 	_cs_active_tab = tab
-	if _cs_stats_page != null: _cs_stats_page.visible = (tab == "stats")
-	if _cs_feats_page != null: _cs_feats_page.visible = (tab == "feats")
+	if _cs_stats_page   != null: _cs_stats_page.visible   = (tab == "stats")
+	if _cs_feats_page   != null: _cs_feats_page.visible   = (tab == "feats")
+	if _cs_bonuses_page != null: _cs_bonuses_page.visible = (tab == "bonuses")
 	for tid in _cs_tab_btns:
 		var btn: Button = _cs_tab_btns[tid]
 		var active: bool = (tid == tab)
@@ -6153,6 +6172,7 @@ func _refresh_stats() -> void:
 	if d.is_empty(): return
 	_cs_switch_tab(_cs_active_tab)
 	_refresh_feats()
+	_refresh_bonuses()
 
 	var lvl: int = d.get("level", 1)
 	_cs_name_lbl.text  = d.get("name", "—")
@@ -6327,6 +6347,266 @@ func _refresh_feats() -> void:
 		desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(desc_lbl)
 		_cs_feats_box.add_child(row)
+
+func _refresh_bonuses() -> void:
+	if _cs_bonuses_vbox == null:
+		return
+	for child in _cs_bonuses_vbox.get_children():
+		child.queue_free()
+
+	var p_live := GameManager.player
+	if p_live == null or not is_instance_valid(p_live):
+		var empty := Label.new()
+		empty.text = "No character data."
+		_cs_bonuses_vbox.add_child(empty)
+		return
+
+	var armor: Dictionary = p_live.get_total_armor()
+	var flat_total: float = armor.get("flat", 0.0)
+	var pct_rem: float    = armor.get("pct_remaining", 1.0)
+	var all_resist: float = armor.get("all_resist", 0.0)
+	var pct_pct: float    = (1.0 - pct_rem) * 100.0
+	var buff: Dictionary  = GameManager.player_data.get("active_meal_buff", {})
+
+	# Gather per-item contributions across all equipped slots
+	var flat_sources:  Array      = []
+	var pct_sources:   Array      = []
+	var ar_sources:    Array      = []
+	var block_sources: Array      = []
+	var carry_sources: Array      = []
+	var skill_srcs: Dictionary    = {}   # skill -> [[item_name, bonus]]
+	var gov_srcs:   Dictionary    = {}   # skill -> [[item_name, bonus]]
+	var block_total: float = 0.0
+	var carry_bonus: int   = 0
+
+	for slot in p_live.equipment:
+		var item = p_live.equipment[slot]
+		if item == null:
+			continue
+		var iname: String = item.get("name", "?")
+		var itype: String = item.get("type", "")
+
+		if itype in ["armor", "clothing", "trinket"]:
+			var df: float = item.get("defense_flat", 0.0)
+			var dp: float = item.get("defense_pct",  0.0)
+			var ar: float = item.get("all_resist",   0.0)
+			if df > 0.0: flat_sources.append([iname, df])
+			if dp > 0.0: pct_sources.append( [iname, dp * 100.0])
+			if ar > 0.0: ar_sources.append(  [iname, ar * 100.0])
+
+		var bf: float = item.get("block_flat", 0.0)
+		if bf > 0.0:
+			block_total += bf
+			block_sources.append([iname, bf])
+
+		var cwb: int = item.get("carry_weight_bonus", 0)
+		if cwb > 0:
+			carry_bonus += cwb
+			carry_sources.append([iname, cwb])
+
+		for sk in item.get("skill_bonus", {}):
+			if not skill_srcs.has(sk): skill_srcs[sk] = []
+			skill_srcs[sk].append([iname, item["skill_bonus"][sk]])
+		for sk in item.get("governing_bonus", {}):
+			if not gov_srcs.has(sk): gov_srcs[sk] = []
+			gov_srcs[sk].append([iname, item["governing_bonus"][sk]])
+
+	if buff.has("phys_dr_flat"):
+		flat_sources.append([buff.get("name", "Meal"), float(buff["phys_dr_flat"])])
+	if buff.has("phys_dr_pct"):
+		pct_sources.append([buff.get("name", "Meal"), float(buff["phys_dr_pct"]) * 100.0])
+
+	# ── DEFENSE ───────────────────────────────────────────────────────────────
+	_cs_bonuses_vbox.add_child(_bonuses_section_hdr("DEFENSE"))
+
+	if flat_total > 0.0:
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Flat armor", "%.2f" % flat_total))
+		for src in flat_sources:
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % src[0], "+%.2f" % src[1]))
+	else:
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Flat armor", "—"))
+
+	if pct_pct > 0.0:
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("% armor", "%.1f%%" % pct_pct))
+		for src in pct_sources:
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % src[0], "%.1f%%" % src[1]))
+
+	if all_resist > 0.0:
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("All-dmg resist", "%.1f%%" % (all_resist * 100.0)))
+		for src in ar_sources:
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % src[0], "%.1f%%" % src[1]))
+
+	if GameManager.has_feat("bulky"):
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Bulky (feat)", "−10% all dmg"))
+		_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ multiplicative, after armor", ""))
+
+	if block_total > 0.0:
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Shield block", "%.1f flat" % block_total))
+		for src in block_sources:
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % src[0], "%.1f" % src[1]))
+
+	var sep_samp := HSeparator.new(); sep_samp.modulate.a = 0.25
+	_cs_bonuses_vbox.add_child(sep_samp)
+	var s_raw: int    = 5
+	var s_final: float = p_live.calc_damage_received(s_raw)
+	_cs_bonuses_vbox.add_child(_bonuses_kv_row(
+		"Sample (5 raw phys)",
+		"→ %.2f dealt  (%.2f absorbed)" % [s_final, float(s_raw) - s_final]))
+
+	# ── SKILLS & ACCURACY ─────────────────────────────────────────────────────
+	var has_skill: bool = not skill_srcs.is_empty() or not gov_srcs.is_empty() or buff.has("hit_flat")
+	if has_skill:
+		_cs_bonuses_vbox.add_child(_bonuses_section_hdr("SKILLS & ACCURACY"))
+		if buff.has("hit_flat"):
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row("To-hit", "+%d%%" % int(buff["hit_flat"])))
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % buff.get("name", "Meal"), ""))
+		for sk in skill_srcs:
+			var total: float = 0.0
+			for src in skill_srcs[sk]: total += src[1]
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row(
+				SKILL_DISPLAY.get(sk, sk.capitalize()), "+%.0f" % total))
+			for src in skill_srcs[sk]:
+				_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % src[0], "+%.0f" % src[1]))
+		for sk in gov_srcs:
+			var total: float = 0.0
+			for src in gov_srcs[sk]: total += src[1]
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row(
+				"%s governing" % SKILL_DISPLAY.get(sk, sk.capitalize()), "+%d mod" % int(total)))
+			for src in gov_srcs[sk]:
+				_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % src[0], "+%d mod" % int(src[1])))
+
+	# ── STATS ─────────────────────────────────────────────────────────────────
+	var has_stats: bool = buff.has("per_flat") or buff.has("agi_flat") or buff.has("wil_flat")
+	if has_stats:
+		_cs_bonuses_vbox.add_child(_bonuses_section_hdr("STATS"))
+		var meal_name: String = buff.get("name", "Meal")
+		if buff.has("per_flat"):
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row("Perception", "+%d" % int(buff["per_flat"])))
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % meal_name, ""))
+		if buff.has("agi_flat"):
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row("Agility", "+%d" % int(buff["agi_flat"])))
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % meal_name, ""))
+		if buff.has("wil_flat"):
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row("Willpower", "+%d" % int(buff["wil_flat"])))
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % meal_name, ""))
+
+	# ── RESOURCES ─────────────────────────────────────────────────────────────
+	var has_res: bool = buff.has("hp_pct") or buff.has("sp_pct") or buff.has("mp_pct")
+	if has_res:
+		_cs_bonuses_vbox.add_child(_bonuses_section_hdr("RESOURCES"))
+		var meal_name_r: String = buff.get("name", "Meal")
+		if buff.has("hp_pct"):
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row("Max HP", "+%d%%" % int(round(float(buff["hp_pct"]) * 100.0))))
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % meal_name_r, ""))
+		if buff.has("sp_pct"):
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row("Max SP", "+%d%%" % int(round(float(buff["sp_pct"]) * 100.0))))
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % meal_name_r, ""))
+		if buff.has("mp_pct"):
+			_cs_bonuses_vbox.add_child(_bonuses_kv_row("Max MP", "+%d%%" % int(round(float(buff["mp_pct"]) * 100.0))))
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % meal_name_r, ""))
+
+	# ── SPIRIT WARD ───────────────────────────────────────────────────────────
+	var ward_lvl: int = _player_spirit_ward_level()
+	if ward_lvl >= 0:
+		_cs_bonuses_vbox.add_child(_bonuses_section_hdr("SPIRIT WARD"))
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Ward level", "Lv.%d" % ward_lvl))
+		_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % _player_spirit_ward_name(), ""))
+
+	# ── OTHER (carry weight, etc.) ────────────────────────────────────────────
+	if carry_bonus > 0:
+		_cs_bonuses_vbox.add_child(_bonuses_section_hdr("OTHER"))
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Carry capacity", "+%d" % carry_bonus))
+		for src in carry_sources:
+			_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ %s" % src[0], "+%d" % src[1]))
+
+	# ── FEATS ─────────────────────────────────────────────────────────────────
+	var owned_feats: Array = GameManager.player_data.get("feats", [])
+	if not owned_feats.is_empty():
+		_cs_bonuses_vbox.add_child(_bonuses_section_hdr("FEATS"))
+		for f in owned_feats:
+			var fn_lbl := Label.new()
+			fn_lbl.text = f.get("name", "?")
+			fn_lbl.add_theme_font_size_override("font_size", 13)
+			fn_lbl.add_theme_color_override("font_color", Color(0.95, 0.85, 0.45))
+			_cs_bonuses_vbox.add_child(fn_lbl)
+			var fd_lbl := Label.new()
+			fd_lbl.text = f.get("description", "")
+			fd_lbl.add_theme_font_size_override("font_size", 11)
+			fd_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.75))
+			fd_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			fd_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			_cs_bonuses_vbox.add_child(fd_lbl)
+
+	# ── ACTIVE MEAL ───────────────────────────────────────────────────────────
+	_cs_bonuses_vbox.add_child(_bonuses_section_hdr("ACTIVE MEAL"))
+	if buff.is_empty():
+		var none_lbl := Label.new()
+		none_lbl.text = "None"
+		none_lbl.add_theme_font_size_override("font_size", 12)
+		none_lbl.add_theme_color_override("font_color", Color(0.45, 0.45, 0.50))
+		_cs_bonuses_vbox.add_child(none_lbl)
+	else:
+		var meal_hdr := Label.new()
+		meal_hdr.text = buff.get("name", "Unknown")
+		meal_hdr.add_theme_font_size_override("font_size", 13)
+		meal_hdr.add_theme_color_override("font_color", Color(0.95, 0.85, 0.45))
+		_cs_bonuses_vbox.add_child(meal_hdr)
+		for line in DataManager.format_meal_buff_lines(buff):
+			var ml := Label.new()
+			ml.text = "  • " + line
+			ml.add_theme_font_size_override("font_size", 12)
+			ml.add_theme_color_override("font_color", Color(0.75, 0.75, 0.80))
+			_cs_bonuses_vbox.add_child(ml)
+
+
+func _bonuses_section_hdr(text: String) -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 3)
+	var sep := HSeparator.new()
+	sep.modulate.a = 0.4
+	box.add_child(sep)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_color_override("font_color", Color(0.55, 0.75, 0.95))
+	box.add_child(lbl)
+	return box
+
+
+func _bonuses_kv_row(key: String, val: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var k := Label.new()
+	k.text = key
+	k.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	k.add_theme_font_size_override("font_size", 12)
+	row.add_child(k)
+	var v := Label.new()
+	v.text = val
+	v.add_theme_font_size_override("font_size", 12)
+	v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(v)
+	return row
+
+
+func _bonuses_sub_row(left: String, right: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var k := Label.new()
+	k.text = left
+	k.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	k.add_theme_font_size_override("font_size", 11)
+	k.add_theme_color_override("font_color", Color(0.52, 0.52, 0.58))
+	row.add_child(k)
+	if right != "":
+		var v := Label.new()
+		v.text = right
+		v.add_theme_font_size_override("font_size", 11)
+		v.add_theme_color_override("font_color", Color(0.52, 0.52, 0.58))
+		v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row.add_child(v)
+	return row
+
 
 func _refresh_map() -> void:
 	var layer_names = ["Surface", "Underground I", "Underground II"]

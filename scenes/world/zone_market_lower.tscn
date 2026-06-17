@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://zone_market_lower"]
+[gd_scene load_steps=12 format=3 uid="uid://zone_market_lower"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -7,6 +7,10 @@
 [ext_resource type="Script" path="res://scripts/entities/fletcher.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/entities/scribe.gd" id="6"]
 [ext_resource type="Script" path="res://scripts/entities/book_stack.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/entities/door.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/entities/meat_hawker.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/entities/sign.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/entities/bone_pile.gd" id="11"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -62,3 +66,41 @@ grid_cell = Vector2i(7, 45)
 [node name="BookStack3" type="Node2D" parent="."]
 script = ExtResource("7")
 grid_cell = Vector2i(7, 47)
+
+[node name="SmokeHouse" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 56
+X2 = 68
+Y1 = 29
+Y2 = 40
+DOOR_X = 62
+DOOR_Y = -1
+
+[node name="SmokeHouseDoor" type="Node2D" parent="."]
+script = ExtResource("8")
+grid_cell = Vector2i(62, 40)
+
+[node name="SmokeHouseRack" type="Node2D" parent="."]
+script = ExtResource("4")
+X1 = 57
+X2 = 67
+Y = 33
+
+[node name="SmokeHouseSign" type="Node2D" parent="."]
+script = ExtResource("10")
+grid_cell = Vector2i(61, 40)
+sign_text = "Smoke House"
+face = "sw"
+
+[node name="SmokeHouseBones" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(66, 38)
+
+[node name="MeatHawkerStall" type="Node2D" parent="."]
+script = ExtResource("4")
+X1 = 59
+X2 = 65
+Y = 42
+
+[node name="MeatHawker" type="Node2D" parent="."]
+script = ExtResource("9")

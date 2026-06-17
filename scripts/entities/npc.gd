@@ -190,9 +190,8 @@ func _execute_npc_ai_turn() -> void:
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
-		var adj: Vector2i = _find_adjacent_to(p_cell)
-		if adj != Vector2i(-1, -1) and move_budget > 0:
-			var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene)
+		if move_budget > 0:
+			var path: Array[Vector2i] = _best_approach_path_npc(p_cell)
 			var steps: int = mini(move_budget, path.size())
 			for i in range(steps):
 				if not is_instance_valid(self) or not _in_combat:
@@ -228,6 +227,17 @@ func _execute_npc_ai_turn() -> void:
 
 	if is_instance_valid(self):
 		CombatManager.end_turn()
+
+func _best_approach_path_npc(target: Vector2i) -> Array[Vector2i]:
+	var best: Array[Vector2i] = []
+	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var c: Vector2i = target + dir
+		if c != grid_cell and (_tile_scene == null or not _tile_scene.is_walkable(c)):
+			continue
+		var candidate: Array[Vector2i] = Pathfinding.find_path(grid_cell, c, _tile_scene)
+		if not candidate.is_empty() and (best.is_empty() or candidate.size() < best.size()):
+			best = candidate
+	return best
 
 func _find_adjacent_to(cell: Vector2i) -> Vector2i:
 	var best := Vector2i(-1, -1)

@@ -1075,6 +1075,8 @@ func _process_status_effects(entity: Node) -> void:
 			EventBus.damage_dealt.emit(entity, total_dmg, "bleed")
 			EventBus.damage_floater.emit(entity, "-%d bleed" % total_dmg, Color(0.75, 0.10, 0.10))
 			_check_combat_end()
+			if not active:
+				return
 		if bleed_stacks.is_empty():
 			EventBus.status_cleared.emit(entity, "bleed")
 
@@ -1105,6 +1107,8 @@ func _process_status_effects(entity: Node) -> void:
 			EventBus.damage_dealt.emit(entity, total_pdmg, "poison")
 			EventBus.damage_floater.emit(entity, "-%d poison" % total_pdmg, Color(0.25, 0.82, 0.25))
 			_check_combat_end()
+			if not active:
+				return
 		if poison_stacks.is_empty():
 			EventBus.status_cleared.emit(entity, "poison")
 
@@ -1128,6 +1132,8 @@ func _process_status_effects(entity: Node) -> void:
 		EventBus.damage_dealt.emit(entity, final_burn, "burning")
 		EventBus.damage_floater.emit(entity, "-%.0f fire" % final_burn, Color(1.0, 0.50, 0.10))
 		_check_combat_end()
+		if not active:
+			return
 		if burning_stacks.is_empty():
 			EventBus.status_cleared.emit(entity, "burning")
 
@@ -1163,6 +1169,8 @@ func _process_status_effects(entity: Node) -> void:
 		EventBus.damage_dealt.emit(entity, final_hdmg, "heated")
 		EventBus.damage_floater.emit(entity, "-%.0f heat" % final_hdmg, Color(1.0, 0.55, 0.10))
 		_check_combat_end()
+		if not active:
+			return
 		if heated_stacks.is_empty():
 			EventBus.status_cleared.emit(entity, "heated")
 		# Per-stack burning chance (12% per stack that ticked)

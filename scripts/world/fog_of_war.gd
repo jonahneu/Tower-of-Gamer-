@@ -56,6 +56,9 @@ func _ready() -> void:
 	_tile_scene = get_parent() as TileScene
 	EventBus.player_moved.connect(_on_player_moved)
 	EventBus.los_blockers_changed.connect(_on_los_blockers_changed)
+	EventBus.turn_ended.connect(func(_entity: Node):
+		if _origin != Vector2i(-1, -1) and GameManager.combat_mode:
+			update_entity_visibility())
 	_precompute_fov_offsets()
 	_create_chunks()
 

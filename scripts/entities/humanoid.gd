@@ -138,10 +138,10 @@ func calc_damage_received(raw_damage: int, attacker_weapon: Dictionary = {}) -> 
 		feat_resist_mult = 0.9
 
 	if dtype == "fire":
-		var base: float = maxf(1.0, float(raw_damage) * (1.0 - fire_resistance))
-		return maxf(1.0, base * (1.0 - all_resist) * feat_resist_mult)
+		var base: float = float(raw_damage) * (1.0 - fire_resistance)
+		return base * (1.0 - all_resist) * feat_resist_mult
 	if dtype != "physical":
-		return maxf(1.0, float(raw_damage) * (1.0 - all_resist) * feat_resist_mult)
+		return float(raw_damage) * (1.0 - all_resist) * feat_resist_mult
 
 	var flat:    float = armor["flat"]
 	var pct_rem: float = armor["pct_remaining"]
@@ -170,7 +170,7 @@ func calc_damage_received(raw_damage: int, attacker_weapon: Dictionary = {}) -> 
 	if after_flat == 0.0:
 		return 0.0
 	var after_pct: float = after_flat * pct_rem
-	return maxf(1.0, after_pct * (1.0 - all_resist) * feat_resist_mult) if all_resist > 0.0 else after_pct * feat_resist_mult
+	return after_pct * (1.0 - all_resist) * feat_resist_mult
 
 # Returns total bonus to a skill from all equipped items.
 func get_equipment_skill_bonus(skill_name: String) -> int:

@@ -43,7 +43,7 @@ func _load_feats() -> void:
 	}
 	feats["heavy_hitter"] = {
 		"id": "heavy_hitter", "name": "Heavy Hitter", "source": "level_up",
-		"description": "Your first two melee attacks each turn carry the full weight of your body behind them. Each of those strikes gains a bonus to damage equal to your Strength modifier, stacking on top of any other modifier already applied.",
+		"description": "You commit fully to every swing. Melee attacks deal bonus damage equal to the percentage of your turn's total AP that attack cost — spend it all on one strike for double damage, half for 1.5x, and so on.",
 		"requirements": {"stats": {"strength": 8}, "skills": {"melee": 15}},
 		"effect_tag": "heavy_hitter",
 	}

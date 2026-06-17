@@ -379,13 +379,14 @@ func _make_turn_state(entity: Node) -> Dictionary:
 	var ex: int  = _exhaustion_for(entity)
 	var base_mp: int = maxi(0, entity.stat_agility * 2 - ex * 2)
 	var mp: int  = floori(base_mp * 0.2) if entity.is_overburdened() else base_mp
+	var ap: int = maxi(1, entity.stat_agility - ex)
 	return {
-		"ap":           maxi(1, entity.stat_agility - ex),
-		"mp":           mp,
-		"cooldowns":    {},
-		"weapon_loaded": {},
-		"spells_cast":  0,
-		"melee_attacks": 0,
+		"ap":               ap,
+		"max_ap_this_turn": ap,
+		"mp":                mp,
+		"cooldowns":         {},
+		"weapon_loaded":     {},
+		"spells_cast":       0,
 	}
 
 func begin_smoke_deploy(item: Dictionary, inv_idx: int) -> void:
@@ -629,6 +630,9 @@ func _begin_turn() -> void:
 		EventBus.damage_floater.emit(e, "dazed!", Color(0.85, 0.65, 0.10))
 		EventBus.resources_changed.emit(e)
 
+	# Heavy Hitter reads this to know what "spending it all on one swing" means
+	ts["max_ap_this_turn"] = ts["ap"]
+
 	# Grappled: held in place — MP forced to 0 this turn, schedule clearing at end of this turn
 	if e.has_method("get") and e.get("status_effects") != null \
 			and not e.status_effects.get("grappled", []).is_empty():
@@ -764,10 +768,7 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 	EventBus.attack_started.emit(attacker, defender)
 	var skill_name: String = weapon.get("skill", "melee")
 	var mod_adj: int       = -1 if "clumsy" in props else 0
-	# Track melee attacks for Heavy Hitter (count each attempt, hit or miss)
 	var is_melee_attack: bool = skill_name == "melee" and not is_spell and attacker == GameManager.player
-	if is_melee_attack and GameManager.has_feat("heavy_hitter") and turn_state.has(attacker):
-		turn_state[attacker]["melee_attacks"] = turn_state[attacker].get("melee_attacks", 0) + 1
 
 	# Capture full roll detail for the log
 	var atk_skill: float  = _get_skill_total(attacker, skill_name, mod_adj)
@@ -914,15 +915,17 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 				var gov_mod: int         = gov_info["mod"]
 				var gov_stat: String     = gov_info["stat"]
 				raw += gov_mod
-				# Heavy Hitter: first two melee attacks per turn gain an extra STR mod
-				var hh_bonus: int = 0
-				if is_melee_attack and GameManager.has_feat("heavy_hitter"):
-					if turn_state.get(attacker, {}).get("melee_attacks", 0) <= 2:
-						var str_sv = attacker.get("stat_strength")
-						var str_val: int = int(str_sv) if str_sv != null else 5
-						hh_bonus = maxi(0, str_val - 5)
-						raw += hh_bonus
 				raw  = max(1, raw)
+				# Heavy Hitter: damage multiplier scales with how much of the
+				# attacker's AP pool for the round this swing's cost represents —
+				# spending it all on one swing roughly doubles that swing's damage.
+				var hh_mult: float = 1.0
+				var hh_log: String = ""
+				if is_melee_attack and GameManager.has_feat("heavy_hitter"):
+					var max_ap: int = maxi(1, turn_state.get(attacker, {}).get("max_ap_this_turn", 1))
+					var ap_frac: float = clampf(float(effective_ap) / float(max_ap), 0.0, 1.0)
+					hh_mult = 1.0 + ap_frac
+					hh_log = "  (heavy hitter: ×%.2f — %d/%d AP this turn)" % [hh_mult, effective_ap, max_ap]
 				if is_crit:
 					raw *= 2
 				if weapon.get("damage_type", "physical") == "physical":
@@ -945,6 +948,7 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 				else:
 					final_dmg = float(raw)
 				final_dmg *= dmg_mult
+				final_dmg *= hh_mult
 				if is_crit:
 					log_lines.append("  CRITICAL HIT!  [crit roll: %.0f%% < %.1f%%]" % [crit_roll, crit_chance])
 				elif crit_chance > 0.0:
@@ -957,8 +961,8 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 					log_lines.append("  Damage: %.1f%s" % [final_dmg, dtype_tag])
 				if gov_mod != 0 and gov_stat != "":
 					log_lines.append("  (dmg mod: %+d from %s)" % [gov_mod, gov_stat.capitalize()])
-				if hh_bonus > 0:
-					log_lines.append("  (heavy hitter: +%d from Strength)" % hh_bonus)
+				if hh_log != "":
+					log_lines.append(hh_log)
 				defender.current_hp -= final_dmg
 				total_dmg_dealt += final_dmg
 				EventBus.damage_dealt.emit(defender, final_dmg, "attack")

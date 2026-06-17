@@ -93,9 +93,8 @@ func _execute_ai_turn() -> void:
 	if cheby > SPIT_RANGE and _tile_scene != null:
 		var spit_cost: int = _spit_weapon.get("ap_cost", 2)
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - spit_cost)
-		var adj: Vector2i = _find_adjacent_to(p_cell)
-		if adj != Vector2i(-1, -1) and move_budget > 0:
-			var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene)
+		if move_budget > 0:
+			var path: Array[Vector2i] = _best_approach_path(p_cell)
 			var steps: int = mini(move_budget, path.size())
 			for i in range(steps):
 				if not is_instance_valid(self) or not _in_combat:
@@ -135,6 +134,35 @@ func _execute_ai_turn() -> void:
 					if not is_instance_valid(self) or not _in_combat:
 						return
 					var next_cell: Vector2i = path[i]
+					var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
+					var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
+					_tile_scene.unregister_entity(grid_cell)
+					grid_cell = next_cell
+					_tile_scene.register_entity(grid_cell, self)
+					CombatManager.spend_move()
+					var tween := create_tween()
+					tween.tween_property(self, "_visual_pos", target_screen, duration)
+					await tween.finished
+					queue_redraw()
+					if not is_instance_valid(self) or not _in_combat:
+						return
+
+	# ── Fallback: if still no LoS and not adjacent, try to close to bite range ──
+	p_cell = player_typed.grid_cell
+	cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+	if cheby > 1 and _tile_scene != null:
+		var zone_fb: TileScene = GameManager.current_zone as TileScene
+		var los_blocked: bool = zone_fb == null or not zone_fb.has_line_of_sight(grid_cell, p_cell)
+		if los_blocked:
+			var bite_cost: int = _bite_weapon.get("ap_cost", 1)
+			var budget_fb: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - bite_cost)
+			if budget_fb > 0:
+				var path_fb: Array[Vector2i] = _best_approach_path(p_cell)
+				var steps_fb: int = mini(budget_fb, path_fb.size())
+				for i in range(steps_fb):
+					if not is_instance_valid(self) or not _in_combat:
+						return
+					var next_cell: Vector2i = path_fb[i]
 					var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 					var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 					_tile_scene.unregister_entity(grid_cell)

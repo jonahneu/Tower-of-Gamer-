@@ -310,10 +310,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.button_index == MOUSE_BUTTON_RIGHT:
 		_pending_interaction = null
 		_pending_context_entity = null
-		# In combat, right-clicking any other combatant shows an inspect panel
-		# with their active status effects — even non-interactable enemies.
+		# In combat, right-clicking any other combatant shows an inspect popup
+		# with name, HP, and active status effects — even non-interactable enemies.
 		if GameManager.combat_mode and entity != null and entity != self and entity is Humanoid:
-			_show_context_menu_for(entity)
+			var opts: Array = entity.get_interaction_options() \
+					if entity.is_interactable and not (entity is Enemy) else []
+			EventBus.show_context_menu.emit(entity, opts, get_viewport().get_mouse_position())
 		elif entity != null and entity.is_interactable and not (GameManager.combat_mode and entity is Corpse):
 			if _is_in_reach_of(entity):
 				_show_context_menu_for(entity)

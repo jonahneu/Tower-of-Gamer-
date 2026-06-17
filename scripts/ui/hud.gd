@@ -871,16 +871,23 @@ func _build_load_panel() -> Control:
 	var shell = _make_panel_shell("LOAD GAME")
 	var vbox: VBoxContainer = shell["vbox"]
 	_load_rows.clear()
-	# Auto saves
-	_load_rows.append(_build_slot_row(vbox, GameManager.AUTO_SLOT,      false))
-	_load_rows.append(_build_slot_row(vbox, GameManager.PREV_AUTO_SLOT, false))
-	vbox.add_child(HSeparator.new())
-	# Quick saves
-	_load_rows.append(_build_slot_row(vbox, 0, false))
-	_load_rows.append(_build_slot_row(vbox, GameManager.PREV_QUICK_SLOT, false))
-	vbox.add_child(HSeparator.new())
-	for slot in range(1, GameManager.SLOT_COUNT + 1):
-		_load_rows.append(_build_slot_row(vbox, slot, false))
+	# Collect all slots and sort: existing saves newest-first, empty slots at end.
+	var all_slots: Array = [GameManager.AUTO_SLOT, GameManager.PREV_AUTO_SLOT, 0, GameManager.PREV_QUICK_SLOT]
+	for s in range(1, GameManager.SLOT_COUNT + 1):
+		all_slots.append(s)
+	all_slots.sort_custom(func(a: int, b: int) -> bool:
+		var ia: Dictionary = GameManager.get_save_info(a)
+		var ib: Dictionary = GameManager.get_save_info(b)
+		if ia["exists"] and not ib["exists"]:
+			return true
+		if not ia["exists"] and ib["exists"]:
+			return false
+		if not ia["exists"] and not ib["exists"]:
+			return false
+		return ia["timestamp"] > ib["timestamp"]
+	)
+	for s in all_slots:
+		_load_rows.append(_build_slot_row(vbox, s, false))
 	return shell["root"]
 
 # saveable=false: show info but replace Save button with an "auto" label
@@ -1489,6 +1496,16 @@ func _build_context_menu(entity: Node, options: Array, screen_pos: Vector2) -> C
 	name_lbl.add_theme_font_size_override("font_size", 12)
 	name_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
 	vbox.add_child(name_lbl)
+
+	# HP — shown for any humanoid (has current_hp / max_hp)
+	var cur_hp = entity.get("current_hp")
+	var mx_hp  = entity.get("max_hp")
+	if cur_hp != null and mx_hp != null:
+		var hp_lbl = Label.new()
+		hp_lbl.text = "HP  %d / %d" % [ceili(float(cur_hp)), ceili(float(mx_hp))]
+		hp_lbl.add_theme_font_size_override("font_size", 11)
+		hp_lbl.add_theme_color_override("font_color", Color(0.60, 0.92, 0.60))
+		vbox.add_child(hp_lbl)
 
 	# Status effects section — shown for any entity that has the property
 	# (i.e. humanoids: players, enemies, NPCs). For inspect-only panels
@@ -5536,7 +5553,9 @@ func _refresh_rest_cook(inv: Array) -> bool:
 			if DataManager.resolve_material_slot(mt, [active_def["mat_slot"]]) == "":
 				continue
 			var btn := Button.new()
-			btn.text = "%s  (%s)" % [item.get("name", "?"), item.get("quality_name", "?")]
+			var exp_c: int = item.get("expires_in_rests", -1)
+			var exp_c_str: String = ("  — spoils in %d" % exp_c) if exp_c >= 0 else ""
+			btn.text = "%s  (%s)%s" % [item.get("name", "?"), item.get("quality_name", "?"), exp_c_str]
 			var captured_item: Dictionary = item
 			var captured_idx: int = i
 			var captured_key: String = active_slot

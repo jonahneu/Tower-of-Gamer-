@@ -1,9 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://zone_undercity_fork"]
+[gd_scene load_steps=5 format=3 uid="uid://zone_undercity_fork"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/world/undercity_water.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/wall_torch.gd" id="5"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -50,3 +51,27 @@ DOOR_Y = -1
 
 [node name="UndercityWater" type="Node2D" parent="."]
 script = ExtResource("4")
+
+[node name="HallTorchWest1" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(8, 20)
+
+[node name="HallTorchWest2" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(8, 40)
+
+[node name="HallTorchWest3" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(8, 60)
+
+[node name="HallTorchEast1" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(71, 20)
+
+[node name="HallTorchEast2" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(71, 40)
+
+[node name="HallTorchEast3" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(71, 60)

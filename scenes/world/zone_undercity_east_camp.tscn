@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://zone_undercity_east_camp"]
+[gd_scene load_steps=13 format=3 uid="uid://zone_undercity_east_camp"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/entities/bone_pile.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/entities/skull_spike.gd" id="11"]
 [ext_resource type="Script" path="res://scripts/entities/cannibal_scout.gd" id="12"]
+[ext_resource type="Script" path="res://scripts/entities/wall_torch.gd" id="13"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -136,3 +137,19 @@ grid_cell = Vector2i(37, 76)
 [node name="SkullSpikeSouth2" type="Node2D" parent="."]
 script = ExtResource("11")
 grid_cell = Vector2i(43, 76)
+
+[node name="CampTorchSouth1" type="Node2D" parent="."]
+script = ExtResource("13")
+grid_cell = Vector2i(35, 72)
+
+[node name="CampTorchSouth2" type="Node2D" parent="."]
+script = ExtResource("13")
+grid_cell = Vector2i(45, 72)
+
+[node name="CampTorchNorth1" type="Node2D" parent="."]
+script = ExtResource("13")
+grid_cell = Vector2i(58, 16)
+
+[node name="CampTorchNorth2" type="Node2D" parent="."]
+script = ExtResource("13")
+grid_cell = Vector2i(66, 16)

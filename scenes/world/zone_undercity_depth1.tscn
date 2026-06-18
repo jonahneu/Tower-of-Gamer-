@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://zone_undercity_depth1"]
+[gd_scene load_steps=8 format=3 uid="uid://zone_undercity_depth1"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/entities/ladder.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/world/undercity_water.gd" id="6"]
 [ext_resource type="Script" path="res://scripts/entities/adventurer.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/entities/wall_torch.gd" id="8"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -40,6 +41,14 @@ script = ExtResource("4")
 script = ExtResource("5")
 direction = "up"
 grid_cell = Vector2i(40, 17)
+
+[node name="LadderTorchWest" type="Node2D" parent="."]
+script = ExtResource("8")
+grid_cell = Vector2i(38, 17)
+
+[node name="LadderTorchEast" type="Node2D" parent="."]
+script = ExtResource("8")
+grid_cell = Vector2i(42, 17)
 
 
 [node name="UndercityWater" type="Node2D" parent="."]

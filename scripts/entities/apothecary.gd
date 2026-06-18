@@ -113,7 +113,7 @@ func _build_options() -> Array:
 	# ── What do you sell — always available ───────────────────────────────────
 	var open_shop := func():
 		EventBus.dialogue_closed.connect(
-			func(_e): EventBus.open_shop_ui.emit(self, _build_shop_items(), [], 0, func(_item): pass),
+			func(_e): EventBus.open_shop_ui.emit(self, _build_shop_items(), [], Callable()),
 			CONNECT_ONE_SHOT)
 	options.append({
 		"label":    "What do you sell?",

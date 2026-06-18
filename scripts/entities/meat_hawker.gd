@@ -56,7 +56,7 @@ func _update_dialogue() -> void:
 
 	var open_shop := func():
 		EventBus.dialogue_closed.connect(
-			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], 0, Callable()),
+			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], Callable()),
 			CONNECT_ONE_SHOT)
 
 	dialogue_text = "You see a large sweaty man in a bloodstained hide apron. He addresses you loudly. \"Hello! You look hungry! Looking to buy some meats? Raw? Smoked? Cured?\""

@@ -102,11 +102,24 @@ func _build_options() -> Array:
 			"next_options": [{"label": "Continue", "closes": true, "action": reopen}],
 		})
 
-	# ── Work / meat buying — always available ─────────────────────────────────────
+	# ── Work / meat buying — opens the trading window ───────────────────────────
+	var open_meat_trade := func():
+		var remaining: int  = MEAT_DAILY_LIMIT - pd.get(MEAT_DAILY_KEY, 0)
+		var buy_list: Array = [{"material_type": "meat", "price": 1, "remaining": remaining}]
+		var on_sale := func(_item: Dictionary):
+			pd[MEAT_DAILY_KEY] = pd.get(MEAT_DAILY_KEY, 0) + 1
+			_check_hunter_hint(pd)
+		EventBus.dialogue_closed.connect(
+			func(_e): EventBus.open_shop_ui.emit(self, [], buy_list, on_sale),
+			CONNECT_ONE_SHOT)
+
 	options.append({
 		"label":    "Got any work?",
 		"response": "Not exactly. But I'll buy fresh meat off you — one coin a piece, up to three a day.",
-		"next_options": _build_sell_meat_options(pd, reopen),
+		"next_options": [
+			{"label": "Show me what you've got.", "closes": true, "action": open_meat_trade},
+			{"label": "Maybe another time.", "closes": true, "action": reopen},
+		],
 	})
 
 	# ── Apothecary delivery — appears when quest accepted and pouch in inventory ─
@@ -268,45 +281,6 @@ func _convince_skill() -> float:
 	var invested: float = float(pd.get("skills", {}).get("convince", 0))
 	var wil_mod: int = pd.get("stats", {}).get("willpower", 5) - 5
 	return invested * (1.0 + wil_mod * 0.1)
-
-func _build_sell_meat_options(pd: Dictionary, reopen: Callable) -> Array:
-	var opts: Array     = []
-	var sold_today: int = pd.get(MEAT_DAILY_KEY, 0)
-	var remaining: int  = MEAT_DAILY_LIMIT - sold_today
-
-	if remaining <= 0:
-		opts.append({"label": "You've bought your three today.", "closes": true, "action": reopen})
-		return opts
-
-	var has_meat: bool = false
-	for item in pd.get("inventory", []):
-		if item.get("material_type", "") == "meat":
-			has_meat = true
-			break
-
-	if not has_meat:
-		opts.append({"label": "I don't have any right now.", "closes": true, "action": reopen})
-		return opts
-
-	var sell_one := func():
-		var inv: Array = pd.get("inventory", [])
-		for i in range(inv.size()):
-			if inv[i].get("material_type", "") == "meat":
-				inv.remove_at(i)
-				break
-		inv.append(DataManager.get_item("coin"))
-		pd["inventory"] = inv
-		pd[MEAT_DAILY_KEY] = pd.get(MEAT_DAILY_KEY, 0) + 1
-		_check_hunter_hint(pd)
-
-	opts.append({
-		"label":    "Sell a piece of meat. (1 coin)",
-		"action":   sell_one,
-		"response": "Here.",
-		"next_options": [{"label": "Continue", "closes": true, "action": reopen}],
-	})
-	opts.append({"label": "Maybe another time.", "closes": true, "action": reopen})
-	return opts
 
 func _check_hunter_hint(pd: Dictionary) -> void:
 	if pd.get(MEAT_DAILY_KEY, 0) < MEAT_DAILY_LIMIT:

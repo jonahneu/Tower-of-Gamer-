@@ -29,24 +29,11 @@ var _save_panel: Control
 var _load_panel: Control
 var _shop_panel: Control = null
 var _shop_merchant: Node = null
-var _shop_items: Array = []          # [{id, price}] from the merchant
-var _shop_selected_idx: int = -1
-var _shop_item_btns: Array = []
-var _shop_detail_name: Label = null
-var _shop_detail_desc: Label = null
-var _shop_buy_btn: Button  = null
+var _shop_items: Array = []          # [{id, price}] the merchant sells to the player
+var _shop_buy_list: Array = []       # [{id or material_type, price, remaining}] what the merchant buys from the player
+var _shop_on_sale: Callable
 var _shop_coins_lbl: Label = null
 var _shop_title_lbl: Label = null
-var _shop_tab_row: HBoxContainer = null
-var _shop_buy_tab_btn: Button = null
-var _shop_sell_tab_btn: Button = null
-var _shop_quota_lbl: Label = null
-var _shop_mode: String = "buy"
-var _sell_sellable: Array = []
-var _sell_daily_remaining: int = 0
-var _sell_selected_idx: int = -1
-var _sell_item_btns: Array = []
-var _sell_on_sale: Callable
 var _save_rows: Array = []   # [{char_lbl, time_lbl, btn}]
 var _load_rows: Array = []
 var _sneak_btn: Button = null
@@ -2591,6 +2578,47 @@ func _hide_item_hover_tooltip() -> void:
 	if _item_hover_tooltip != null:
 		_item_hover_tooltip.visible = false
 
+# Builds a sized ItemIcon for `item`. pass_through=true (default) ignores mouse
+# input so a surrounding Button keeps receiving clicks/hover; pass false for an
+# icon placed directly in a plain row with no enclosing button, so the icon
+# itself can receive hover. Pair with _wire_item_tooltip on whichever control
+# (the icon, or its parent Button) should show the tooltip.
+func _make_item_icon(item: Dictionary, size: float = 28.0, pass_through: bool = true) -> ItemIcon:
+	var icon := ItemIcon.new()
+	icon.custom_minimum_size = Vector2(size, size)
+	icon.item_id = item.get("id", "")
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE if pass_through else Control.MOUSE_FILTER_STOP
+	return icon
+
+# Wires `control` (an icon or a button) to show item's name + description on
+# hover, using the same tooltip as the main inventory grid.
+func _wire_item_tooltip(control: Control, item: Dictionary) -> void:
+	control.mouse_entered.connect(func(): _show_item_hover_tooltip(item, get_viewport().get_mouse_position()))
+	control.mouse_exited.connect(_hide_item_hover_tooltip)
+
+# Turns a plain text Button into an icon + secondary-text row representing
+# `item` (instead of showing its name as the button's own text), and wires
+# the hover tooltip for the full name + description. `info_text` is shown
+# next to the icon (e.g. uses remaining, price) — pass "" for icon-only.
+func _fill_item_button(btn: Button, item: Dictionary, info_text: String = "") -> void:
+	btn.text = ""
+	btn.custom_minimum_size.y = maxf(btn.custom_minimum_size.y, 32.0)
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(row)
+	var icon := _make_item_icon(item, 28.0, true)
+	row.add_child(icon)
+	if info_text != "":
+		var lbl := Label.new()
+		lbl.text = info_text
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(lbl)
+	_wire_item_tooltip(btn, item)
+
 func _on_drop_btn_pressed() -> void:
 	if _item_info_drop_target.is_empty():
 		return
@@ -2859,15 +2887,21 @@ func _populate_container_column(list_vbox: VBoxContainer, stacks: Array, action_
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 
-		var lbl := Label.new()
-		var name_text: String = item.get("name", "Item")
+		var icon := _make_item_icon(item, 28.0, false)
+		_wire_item_tooltip(icon, item)
+		row.add_child(icon)
+
 		if stack["count"] > 1:
-			name_text += " ×%d" % stack["count"]
-		lbl.text = name_text
-		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lbl.add_theme_font_size_override("font_size", 12)
-		lbl.add_theme_color_override("font_color", Color(0.92, 0.88, 0.80))
-		row.add_child(lbl)
+			var count_lbl := Label.new()
+			count_lbl.text = "×%d" % stack["count"]
+			count_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			count_lbl.add_theme_font_size_override("font_size", 12)
+			count_lbl.add_theme_color_override("font_color", Color(0.92, 0.88, 0.80))
+			row.add_child(count_lbl)
+		else:
+			var spacer := Control.new()
+			spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(spacer)
 
 		var btn := Button.new()
 		btn.text = action_label
@@ -3435,13 +3469,32 @@ func _refresh_crafting() -> void:
 			var mat_entry: Dictionary = _crafting_materials[i]
 			var mat: Dictionary = mat_entry["item"]
 			var count: int = mat_entry.get("count", 1)
+			var is_slotted: bool = mat_entry["inv_idx"] in slotted_indices
 			var btn := Button.new()
 			btn.custom_minimum_size = Vector2(120, 52)
-			btn.add_theme_font_size_override("font_size", 10)
-			btn.clip_text = true
-			btn.text = mat.get("name", "?") + (" x%d" % count if count > 1 else "")
-			if mat_entry["inv_idx"] in slotted_indices:
-				btn.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4))
+			btn.text = ""
+			var col := VBoxContainer.new()
+			col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			col.alignment = BoxContainer.ALIGNMENT_CENTER
+			btn.add_child(col)
+			var icon_center := CenterContainer.new()
+			icon_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			col.add_child(icon_center)
+			var icon := _make_item_icon(mat, 28.0, true)
+			if is_slotted:
+				icon.modulate = Color(0.4, 0.9, 0.4)
+			icon_center.add_child(icon)
+			if count > 1:
+				var count_lbl := Label.new()
+				count_lbl.text = "×%d" % count
+				count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				count_lbl.add_theme_font_size_override("font_size", 10)
+				count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				if is_slotted:
+					count_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4))
+				col.add_child(count_lbl)
+			_wire_item_tooltip(btn, mat)
 			var captured_i: int = i
 			btn.pressed.connect(_on_crafting_mat_pressed.bind(captured_i))
 			_crafting_inv_grid.add_child(btn)
@@ -4703,8 +4756,8 @@ func _on_xp_gained(amount: int) -> void:
 # ══════════════════════════════════════════════════════════════════════════════
 func _build_shop_panel() -> Control:
 	var shell := _make_panel_shell("Shop")
-	var root: Control      = shell["root"]
-	var vbox: VBoxContainer = shell["vbox"]
+	var root: Control       = shell["root"]
+	var vbox: VBoxContainer  = shell["vbox"]
 
 	# Store a ref to the title label so we can update it per merchant.
 	# _make_panel_shell puts it in the first HBoxContainer child of vbox.
@@ -4716,351 +4769,180 @@ func _build_shop_panel() -> Control:
 	_shop_coins_lbl.add_theme_font_size_override("font_size", 14)
 	vbox.add_child(_shop_coins_lbl)
 
-	_shop_tab_row = HBoxContainer.new()
-	_shop_tab_row.visible = false
-	_shop_tab_row.add_theme_constant_override("separation", 4)
-	vbox.add_child(_shop_tab_row)
-
-	_shop_buy_tab_btn = Button.new()
-	_shop_buy_tab_btn.text = "Buy"
-	_shop_buy_tab_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_shop_buy_tab_btn.pressed.connect(func(): _on_shop_tab_changed("buy"))
-	_shop_tab_row.add_child(_shop_buy_tab_btn)
-
-	_shop_sell_tab_btn = Button.new()
-	_shop_sell_tab_btn.text = "Sell"
-	_shop_sell_tab_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_shop_sell_tab_btn.pressed.connect(func(): _on_shop_tab_changed("sell"))
-	_shop_tab_row.add_child(_shop_sell_tab_btn)
-
-	_shop_quota_lbl = Label.new()
-	_shop_quota_lbl.add_theme_font_size_override("font_size", 13)
-	_shop_quota_lbl.modulate = Color(0.75, 0.75, 0.75)
-	_shop_quota_lbl.visible = false
-	vbox.add_child(_shop_quota_lbl)
-
 	vbox.add_child(HSeparator.new())
 
-	# Split: item list (left) and item detail (right)
+	# Two simultaneous panes — your inventory (sell) and their wares (buy).
+	# No buy/sell tabs; trading is just acting on the row you want.
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 16)
 	vbox.add_child(body)
 
-	# ── Left: scrollable item list ─────────────────────────────────────────────
-	var list_container := VBoxContainer.new()
-	list_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list_container.custom_minimum_size = Vector2(280, 0)
-	body.add_child(list_container)
+	var player_vbox := _build_container_column(body, "Your Inventory")
+	body.add_child(VSeparator.new())
+	var vendor_vbox := _build_container_column(body, "Their Wares")
 
-	var list_hdr := HBoxContainer.new()
-	list_container.add_child(list_hdr)
-
-	var _col_name := Label.new(); _col_name.text = "Item"
-	_col_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_col_name.add_theme_font_size_override("font_size", 12)
-	_col_name.modulate = Color(0.7, 0.7, 0.7)
-	list_hdr.add_child(_col_name)
-	for col_text in ["Type", "Wt", "Price"]:
-		var col := Label.new(); col.text = col_text
-		col.custom_minimum_size = Vector2(48, 0)
-		col.add_theme_font_size_override("font_size", 12)
-		col.modulate = Color(0.7, 0.7, 0.7)
-		list_hdr.add_child(col)
-
-	list_container.add_child(HSeparator.new())
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	list_container.add_child(scroll)
-
-	var item_vbox := VBoxContainer.new()
-	item_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	item_vbox.add_theme_constant_override("separation", 2)
-	scroll.add_child(item_vbox)
-
-	# _shop_item_btns populated in _refresh_shop — store the vbox ref via metadata
-	root.set_meta("item_vbox", item_vbox)
-
-	# ── Right: item detail ─────────────────────────────────────────────────────
-	var detail := VBoxContainer.new()
-	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	detail.add_theme_constant_override("separation", 8)
-	body.add_child(detail)
-
-	_shop_detail_name = Label.new()
-	_shop_detail_name.text = "Select an item"
-	_shop_detail_name.add_theme_font_size_override("font_size", 16)
-	_shop_detail_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	detail.add_child(_shop_detail_name)
-
-	detail.add_child(HSeparator.new())
-
-	_shop_detail_desc = Label.new()
-	_shop_detail_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_shop_detail_desc.add_theme_font_size_override("font_size", 13)
-	_shop_detail_desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	detail.add_child(_shop_detail_desc)
-
-	vbox.add_child(HSeparator.new())
-
-	# ── Bottom: buy button ─────────────────────────────────────────────────────
-	var footer := HBoxContainer.new()
-	vbox.add_child(footer)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.add_child(spacer)
-
-	_shop_buy_btn = Button.new()
-	_shop_buy_btn.text = "Buy"
-	_shop_buy_btn.custom_minimum_size = Vector2(140, 36)
-	_shop_buy_btn.disabled = true
-	_shop_buy_btn.pressed.connect(_on_shop_action)
-	footer.add_child(_shop_buy_btn)
-
+	root.set_meta("player_vbox", player_vbox)
+	root.set_meta("vendor_vbox", vendor_vbox)
 	return root
 
-func _on_open_shop_ui(merchant: Node, shop_items: Array, sellable: Array, daily_remaining: int, on_sale: Callable) -> void:
+func _on_open_shop_ui(merchant: Node, shop_items: Array, buy_list: Array, on_sale: Callable) -> void:
 	_close_all()
-	_shop_merchant        = merchant
-	_shop_items           = shop_items
-	_sell_sellable        = sellable
-	_sell_daily_remaining = daily_remaining
-	_sell_on_sale         = on_sale
-	_shop_mode            = "buy"
-	_shop_selected_idx    = -1
-	_sell_selected_idx    = -1
+	_shop_merchant = merchant
+	_shop_items    = shop_items
+	_shop_buy_list = buy_list
+	_shop_on_sale  = on_sale
 	_refresh_shop()
-	_shop_panel.visible   = true
+	_shop_panel.visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-func _on_shop_tab_changed(mode: String) -> void:
-	_shop_mode         = mode
-	_shop_selected_idx = -1
-	_sell_selected_idx = -1
-	_refresh_shop()
-
 func _refresh_shop() -> void:
-	var has_sell: bool = not _sell_sellable.is_empty()
 	if _shop_merchant != null and _shop_title_lbl != null:
 		_shop_title_lbl.text = _shop_merchant.entity_name + "'s Wares"
 	_refresh_shop_coin_lbl()
 
-	if _shop_tab_row != null:
-		_shop_tab_row.visible = has_sell
-	if _shop_buy_tab_btn != null:
-		_shop_buy_tab_btn.disabled = _shop_mode == "buy"
-	if _shop_sell_tab_btn != null:
-		_shop_sell_tab_btn.disabled = _shop_mode == "sell"
-	if _shop_quota_lbl != null:
-		if _shop_mode == "sell":
-			_shop_quota_lbl.text    = "Will buy: %d more today" % _sell_daily_remaining
-			_shop_quota_lbl.visible = true
-		else:
-			_shop_quota_lbl.visible = false
-
-	var item_vbox: VBoxContainer = _shop_panel.get_meta("item_vbox") as VBoxContainer
-	for child in item_vbox.get_children():
+	var player_vbox: VBoxContainer = _shop_panel.get_meta("player_vbox") as VBoxContainer
+	var vendor_vbox: VBoxContainer = _shop_panel.get_meta("vendor_vbox") as VBoxContainer
+	for child in player_vbox.get_children():
 		child.queue_free()
-	_shop_item_btns.clear()
-	_sell_item_btns.clear()
-	_shop_detail_name.text  = "Select an item"
-	_shop_detail_desc.text  = ""
-	_shop_buy_btn.disabled  = true
-	_shop_buy_btn.text      = "Buy" if _shop_mode == "buy" else "Sell"
+	for child in vendor_vbox.get_children():
+		child.queue_free()
 
-	if _shop_mode == "buy":
-		for i in range(_shop_items.size()):
-			var entry: Dictionary     = _shop_items[i]
-			var item_data: Dictionary = DataManager.get_item(entry.get("id", ""))
-			if item_data.is_empty():
-				continue
-			var idx: int = i
-			var btn := Button.new()
-			btn.flat = true
-			btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			btn.add_theme_font_size_override("font_size", 13)
-			btn.custom_minimum_size = Vector2(0, 26)
-			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			var name_str: String  = item_data.get("name", "?").left(22).rpad(23)
-			var type_str: String  = _item_type_short(item_data.get("type", "")).rpad(7)
-			var wt_str: String    = ("%.1f" % item_data.get("weight", 0.0)).rpad(6)
-			var price_str: String = "%d¢" % entry.get("price", 0)
-			btn.text = name_str + type_str + wt_str + price_str
-			btn.pressed.connect(func(): _on_shop_item_selected(idx))
-			item_vbox.add_child(btn)
-			_shop_item_btns.append(btn)
-	else:
-		for i in range(_sell_sellable.size()):
-			var entry: Dictionary     = _sell_sellable[i]
-			var item_data: Dictionary = entry.get("item", {})
-			var idx: int = i
-			var btn := Button.new()
-			btn.flat = true
-			btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			btn.add_theme_font_size_override("font_size", 13)
-			btn.custom_minimum_size = Vector2(0, 26)
-			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			btn.disabled = _sell_daily_remaining <= 0
-			var name_str: String  = item_data.get("name", "?").left(22).rpad(23)
-			var qlty_str: String  = item_data.get("quality_name", "?").left(6).rpad(7)
-			var wt_str: String    = ("%.1f" % item_data.get("weight", 0.0)).rpad(6)
-			var price_str: String = "%d¢" % entry.get("price", 0)
-			btn.text = name_str + qlty_str + wt_str + price_str
-			btn.pressed.connect(func(): _on_shop_item_selected(idx))
-			item_vbox.add_child(btn)
-			_sell_item_btns.append(btn)
+	# ── Your inventory: sellable rows, greyed out if the vendor isn't buying ──
+	var stacks: Array = _compute_stacked_inv()
+	stacks = stacks.filter(func(s): return s["item"].get("type", "") != "currency")
+	if stacks.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "(empty)"
+		empty_lbl.add_theme_font_size_override("font_size", 12)
+		empty_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		player_vbox.add_child(empty_lbl)
+	for stack in stacks:
+		var item: Dictionary = stack["item"]
+		var entry: Dictionary = _find_buy_entry(item)
+		var interested: bool = not entry.is_empty()
+		var remaining: int = entry.get("remaining", 0)
+		var can_sell: bool = interested and remaining > 0
 
-func _refresh_shop_coin_lbl() -> void:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+
+		var icon := _make_item_icon(item, 28.0, false)
+		_wire_item_tooltip(icon, item)
+		if not can_sell:
+			icon.modulate = Color(1, 1, 1, 0.35)
+		row.add_child(icon)
+
+		var count_lbl := Label.new()
+		count_lbl.text = "×%d" % stack["count"] if stack["count"] > 1 else ""
+		count_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		count_lbl.add_theme_font_size_override("font_size", 12)
+		if not can_sell:
+			count_lbl.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		row.add_child(count_lbl)
+
+		var sell_btn := Button.new()
+		if not interested:
+			sell_btn.text = "Not interested"
+			sell_btn.disabled = true
+		elif remaining <= 0:
+			sell_btn.text = "Sold out today"
+			sell_btn.disabled = true
+		else:
+			sell_btn.text = "Sell — %d¢" % entry.get("price", 0)
+			var captured_item: Dictionary = item
+			var captured_entry: Dictionary = entry
+			sell_btn.pressed.connect(func(): _on_sell_item(captured_item, captured_entry))
+		row.add_child(sell_btn)
+
+		player_vbox.add_child(row)
+
+	# ── Their wares: buyable rows ────────────────────────────────────────────
+	if _shop_items.is_empty():
+		var none_lbl := Label.new()
+		none_lbl.text = "(nothing for sale)"
+		none_lbl.add_theme_font_size_override("font_size", 12)
+		none_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		vendor_vbox.add_child(none_lbl)
+	var coins: int = _player_coin_count()
+	for shop_entry in _shop_items:
+		var item_data: Dictionary = DataManager.get_item(shop_entry.get("id", ""))
+		if item_data.is_empty():
+			continue
+		var row2 := HBoxContainer.new()
+		row2.add_theme_constant_override("separation", 8)
+
+		var icon2 := _make_item_icon(item_data, 28.0, false)
+		_wire_item_tooltip(icon2, item_data)
+		row2.add_child(icon2)
+
+		var spacer2 := Control.new()
+		spacer2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row2.add_child(spacer2)
+
+		var price2: int = shop_entry.get("price", 0)
+		var buy_btn := Button.new()
+		buy_btn.text = "Buy — %d¢" % price2
+		buy_btn.disabled = coins < price2
+		var captured_entry2: Dictionary = shop_entry
+		buy_btn.pressed.connect(func(): _on_buy_item(captured_entry2))
+		row2.add_child(buy_btn)
+
+		vendor_vbox.add_child(row2)
+
+func _player_coin_count() -> int:
 	var coins: int = 0
 	for item in GameManager.player_data.get("inventory", []):
 		if item.get("type", "") == "currency":
 			coins += 1
+	return coins
+
+func _refresh_shop_coin_lbl() -> void:
+	var coins: int = _player_coin_count()
 	if _shop_coins_lbl != null:
 		_shop_coins_lbl.text = "You have: %d coin%s" % [coins, "s" if coins != 1 else ""]
 
-func _on_shop_item_selected(idx: int) -> void:
-	var btns: Array
-	var item_data: Dictionary
-	var price: int
-	if _shop_mode == "buy":
-		_shop_selected_idx = idx
-		_sell_selected_idx = -1
-		btns = _shop_item_btns
-		var entry: Dictionary = _shop_items[idx]
-		item_data = DataManager.get_item(entry.get("id", ""))
-		price = entry.get("price", 0)
-		var coins: int = 0
-		for it in GameManager.player_data.get("inventory", []):
-			if it.get("type", "") == "currency":
-				coins += 1
-		_shop_buy_btn.text     = "Buy — %d coin%s" % [price, "s" if price != 1 else ""]
-		_shop_buy_btn.disabled = coins < price
-		var desc: String  = item_data.get("description", "")
-		var stats: String = _item_stats_line(item_data)
-		_shop_detail_desc.text = (stats + "\n\n" if stats != "" else "") + desc
-	else:
-		_sell_selected_idx = idx
-		_shop_selected_idx = -1
-		btns = _sell_item_btns
-		var entry: Dictionary = _sell_sellable[idx]
-		item_data = entry.get("item", {})
-		price = entry.get("price", 0)
-		_shop_buy_btn.text     = "Sell — %d coin%s" % [price, "s" if price != 1 else ""]
-		_shop_buy_btn.disabled = _sell_daily_remaining <= 0
-		_shop_detail_desc.text = item_data.get("description", "")
+# Finds the buy_list entry (if any) the vendor would buy `item` under, matched
+# either by exact item id or by material_type (e.g. "meat" matches any cut).
+func _find_buy_entry(item: Dictionary) -> Dictionary:
+	for entry in _shop_buy_list:
+		if entry.has("id") and item.get("id", "") == entry["id"]:
+			return entry
+		if entry.has("material_type") and item.get("material_type", "") == entry["material_type"]:
+			return entry
+	return {}
 
-	_shop_detail_name.text = item_data.get("name", "?")
-	for j in range(btns.size()):
-		var b: Button = btns[j] as Button
-		if b == null: continue
-		b.modulate = Color(1.3, 1.3, 0.6) if j == idx else Color(1, 1, 1)
+func _on_sell_item(item: Dictionary, entry: Dictionary) -> void:
+	var inv: Array = GameManager.player_data.get("inventory", [])
+	var idx: int = inv.find(item)
+	if idx == -1:
+		return
+	inv.remove_at(idx)
+	for _c in range(entry.get("price", 0)):
+		inv.append(DataManager.get_item("coin"))
+	GameManager.player_data["inventory"] = inv
+	entry["remaining"] = entry.get("remaining", 0) - 1
+	if _shop_on_sale.is_valid():
+		_shop_on_sale.call(item)
+	_refresh_shop()
 
-func _on_shop_action() -> void:
-	if _shop_mode == "buy":
-		if _shop_selected_idx < 0 or _shop_selected_idx >= _shop_items.size():
-			return
-		var entry: Dictionary = _shop_items[_shop_selected_idx]
-		var price: int        = entry.get("price", 0)
-		var inv: Array        = GameManager.player_data.get("inventory", [])
-		var removed: int = 0
-		var i: int = inv.size() - 1
-		while i >= 0 and removed < price:
-			if inv[i].get("type", "") == "currency":
-				inv.remove_at(i)
-				removed += 1
-			i -= 1
-		if removed < price:
-			return
-		var item_data: Dictionary = DataManager.get_item(entry.get("id", ""))
-		if not item_data.is_empty():
-			inv.append(item_data.duplicate(true))
-		GameManager.player_data["inventory"] = inv
-		_shop_selected_idx = -1
-		_refresh_shop()
-	else:
-		if _sell_selected_idx < 0 or _sell_selected_idx >= _sell_sellable.size():
-			return
-		if _sell_daily_remaining <= 0:
-			return
-		var entry: Dictionary        = _sell_sellable[_sell_selected_idx]
-		var item_to_sell: Dictionary = entry.get("item", {})
-		var price: int               = entry.get("price", 0)
-		var inv: Array               = GameManager.player_data.get("inventory", [])
-		var sell_id: String  = item_to_sell.get("id", "")
-		var sell_qty: int    = item_to_sell.get("quality", -1)
-		var removed: bool = false
-		for i in range(inv.size()):
-			if inv[i].get("id", "") == sell_id and inv[i].get("quality", -1) == sell_qty:
-				inv.remove_at(i)
-				removed = true
-				break
-		if not removed:
-			return
-		for _c in range(price):
-			inv.append(DataManager.get_item("coin"))
-		GameManager.player_data["inventory"] = inv
-		_sell_daily_remaining -= 1
-		if _sell_on_sale.is_valid():
-			_sell_on_sale.call(item_to_sell)
-		_sell_sellable.remove_at(_sell_selected_idx)
-		_refresh_shop()
-
-func _item_type_short(t: String) -> String:
-	match t:
-		"weapon":   return "Wpn"
-		"armor":    return "Arm"
-		"clothing": return "Cloth"
-		"tool":     return "Tool"
-		"trinket":  return "Trnkt"
-		"ammo":     return "Ammo"
-		_:          return t.left(5)
-
-const _STAT_ABBREV: Dictionary = {
-	"strength":     "str",
-	"dexterity":    "dex",
-	"agility":      "agi",
-	"constitution": "con",
-	"intelligence": "int",
-	"willpower":    "wil",
-	"perception":   "per",
-}
-
-func _item_stats_line(item: Dictionary) -> String:
-	var parts: Array = []
-	if item.has("damage"):
-		var governing: Array = item.get("governing", [])
-		var abbrevs: Array = []
-		for stat in governing:
-			var abbr: String = _STAT_ABBREV.get(stat, stat.left(3))
-			if item.get("half_dex_damage", false) and stat == "dexterity":
-				abbr += "×½"
-			abbrevs.append(abbr)
-		var dmg_dice: String = item["damage"]
-		if not abbrevs.is_empty():
-			parts.append("%s (%s)" % [dmg_dice, " / ".join(abbrevs)])
-		else:
-			parts.append(dmg_dice)
-	if item.has("range") and item["range"] > 1:
-		parts.append("Rng %d" % item["range"])
-	if item.get("defense_flat", 0) != 0 or item.get("defense_pct", 0.0) != 0.0:
-		parts.append("Def +%d / +%.0f%%" % [item.get("defense_flat",0), item.get("defense_pct",0.0)*100])
-	if item.get("block_flat", 0.0) > 0.0:
-		var block_gov: Array = item.get("governing", [])
-		var block_abbrevs: Array = []
-		for stat in block_gov:
-			block_abbrevs.append(_STAT_ABBREV.get(stat, str(stat).left(3)))
-		if not block_abbrevs.is_empty():
-			parts.append("Block %d (%s)" % [int(item["block_flat"]), " / ".join(block_abbrevs)])
-		else:
-			parts.append("Block %d" % int(item["block_flat"]))
-	if item.get("spirit_ward", false):
-		parts.append("Spirit Ward")
-	if item.get("weight", 0.0) > 0:
-		parts.append("%.1f kg" % item["weight"])
-	return "  ·  ".join(parts)
+func _on_buy_item(entry: Dictionary) -> void:
+	var price: int = entry.get("price", 0)
+	var inv: Array = GameManager.player_data.get("inventory", [])
+	var removed: int = 0
+	var i: int = inv.size() - 1
+	while i >= 0 and removed < price:
+		if inv[i].get("type", "") == "currency":
+			inv.remove_at(i)
+			removed += 1
+		i -= 1
+	if removed < price:
+		return
+	var item_data: Dictionary = DataManager.get_item(entry.get("id", ""))
+	if not item_data.is_empty():
+		inv.append(item_data.duplicate(true))
+	GameManager.player_data["inventory"] = inv
+	_refresh_shop()
 
 
 func _show_save_toast() -> void:
@@ -5494,7 +5376,7 @@ func _refresh_rest_eat(inv: Array) -> bool:
 		var max_i: int  = item.get("max_uses", 1)
 		var exp_i: int  = item.get("expires_in_rests", -1)
 		var exp_i_str: String = ("  — spoils in %d" % exp_i) if exp_i >= 0 else ""
-		btn.text = "%s  (%d/%d uses)%s" % [item.get("name", "?"), uses_i, max_i, exp_i_str]
+		_fill_item_button(btn, item, "(%d/%d uses)%s" % [uses_i, max_i, exp_i_str])
 		var captured_item: Dictionary = item
 		var captured_idx: int = i
 		btn.pressed.connect(func():
@@ -5592,7 +5474,7 @@ func _refresh_rest_cook(inv: Array) -> bool:
 			var btn := Button.new()
 			var exp_c: int = item.get("expires_in_rests", -1)
 			var exp_c_str: String = ("  — spoils in %d" % exp_c) if exp_c >= 0 else ""
-			btn.text = "%s  (%s)%s" % [item.get("name", "?"), item.get("quality_name", "?"), exp_c_str]
+			_fill_item_button(btn, item, "(%s)%s" % [item.get("quality_name", "?"), exp_c_str])
 			var captured_item: Dictionary = item
 			var captured_idx: int = i
 			var captured_key: String = active_slot
@@ -5652,17 +5534,24 @@ func _build_cook_slot_row(slot_key: String, label_text: String) -> HBoxContainer
 	lbl.custom_minimum_size = Vector2(160, 0)
 	row.add_child(lbl)
 
-	var value_lbl := Label.new()
-	value_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	value_lbl.clip_contents = false
 	if _rest_cook_slots.has(slot_key):
 		var item: Dictionary = _rest_cook_slots[slot_key]["item"]
-		value_lbl.text = "%s  (%s)" % [item.get("name", "?"), item.get("quality_name", "?")]
+		var icon := _make_item_icon(item, 26.0, false)
+		_wire_item_tooltip(icon, item)
+		row.add_child(icon)
+		var value_lbl := Label.new()
+		value_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		value_lbl.clip_contents = false
+		value_lbl.text = "(%s)" % item.get("quality_name", "?")
 		value_lbl.add_theme_color_override("font_color", Color(0.80, 0.80, 0.65))
+		row.add_child(value_lbl)
 	else:
+		var value_lbl := Label.new()
+		value_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		value_lbl.clip_contents = false
 		value_lbl.text = "— choose below —"
 		value_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
-	row.add_child(value_lbl)
+		row.add_child(value_lbl)
 
 	if _rest_cook_slots.has(slot_key):
 		var clear_btn := Button.new()

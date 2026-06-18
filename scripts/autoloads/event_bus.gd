@@ -24,8 +24,12 @@ signal status_cleared(entity: Node, status_name: String)
 signal combat_log(entry: String)   # fired for every loggable combat event
 signal open_crafting_ui(entity: Node)   # entity = the NPC that opened crafting
 signal crafting_ui_closed(entity: Node) # entity = same NPC, fired when player closes panel
-# shop_items: [{id, price}]; sellable: [{item, price}] — pass empty sellable for buy-only merchants
-signal open_shop_ui(merchant: Node, shop_items: Array, sellable: Array, daily_remaining: int, on_sale: Callable)
+# shop_items: [{id, price}] the merchant sells to the player.
+# buy_list: [{id or material_type, price, remaining}] what the merchant will
+# buy from the player right now — pass [] for a merchant that buys nothing.
+# on_sale(item): called once a sale to the merchant completes, so the caller
+# can persist its own remaining-quantity bookkeeping (e.g. a daily limit).
+signal open_shop_ui(merchant: Node, shop_items: Array, buy_list: Array, on_sale: Callable)
 signal dialogue_opened(entity: Node)    # fired when the dialogue panel becomes visible
 signal dialogue_closed(entity: Node)    # fired when the dialogue panel is dismissed
 signal examine_panel_opened             # fired when the object/examine panel becomes visible

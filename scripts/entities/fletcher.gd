@@ -1,10 +1,7 @@
 extends NPC
 # The Fletcher — runs an open stall in the Market District.
 # Sells primitive/natural weapons: bows, stone knife, wooden spear, whip, quiver.
-# Also buys hides: regular (coyote pelt, lizard skin) <Fine=1c, Fine+=2c; adolescent coyote <Fine=2c, Fine+=3c.
-
-const DAILY_BUY_LIMIT: int = 3
-const DAILY_KEY: String    = "fletcher_hides_sold_today"
+# Buys nothing for now (trading window's buy_list is empty).
 
 const SHOP_ITEMS: Array = [
 	{"id": "knife",        "price": 2},
@@ -44,7 +41,6 @@ func _ready() -> void:
 	super._ready()
 	entity_name = "Fletcher"
 	_update_dialogue()
-	EventBus.player_rested.connect(func(): GameManager.player_data.erase(DAILY_KEY))
 
 func get_interaction_options() -> Array:
 	_update_dialogue()
@@ -53,12 +49,8 @@ func get_interaction_options() -> Array:
 func _update_dialogue() -> void:
 	var pd: Dictionary = GameManager.player_data
 	var open_trade := func():
-		var sellable: Array = _build_sellable_hides()
-		var rem: int        = DAILY_BUY_LIMIT - GameManager.player_data.get(DAILY_KEY, 0)
-		var on_sale := func(_item: Dictionary):
-			GameManager.player_data[DAILY_KEY] = GameManager.player_data.get(DAILY_KEY, 0) + 1
 		EventBus.dialogue_closed.connect(
-			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, sellable, rem, on_sale),
+			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], Callable()),
 			CONNECT_ONE_SHOT)
 
 	dialogue_text = "A wiry person sits behind a low counter strung with hanging bows. They look up expectantly."
@@ -66,7 +58,7 @@ func _update_dialogue() -> void:
 	dialogue_options = [
 		{
 			"label":    "What do you sell?",
-			"response": "Bows, spears, knives. Stone and wood, all of it. I also buy hides — up to three a day.",
+			"response": "Bows, spears, knives. Stone and wood, all of it.",
 			"next_options": [
 				{"label": "Show me.",            "closes": true, "action": open_trade},
 				{"label": "Maybe another time.", "closes": true},
@@ -93,25 +85,3 @@ func _convince_skill() -> float:
 func _reopen_dialogue() -> void:
 	_update_dialogue()
 	EventBus.interaction_triggered.emit(self, "talk")
-
-func _has_sellable_hides() -> bool:
-	for item in GameManager.player_data.get("inventory", []):
-		if item.get("material_type", "") in ["pelt", "skin"]:
-			return true
-	return false
-
-func _build_sellable_hides() -> Array:
-	var sellable: Array = []
-	for item in GameManager.player_data.get("inventory", []):
-		var mat: String   = item.get("material_type", "")
-		if mat not in ["pelt", "skin"]:
-			continue
-		var quality: int  = item.get("quality", 0)
-		var beast: String = item.get("beast_source", "")
-		var price: int
-		if beast == "adolescent_coyote":
-			price = 3 if quality >= 4 else 2
-		else:
-			price = 2 if quality >= 4 else 1
-		sellable.append({"item": item.duplicate(), "price": price})
-	return sellable

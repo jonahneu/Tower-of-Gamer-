@@ -37,7 +37,7 @@ func _update_dialogue() -> void:
 		EventBus.dialogue_closed.connect(func(_e): _reopen_dialogue(), CONNECT_ONE_SHOT)
 	var open_shop := func():
 		EventBus.dialogue_closed.connect(
-			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], 0, Callable()), CONNECT_ONE_SHOT)
+			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], Callable()), CONNECT_ONE_SHOT)
 
 	var has_delivery_quest: bool = GameManager.has_quest_thread("scribe_delivery", "deliver_scripture")
 	var already_taught: bool     = pd.get("scribe_taught_basic_talisman", false)

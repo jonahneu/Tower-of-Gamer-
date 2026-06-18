@@ -53,7 +53,7 @@ func _update_dialogue() -> void:
 
 	var open_shop := func():
 		EventBus.dialogue_closed.connect(
-			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], 0, Callable()), CONNECT_ONE_SHOT)
+			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], Callable()), CONNECT_ONE_SHOT)
 
 	dialogue_text = "The man behind the forge barely glances up. His forearms are thick with old burns."
 

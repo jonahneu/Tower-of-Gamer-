@@ -93,9 +93,12 @@ func _execute_ai_turn() -> void:
 	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
 	var engaged: bool = p_cell == player_typed.grid_cell
 
+	var cheby: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+	var zone: TileScene = null
+
 	if engaged:
 		# ── Move phase: close to within spit range if farther away ───────────────
-		var cheby: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+		cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
 		if cheby > SPIT_RANGE and _tile_scene != null:
 			var spit_cost: int = _spit_weapon.get("ap_cost", 2)
 			var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - spit_cost)
@@ -127,7 +130,7 @@ func _execute_ai_turn() -> void:
 		# ── Reposition phase: within spit range but LoS blocked → find a clear cell ─
 		p_cell = player_typed.grid_cell
 		cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-		var zone: TileScene = GameManager.current_zone as TileScene
+		zone = GameManager.current_zone as TileScene
 		if cheby <= SPIT_RANGE and _tile_scene != null and zone != null \
 				and not zone.has_line_of_sight(grid_cell, p_cell):
 			var los_cell: Vector2i = _find_los_position(p_cell, SPIT_RANGE, zone)
@@ -187,8 +190,8 @@ func _execute_ai_turn() -> void:
 	else:
 		# Not currently engaged — just approach the resolved target cell
 		# (alert origin, last-known cell, or wander direction).
-		var cheby_ne: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-		if cheby_ne > 1 and _tile_scene != null:
+		cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+		if cheby > 1 and _tile_scene != null:
 			var bite_cost_ne: int = _bite_weapon.get("ap_cost", 1)
 			var budget_ne: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - bite_cost_ne)
 			if budget_ne > 0:
@@ -244,28 +247,33 @@ func _execute_ai_turn() -> void:
 
 
 # ── LoS repositioning helper ──────────────────────────────────────────────────
-# Searches cells within a small radius of the lizard's current position for
-# one that is walkable, within `spit_range` of the player, and has LoS to them.
-# Returns the nearest such cell, or Vector2i(-1,-1) if none found.
+# BFS outward over walkable cells (4-directional, matching Pathfinding's
+# movement model) from the lizard's current position, returning the first
+# cell within `spit_range` of the player with LoS to them. BFS order means
+# the first match is nearest by actual walking distance, not straight-line
+# distance — a straight-line-nearest cell can sit behind an obstacle and
+# require a long detour, while a "farther" cell is a short, direct walk.
 func _find_los_position(p_cell: Vector2i, spit_range: int, zone: TileScene) -> Vector2i:
-	var best := Vector2i(-1, -1)
-	var best_dist: int = 99999
 	const SEARCH_RADIUS: int = 6
-	for dx in range(-SEARCH_RADIUS, SEARCH_RADIUS + 1):
-		for dy in range(-SEARCH_RADIUS, SEARCH_RADIUS + 1):
-			var c := Vector2i(grid_cell.x + dx, grid_cell.y + dy)
-			if not _tile_scene.is_walkable(c):
+	var visited: Dictionary = {grid_cell: 0}
+	var queue: Array[Vector2i] = [grid_cell]
+	var head: int = 0
+	while head < queue.size():
+		var cur: Vector2i = queue[head]
+		head += 1
+		var to_player: int = maxi(abs(cur.x - p_cell.x), abs(cur.y - p_cell.y))
+		if to_player <= spit_range and zone.has_line_of_sight(cur, p_cell):
+			return cur
+		var depth: int = visited[cur]
+		if depth >= SEARCH_RADIUS:
+			continue
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nb: Vector2i = cur + d
+			if visited.has(nb) or not _tile_scene.is_walkable(nb):
 				continue
-			var to_player: int = maxi(abs(c.x - p_cell.x), abs(c.y - p_cell.y))
-			if to_player > spit_range:
-				continue
-			if not zone.has_line_of_sight(c, p_cell):
-				continue
-			var dist: int = maxi(abs(dx), abs(dy))
-			if dist < best_dist:
-				best_dist = dist
-				best = c
-	return best
+			visited[nb] = depth + 1
+			queue.append(nb)
+	return Vector2i(-1, -1)
 
 
 # ── Click detection ───────────────────────────────────────────────────────────

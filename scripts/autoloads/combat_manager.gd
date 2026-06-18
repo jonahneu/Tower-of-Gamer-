@@ -994,7 +994,7 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 	var base_hit: int     = clampi(50 + int((atk_skill - def_value) * 2.0), 5, 95)
 	var hit_chance: int   = clampi(base_hit + cover_penalty + smoke_penalty, 5, 95)
 	var long_range_log: String = ""
-	if attacker == GameManager.player and GameManager.has_feat("long_ranged"):
+	if _entity_has_feat(attacker, "long_ranged"):
 		var weapon_range: int = weapon.get("range", 1)
 		if weapon_range > 1:
 			var actual_dist: float = _euclidean(attacker, defender)
@@ -1144,7 +1144,7 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 						log_lines.append(shield_block["log"])
 					raw = maxi(0, raw - int(shield_block["flat"]))
 				var dmg_weapon: Dictionary = weapon
-				if attacker == GameManager.player and GameManager.has_feat("brutal"):
+				if _entity_has_feat(attacker, "brutal"):
 					if dmg_weapon == weapon:
 						dmg_weapon = weapon.duplicate()
 					dmg_weapon["armor_ignore_pct"] = 1.0 - (1.0 - weapon.get("armor_ignore_pct", 0.0)) * 0.80
@@ -1696,6 +1696,14 @@ func _get_stat_resist(entity: Node, stat_name: String) -> float:
 		lv = int(lv_raw) if lv_raw != null else 1
 	var mod: int = stat_val - 5
 	return maxf(0.0, float((1 + mod) * 5 * lv))
+
+# True if `entity` currently has feat_id — player_data for the player,
+# the generic Humanoid.feats list (e.g. Cannibal's "runner") for everyone else.
+func _entity_has_feat(entity: Node, feat_id: String) -> bool:
+	if entity == GameManager.player:
+		return GameManager.has_feat(feat_id)
+	var ef = entity.get("feats")
+	return ef != null and feat_id in ef
 
 func _get_skill_total(entity: Node, skill_name: String, mod_adj: int = 0) -> float:
 	# For the player, skill data lives in player_data; for NPCs, use humanoid.get_skill_total()

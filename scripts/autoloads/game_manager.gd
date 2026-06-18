@@ -78,8 +78,9 @@ func _ready() -> void:
 				"label":          "Market District — Gate",
 				"thumbnail_type": "city",
 				"exits":          {
-					"west": Vector2i(8, 12),
-					"east": Vector2i(10, 12),
+					"west":  Vector2i(8, 12),
+					"east":  Vector2i(10, 12),
+					"north": Vector2i(9, 11),
 				},
 			},
 			Vector2i(8, 12): {
@@ -88,8 +89,9 @@ func _ready() -> void:
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
-					"west": Vector2i(7, 12),
-					"east": Vector2i(9, 12),
+					"west":  Vector2i(7, 12),
+					"east":  Vector2i(9, 12),
+					"north": Vector2i(8, 11),
 				},
 			},
 			Vector2i(10, 13): {
@@ -161,6 +163,72 @@ func _ready() -> void:
 				"exits":                    {
 					"south": Vector2i(7, 13),
 					"east":  Vector2i(8, 12),
+					"north": Vector2i(7, 11),
+				},
+			},
+			Vector2i(7, 11): {
+				"scene":                    "res://scenes/world/zone_river_bend.tscn",
+				"label":                    "Riverbank — Bend",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(7, 12),
+					"north": Vector2i(7, 10),
+					"east":  Vector2i(8, 11),
+				},
+			},
+			Vector2i(8, 11): {
+				"scene":                    "res://scenes/world/zone_desert_flats.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 12),
+					"north": Vector2i(8, 10),
+					"east":  Vector2i(9, 11),
+					"west":  Vector2i(7, 11),
+				},
+			},
+			Vector2i(9, 11): {
+				"scene":                    "res://scenes/world/zone_desert_outpost.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 12),
+					"north": Vector2i(9, 10),
+					"west":  Vector2i(8, 11),
+				},
+			},
+			Vector2i(7, 10): {
+				"scene":                    "res://scenes/world/zone_river_headwaters.tscn",
+				"label":                    "Riverbank — Headwaters",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(7, 11),
+					"east":  Vector2i(8, 10),
+				},
+			},
+			Vector2i(8, 10): {
+				"scene":                    "res://scenes/world/zone_desert_scrub.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 11),
+					"east":  Vector2i(9, 10),
+					"west":  Vector2i(7, 10),
+				},
+			},
+			Vector2i(9, 10): {
+				"scene":                    "res://scenes/world/zone_desert_borderlands.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 11),
+					"west":  Vector2i(8, 10),
 				},
 			},
 			Vector2i(7, 13): {

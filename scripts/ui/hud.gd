@@ -84,6 +84,9 @@ var _cs_bonuses_vbox: VBoxContainer = null       # rebuilt on each refresh
 var _cs_tab_btns: Dictionary = {}               # "stats" / "feats" / "bonuses" -> Button
 var _cs_active_tab: String = "stats"
 var _levelup_banner: Control = null        # level-up notification overlay
+var _holdrepeat_timer: Timer = null        # shared timer backing _make_holdable's hold-to-repeat
+var _holdrepeat_action: Callable = Callable()
+var _holdrepeat_fast: bool = false
 
 # ── Map live refs ──────────────────────────────────────────────────────────────
 var _map_layer: int = 0
@@ -1884,6 +1887,40 @@ func _cs_switch_tab(tab: String) -> void:
 		elif tid == "feats":
 			btn.text = "Feats"
 
+# Wires a button so holding it down repeats `action` (instead of requiring
+# repeated clicks) — used for the level-up +/- allocation buttons. Fires once
+# immediately on press, then after a short delay repeats at a fast interval
+# until released or the pointer leaves the button.
+const _HOLDREPEAT_DELAY: float = 0.45
+const _HOLDREPEAT_INTERVAL: float = 0.08
+
+func _make_holdable(btn: Button, action: Callable) -> void:
+	btn.button_down.connect(func():
+		action.call()
+		_holdrepeat_action = action
+		_holdrepeat_fast = false
+		if _holdrepeat_timer == null:
+			_holdrepeat_timer = Timer.new()
+			add_child(_holdrepeat_timer)
+			_holdrepeat_timer.timeout.connect(_on_holdrepeat_timeout)
+		_holdrepeat_timer.one_shot = true
+		_holdrepeat_timer.start(_HOLDREPEAT_DELAY))
+	btn.button_up.connect(_stop_holdrepeat)
+	btn.mouse_exited.connect(_stop_holdrepeat)
+
+func _on_holdrepeat_timeout() -> void:
+	if _holdrepeat_action.is_valid():
+		_holdrepeat_action.call()
+	if not _holdrepeat_fast:
+		_holdrepeat_fast = true
+		_holdrepeat_timer.one_shot = false
+		_holdrepeat_timer.start(_HOLDREPEAT_INTERVAL)
+
+func _stop_holdrepeat() -> void:
+	if _holdrepeat_timer != null:
+		_holdrepeat_timer.stop()
+	_holdrepeat_action = Callable()
+
 func _build_cs_stats_col() -> VBoxContainer:
 	var col = VBoxContainer.new()
 	col.add_theme_constant_override("separation", 6)
@@ -1910,7 +1947,7 @@ func _build_cs_stats_col() -> VBoxContainer:
 		plus_btn.custom_minimum_size = Vector2(28, 24)
 		plus_btn.visible = false
 		var captured_stat: String = stat
-		plus_btn.pressed.connect(func():
+		_make_holdable(plus_btn, func():
 			GameManager.spend_stat_point(captured_stat)
 			_refresh_stats())
 		var minus_btn = Button.new(); minus_btn.text = "-"
@@ -1918,7 +1955,7 @@ func _build_cs_stats_col() -> VBoxContainer:
 		minus_btn.modulate.a = 0.0
 		minus_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var captured_stat_r: String = stat
-		minus_btn.pressed.connect(func():
+		_make_holdable(minus_btn, func():
 			GameManager.refund_stat_point(captured_stat_r)
 			_refresh_stats())
 		_cs_stat_vals[stat]        = val_l
@@ -1958,7 +1995,7 @@ func _build_cs_skills_col() -> VBoxContainer:
 		plus_btn.custom_minimum_size = Vector2(28, 22)
 		plus_btn.visible = false
 		var captured_skill: String = skill
-		plus_btn.pressed.connect(func():
+		_make_holdable(plus_btn, func():
 			GameManager.spend_skill_point(captured_skill)
 			_refresh_stats())
 		var minus_btn = Button.new(); minus_btn.text = "-"
@@ -1966,7 +2003,7 @@ func _build_cs_skills_col() -> VBoxContainer:
 		minus_btn.modulate.a = 0.0
 		minus_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var captured_skill_r: String = skill
-		minus_btn.pressed.connect(func():
+		_make_holdable(minus_btn, func():
 			GameManager.refund_skill_point(captured_skill_r)
 			_refresh_stats())
 		var inv_l = Label.new(); inv_l.custom_minimum_size = Vector2(60, 0)
@@ -5779,10 +5816,6 @@ func _do_rest() -> void:
 				removed += 1
 			i -= 1
 		GameManager.player_data["inventory"] = inv
-		# First inn sleep: small XP reward
-		if not GameManager.player_data.get("inn_first_sleep_done", false):
-			GameManager.player_data["inn_first_sleep_done"] = true
-			GameManager.add_xp(10)
 	elif _rest_mode == "cook" and _cook_recipe_ready():
 		_consume_cook_slots(inv)
 	else:
@@ -5860,11 +5893,21 @@ func _do_rest() -> void:
 		var ex: int = GameManager.player_data.get("exhaustion_stacks", 0)
 		GameManager.player_data["exhaustion_stacks"] = ex + shortfall
 
-	# Hunter path: completing the camp rest finishes both thread and parent quest
-	if _rest_hunter_camp:
+	# The "first protected sleep" XP reward is shared across paths (hunter,
+	# vial, ...) — whichever path gets there first pays out, and it never
+	# pays out again even if the player later satisfies a different path too.
+	var protection_xp_granted: bool = GameManager.player_data.get("protection_xp_granted", false)
+
+	# Hunter path: completing the camp rest finishes both thread and parent quest.
+	# Only the rest that actually completes the thread grants XP — resting at
+	# the camp again afterward shouldn't keep paying out.
+	if _rest_hunter_camp and not GameManager.is_quest_thread_completed("find_spiritual_protection", "hunter_animal_kill"):
 		GameManager.complete_quest_thread("find_spiritual_protection", "hunter_animal_kill")
 		GameManager.complete_quest("find_spiritual_protection")
-		GameManager.add_xp(75)
+		if not protection_xp_granted:
+			GameManager.player_data["protection_xp_granted"] = true
+			protection_xp_granted = true
+			GameManager.add_xp(75)
 
 	# Vial path: on first protected sleep, add a journal note — but don't complete
 	# the thread or quest yet (those only close when the recipe is learned).
@@ -5875,7 +5918,10 @@ func _do_rest() -> void:
 		GameManager.player_data["vial_path_rest_done"] = true
 		GameManager.update_quest_thread("find_spiritual_protection", "apothecary_vial_path",
 			"I slept safely, but the vial won't last forever. I need a more permanent solution.")
-		GameManager.add_xp(30)
+		if not protection_xp_granted:
+			GameManager.player_data["protection_xp_granted"] = true
+			protection_xp_granted = true
+			GameManager.add_xp(30)
 
 	# Vial expiry quest update — fires the rest the protection runs out
 	if vial_left == 1 and not GameManager.player_data.get("vial_expiry_quest_done", false):
@@ -6336,6 +6382,7 @@ func _refresh_feats() -> void:
 				row.add_theme_constant_override("separation", 6)
 				var btn := Button.new()
 				btn.text = f.get("name", feat_id)
+				btn.tooltip_text = f.get("description", "")
 				btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				btn.custom_minimum_size = Vector2(0, 26)
 				btn.disabled = not meets

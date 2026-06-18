@@ -967,6 +967,15 @@ func has_quest_thread(parent_id: String, thread_id: String) -> bool:
 				return true
 	return false
 
+func is_quest_thread_completed(parent_id: String, thread_id: String) -> bool:
+	for q in player_data.get("quests", []):
+		if q.get("id") != parent_id:
+			continue
+		for t in q.get("threads", []):
+			if t.get("id") == thread_id:
+				return t.get("completed", false)
+	return false
+
 # ── Faction contact helpers ───────────────────────────────────────────────────
 # Tracks which NPCs have explained their religion/path to the player.
 # Used after the premonition dream to build quest threads pointing back to them.

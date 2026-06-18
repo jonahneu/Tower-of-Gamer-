@@ -991,6 +991,11 @@ func _on_begin() -> void:
 		_begin_btn.text = "Choose your bonus stat (★) first!"
 		_show_panel(1)
 		return
+	if selected_feat != "" and not _feat_available(selected_feat):
+		_begin_btn.text = "Your stats no longer meet that feat's requirements!"
+		_show_panel(3)
+		_refresh_all()
+		return
 
 	var final_stats = stats.duplicate()
 	if not bonus_stat.is_empty():
@@ -1086,8 +1091,6 @@ func _refresh_all() -> void:
 		var cc: float = _crit_chance()
 		_crit_lbl.text = "Crit chance: %.1f%%" % cc if cc > 0.0 else "Crit chance: — (need PER or DEX > 5)"
 
-	if selected_feat != "" and not _feat_available(selected_feat):
-		selected_feat = ""
 	for feat_name in _feats.keys():
 		var avail: bool = _feat_available(feat_name)
 		var f_btn: Button = _feat_buttons[feat_name]

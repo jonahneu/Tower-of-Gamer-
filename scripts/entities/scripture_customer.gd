@@ -36,7 +36,7 @@ func _update_dialogue() -> void:
 			GameManager.complete_quest_thread("scribe_delivery", "deliver_scripture")
 			GameManager.complete_quest("scribe_delivery")
 			var inv: Array = pd.get("inventory", [])
-			for _i in range(5):
+			for _i in range(10):
 				inv.append(DataManager.get_item("coin"))
 			pd["inventory"] = inv
 

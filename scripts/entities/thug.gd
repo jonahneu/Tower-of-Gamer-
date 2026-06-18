@@ -17,7 +17,7 @@ const DETECTION_RANGE: int = 8
 
 var _dialogue_triggered: bool = false
 var _dialogue_resolved: bool  = false
-var _left_area: bool          = false
+var _backoff_dist: int        = -1   # distance to player at the moment they said they're leaving; -1 = not yet captured
 
 func _ready() -> void:
 	stat_strength     = 7
@@ -66,9 +66,12 @@ func _process(delta: float) -> void:
 		var dx: int = abs(grid_cell.x - player.grid_cell.x)
 		var dy: int = abs(grid_cell.y - player.grid_cell.y)
 		var dist: int = maxi(dx, dy)
-		if not _left_area and dist > DETECTION_RANGE:
-			_left_area = true
-		elif _left_area and dist <= DETECTION_RANGE:
+		if _backoff_dist < 0:
+			# Capture the distance at the moment "I'm leaving" was chosen — any
+			# approach closer than this (heading toward them OR trying to slip
+			# past on either side) reads as not actually leaving.
+			_backoff_dist = dist
+		elif dist < _backoff_dist:
 			GameManager.player_data["gate_toll_hostile"] = true
 			go_hostile()
 		return

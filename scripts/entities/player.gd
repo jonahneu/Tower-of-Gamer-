@@ -15,6 +15,7 @@ var move_path: Array[Vector2i] = []
 var _visual_pos: Vector2 = Vector2.ZERO
 var _target_pos: Vector2 = Vector2.ZERO
 var _tile_scene: TileScene = null
+var _carried_torch: Torch = null
 var _bob_time: float = 0.0
 var _is_moving: bool = false
 var _was_moving: bool = false
@@ -108,15 +109,37 @@ func _ready() -> void:
 	EventBus.attack_started.connect(_on_attack_started)
 	EventBus.combat_started.connect(_on_combat_started)
 	EventBus.turn_started.connect(_on_turn_started)
+	EventBus.inventory_changed.connect(_sync_torch_from_equipment)
 	_tile_scene = get_parent() as TileScene
 	_visual_pos = TileScene.grid_to_screen(grid_cell)
 	_target_pos = _visual_pos
 	position = _visual_pos
+	_sync_torch_from_equipment()
 	queue_redraw()
 	# Deferred: buildings register their blocked cells in _ready() too (siblings),
 	# but sibling order means player._ready() runs before them. Check after all
 	# _ready() calls complete so blocked_cells is fully populated.
 	call_deferred("_unstuck_check")
+
+# Creates/destroys the carried Torch light source to match whatever's
+# currently equipped in either hand slot. Called on _ready() and whenever
+# equipment changes (EventBus.inventory_changed).
+func _sync_torch_from_equipment() -> void:
+	var equip: Dictionary = GameManager.player_data.get("equipment", {})
+	var has_torch: bool = false
+	for slot in ["hand_1", "hand_2"]:
+		var item = equip.get(slot)
+		if item is Dictionary and item.get("light_source", false):
+			has_torch = true
+			break
+	if has_torch and _carried_torch == null:
+		_carried_torch = Torch.new()
+		add_child(_carried_torch)
+		_carried_torch.attach(self, _tile_scene)
+	elif not has_torch and _carried_torch != null:
+		_carried_torch.detach()
+		_carried_torch.queue_free()
+		_carried_torch = null
 
 func _input(event: InputEvent) -> void:
 	# Alt / Tab: toggle interactable highlights (fires on both press and release)

@@ -3,6 +3,8 @@ class_name Bonfire
 # Prop: a large communal fire pit. Visual only — does not block movement or interaction.
 
 @export var grid_cell: Vector2i = Vector2i(0, 0)
+@export var bright_radius: int = 10
+@export var dim_radius: int = 18
 
 var blocks_movement: bool = false
 var is_interactable: bool = false
@@ -11,7 +13,13 @@ var _tile_scene: TileScene = null
 func _ready() -> void:
 	_tile_scene = get_parent() as TileScene
 	position = TileScene.grid_to_screen(grid_cell)
+	if _tile_scene != null:
+		_tile_scene.register_light_source(self, grid_cell, bright_radius, dim_radius)
 	queue_redraw()
+
+func _exit_tree() -> void:
+	if _tile_scene != null:
+		_tile_scene.unregister_light_source(self)
 
 func _draw() -> void:
 	var base_y: float = TileScene.TILE_H / 4.0

@@ -118,6 +118,7 @@ func _execute_ai_turn() -> void:
 			for coyote in idle_coyotes:
 				if is_instance_valid(coyote):
 					CombatManager.add_participant(coyote)
+					CombatManager.alert_entity(coyote, grid_cell)
 			await get_tree().create_timer(0.45).timeout
 			if not is_instance_valid(self) or not _in_combat:
 				return
@@ -126,7 +127,7 @@ func _execute_ai_turn() -> void:
 
 	# ── Move phase: close to player ───────────────────────────────────────────
 	var attack_cost: int = _attack_weapon.get("ap_cost", 1)
-	var p_cell: Vector2i = player_typed.grid_cell
+	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
@@ -141,6 +142,7 @@ func _execute_ai_turn() -> void:
 				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 				var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 				_tile_scene.unregister_entity(grid_cell)
+				CombatManager.record_move(self, grid_cell, next_cell)
 				grid_cell = next_cell
 				_tile_scene.register_entity(grid_cell, self)
 				CombatManager.spend_move()

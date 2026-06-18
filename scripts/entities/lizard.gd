@@ -86,49 +86,21 @@ func _execute_ai_turn() -> void:
 		return
 
 	const SPIT_RANGE: int = 16
-	var p_cell: Vector2i = player_typed.grid_cell
+	# Spit-range closing and LoS repositioning only make sense against a target
+	# we can currently see — if resolve_ai_target_cell sends us somewhere other
+	# than the live player (alerted/searching/wandering), skip straight to a
+	# plain approach toward that cell instead.
+	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
+	var engaged: bool = p_cell == player_typed.grid_cell
 
-	# ── Move phase: close to within spit range if farther away ───────────────
-	var cheby: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-	if cheby > SPIT_RANGE and _tile_scene != null:
-		var spit_cost: int = _spit_weapon.get("ap_cost", 2)
-		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - spit_cost)
-		if move_budget > 0:
-			var path: Array[Vector2i] = _best_approach_path(p_cell)
-			var steps: int = mini(move_budget, path.size())
-			for i in range(steps):
-				if not is_instance_valid(self) or not _in_combat:
-					return
-				var next_cell: Vector2i = path[i]
-				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
-				var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
-				_tile_scene.unregister_entity(grid_cell)
-				grid_cell = next_cell
-				_tile_scene.register_entity(grid_cell, self)
-				CombatManager.spend_move()
-				var tween := create_tween()
-				tween.tween_property(self, "_visual_pos", target_screen, duration)
-				await tween.finished
-				queue_redraw()
-				if not is_instance_valid(self) or not _in_combat:
-					return
-				# Stop early once we're within spit range
-				var d: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-				if d <= SPIT_RANGE:
-					break
-
-	# ── Reposition phase: within spit range but LoS blocked → find a clear cell ─
-	p_cell = player_typed.grid_cell
-	cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-	var zone: TileScene = GameManager.current_zone as TileScene
-	if cheby <= SPIT_RANGE and _tile_scene != null and zone != null \
-			and not zone.has_line_of_sight(grid_cell, p_cell):
-		var los_cell: Vector2i = _find_los_position(p_cell, SPIT_RANGE, zone)
-		if los_cell != Vector2i(-1, -1):
+	if engaged:
+		# ── Move phase: close to within spit range if farther away ───────────────
+		var cheby: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+		if cheby > SPIT_RANGE and _tile_scene != null:
 			var spit_cost: int = _spit_weapon.get("ap_cost", 2)
 			var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - spit_cost)
 			if move_budget > 0:
-				var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, los_cell, _tile_scene)
+				var path: Array[Vector2i] = _best_approach_path(p_cell)
 				var steps: int = mini(move_budget, path.size())
 				for i in range(steps):
 					if not is_instance_valid(self) or not _in_combat:
@@ -137,6 +109,7 @@ func _execute_ai_turn() -> void:
 					var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 					var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 					_tile_scene.unregister_entity(grid_cell)
+					CombatManager.record_move(self, grid_cell, next_cell)
 					grid_cell = next_cell
 					_tile_scene.register_entity(grid_cell, self)
 					CombatManager.spend_move()
@@ -146,26 +119,89 @@ func _execute_ai_turn() -> void:
 					queue_redraw()
 					if not is_instance_valid(self) or not _in_combat:
 						return
+					# Stop early once we're within spit range
+					var d: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+					if d <= SPIT_RANGE:
+						break
 
-	# ── Fallback: if still no LoS and not adjacent, try to close to bite range ──
-	p_cell = player_typed.grid_cell
-	cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-	if cheby > 1 and _tile_scene != null:
-		var zone_fb: TileScene = GameManager.current_zone as TileScene
-		var los_blocked: bool = zone_fb == null or not zone_fb.has_line_of_sight(grid_cell, p_cell)
-		if los_blocked:
-			var bite_cost: int = _bite_weapon.get("ap_cost", 1)
-			var budget_fb: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - bite_cost)
-			if budget_fb > 0:
-				var path_fb: Array[Vector2i] = _best_approach_path(p_cell)
-				var steps_fb: int = mini(budget_fb, path_fb.size())
-				for i in range(steps_fb):
+		# ── Reposition phase: within spit range but LoS blocked → find a clear cell ─
+		p_cell = player_typed.grid_cell
+		cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+		var zone: TileScene = GameManager.current_zone as TileScene
+		if cheby <= SPIT_RANGE and _tile_scene != null and zone != null \
+				and not zone.has_line_of_sight(grid_cell, p_cell):
+			var los_cell: Vector2i = _find_los_position(p_cell, SPIT_RANGE, zone)
+			if los_cell != Vector2i(-1, -1):
+				var spit_cost: int = _spit_weapon.get("ap_cost", 2)
+				var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - spit_cost)
+				if move_budget > 0:
+					var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, los_cell, _tile_scene)
+					var steps: int = mini(move_budget, path.size())
+					for i in range(steps):
+						if not is_instance_valid(self) or not _in_combat:
+							return
+						var next_cell: Vector2i = path[i]
+						var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
+						var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
+						_tile_scene.unregister_entity(grid_cell)
+						CombatManager.record_move(self, grid_cell, next_cell)
+						grid_cell = next_cell
+						_tile_scene.register_entity(grid_cell, self)
+						CombatManager.spend_move()
+						var tween := create_tween()
+						tween.tween_property(self, "_visual_pos", target_screen, duration)
+						await tween.finished
+						queue_redraw()
+						if not is_instance_valid(self) or not _in_combat:
+							return
+
+		# ── Fallback: if still no LoS and not adjacent, try to close to bite range ──
+		p_cell = player_typed.grid_cell
+		cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+		if cheby > 1 and _tile_scene != null:
+			var zone_fb: TileScene = GameManager.current_zone as TileScene
+			var los_blocked: bool = zone_fb == null or not zone_fb.has_line_of_sight(grid_cell, p_cell)
+			if los_blocked:
+				var bite_cost: int = _bite_weapon.get("ap_cost", 1)
+				var budget_fb: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - bite_cost)
+				if budget_fb > 0:
+					var path_fb: Array[Vector2i] = _best_approach_path(p_cell)
+					var steps_fb: int = mini(budget_fb, path_fb.size())
+					for i in range(steps_fb):
+						if not is_instance_valid(self) or not _in_combat:
+							return
+						var next_cell: Vector2i = path_fb[i]
+						var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
+						var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
+						_tile_scene.unregister_entity(grid_cell)
+						CombatManager.record_move(self, grid_cell, next_cell)
+						grid_cell = next_cell
+						_tile_scene.register_entity(grid_cell, self)
+						CombatManager.spend_move()
+						var tween := create_tween()
+						tween.tween_property(self, "_visual_pos", target_screen, duration)
+						await tween.finished
+						queue_redraw()
+						if not is_instance_valid(self) or not _in_combat:
+							return
+	else:
+		# Not currently engaged — just approach the resolved target cell
+		# (alert origin, last-known cell, or wander direction).
+		var cheby_ne: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
+		if cheby_ne > 1 and _tile_scene != null:
+			var bite_cost_ne: int = _bite_weapon.get("ap_cost", 1)
+			var budget_ne: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - bite_cost_ne)
+			if budget_ne > 0:
+				var path_ne: Array[Vector2i] = _best_approach_path(p_cell)
+				var steps_ne: int = mini(budget_ne, path_ne.size())
+				for i in range(steps_ne):
 					if not is_instance_valid(self) or not _in_combat:
 						return
-					var next_cell: Vector2i = path_fb[i]
+					var next_cell: Vector2i = path_ne[i]
 					var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 					var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 					_tile_scene.unregister_entity(grid_cell)
+					CombatManager.record_move(self, grid_cell, next_cell)
 					grid_cell = next_cell
 					_tile_scene.register_entity(grid_cell, self)
 					CombatManager.spend_move()

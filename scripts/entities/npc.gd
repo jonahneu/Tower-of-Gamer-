@@ -186,7 +186,7 @@ func _execute_npc_ai_turn() -> void:
 	var attack_cost: int = weapon.get("ap_cost", 2)
 
 	# Move toward player spending MP then spare AP
-	var p_cell: Vector2i = player.get("grid_cell")
+	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player)
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
@@ -200,6 +200,7 @@ func _execute_npc_ai_turn() -> void:
 				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 				var duration: float = _visual_pos.distance_to(target_screen) / 280.0
 				_tile_scene.unregister_entity(grid_cell)
+				CombatManager.record_move(self, grid_cell, next_cell)
 				grid_cell = next_cell
 				_tile_scene.register_entity(grid_cell, self)
 				CombatManager.spend_move()

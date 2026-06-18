@@ -20,6 +20,8 @@ var _chunks: Array = []   # flat array of _FogChunk nodes
 class _FogChunk extends Node2D:
 	const _COL_UNEXPLORED: Color = Color(0.0, 0.0, 0.0, 1.0)
 	const _COL_REMEMBERED: Color = Color(0.0, 0.0, 0.0, 0.65)
+	const _COL_LIGHT_DIM: Color  = Color(0.05, 0.05, 0.15, 0.30)
+	const _COL_LIGHT_DARK: Color = Color(0.02, 0.02, 0.08, 0.55)
 
 	var col_start: int = 0
 	var row_start: int = 0
@@ -36,6 +38,18 @@ class _FogChunk extends Node2D:
 			for row in range(row_start, row_end):
 				var cell := Vector2i(col, row)
 				if fow.visible_cells.has(cell):
+					if fow._tile_scene == null:
+						continue
+					var tier: int = fow._tile_scene.get_light_level(cell)
+					if tier == LightLevels.DIM or tier == LightLevels.DARK:
+						var center: Vector2 = TileScene.grid_to_screen(cell)
+						var pts := PackedVector2Array([
+							center + Vector2(0.0,  -hh),
+							center + Vector2(hw,   0.0),
+							center + Vector2(0.0,   hh),
+							center + Vector2(-hw,  0.0),
+						])
+						draw_colored_polygon(pts, _COL_LIGHT_DIM if tier == LightLevels.DIM else _COL_LIGHT_DARK)
 					continue
 				var center: Vector2 = TileScene.grid_to_screen(cell)
 				var pts := PackedVector2Array([
@@ -56,6 +70,7 @@ func _ready() -> void:
 	_tile_scene = get_parent() as TileScene
 	EventBus.player_moved.connect(_on_player_moved)
 	EventBus.los_blockers_changed.connect(_on_los_blockers_changed)
+	EventBus.light_levels_changed.connect(_on_light_levels_changed)
 	EventBus.turn_ended.connect(func(_entity: Node):
 		if _origin != Vector2i(-1, -1) and GameManager.combat_mode:
 			update_entity_visibility())
@@ -98,15 +113,30 @@ func _on_los_blockers_changed() -> void:
 	update_entity_visibility()
 	_redraw_dirty_chunks(old_visible)
 
+# Light changes can alter a cell's tint while it stays in visible_cells the
+# whole time (no enter/exit transition for _redraw_dirty_chunks to catch), so
+# this does a full redraw rather than relying on the visible-set diff.
+func _on_light_levels_changed() -> void:
+	if _origin == Vector2i(-1, -1):
+		return
+	compute_fov(_origin)
+	update_entity_visibility()
+	redraw_all()
+
 # ── FOV computation ────────────────────────────────────────────────────────────
 func compute_fov(origin: Vector2i) -> void:
 	_origin = origin
 	visible_cells.clear()
 	if _tile_scene == null:
 		return
+	var observer_level: int = _tile_scene.get_light_level(origin)
 	for offset in _fov_offsets:
 		var cell := Vector2i(origin.x + offset.x, origin.y + offset.y)
 		if not _tile_scene.is_in_bounds(cell):
+			continue
+		var target_level: int = _tile_scene.get_light_level(cell)
+		var cap: int = LightLevels.vision_cap(observer_level, target_level, RADIUS)
+		if offset.x * offset.x + offset.y * offset.y > cap * cap:
 			continue
 		if _tile_scene.has_line_of_sight(origin, cell):
 			visible_cells[cell] = true

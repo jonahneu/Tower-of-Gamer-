@@ -23,6 +23,13 @@ var pending_weapon: Dictionary = {}    # weapon queued for target selection (emp
 var sneak_attack_pending: bool = false # player's first attack this combat has 2× crit
 var tactical_mode: bool = false        # turn-based movement without combat
 
+# ── Group awareness / search state (light-aware AI pursuit) ──────────────────
+var player_last_known_cell: Vector2i = Vector2i(-1, -1)   # shared group memory; (-1,-1) = none yet
+var player_last_known_light: int = LightLevels.FULL       # light tier at the moment of last sighting
+var group_has_sight: bool = false                          # true if ANY living participant currently sees the player
+var _disengage_round_counter: int = 0                       # consecutive full rounds all-wandering with no sighting
+const DISENGAGE_ROUNDS_REQUIRED: int = 2
+
 # Smoke bomb deploy state
 var pending_smoke_deploy: bool = false
 var _pending_smoke_item: Dictionary = {}
@@ -103,6 +110,10 @@ func start_combat(combatants: Array, stealth_info: Dictionary = {}, sneak_attack
 	turn_index = 0
 	participants = combatants.duplicate()
 	turn_state.clear()
+	player_last_known_cell = Vector2i(-1, -1)
+	player_last_known_light = LightLevels.FULL
+	group_has_sight = false
+	_disengage_round_counter = 0
 
 	# Roll initiative: 1d10 + DEX modifier + AGI modifier, sort descending
 	var scored: Array = []
@@ -213,13 +224,20 @@ func end_turn() -> void:
 
 	# Advance to next living combatant
 	var attempts = 0
+	var wrapped: bool = false
 	while attempts < participants.size():
 		turn_index = (turn_index + 1) % participants.size()
 		if turn_index == 0:
 			round += 1
+			wrapped = true
 		if _is_alive(participants[turn_index]):
 			break
 		attempts += 1
+
+	if wrapped and not tactical_mode:
+		_check_disengage()
+		if not active:
+			return
 
 	_begin_turn()
 
@@ -387,7 +405,195 @@ func _make_turn_state(entity: Node) -> Dictionary:
 		"cooldowns":         {},
 		"weapon_loaded":     {},
 		"spells_cast":       0,
+		"ai_state":          "engaged",
+		"alert_origin":      Vector2i(-1, -1),
+		"wander_dir":        Vector2i.ZERO,
+		"last_move_dir":     Vector2i.ZERO,
 	}
+
+# ── Light-aware group awareness / search state machine ───────────────────────
+# States (turn_state[entity]["ai_state"]):
+#   "engaged"   — knows where the player is, chase the live cell (today's behavior)
+#   "alerted"   — summoned via Howl/Yell with no personal knowledge yet; head to alert_origin
+#   "searching" — group lost sight; head to player_last_known_cell
+#   "wandering" — reached the last-known cell, still nothing; pick a direction and keep going
+
+# Called right after add_participant() when Howl/Yell pulls in a distant idle
+# entity that doesn't yet know where the player is.
+func alert_entity(entity: Node, origin_cell: Vector2i) -> void:
+	if not turn_state.has(entity):
+		return
+	turn_state[entity]["ai_state"] = "alerted"
+	turn_state[entity]["alert_origin"] = origin_cell
+
+# One-line addition inside each entity's movement-stepping loop (right after
+# grid_cell is updated to next_cell) so the wander sub-state can exclude the
+# reverse of the most recent move.
+func record_move(entity: Node, from_cell: Vector2i, to_cell: Vector2i) -> void:
+	if not turn_state.has(entity):
+		return
+	turn_state[entity]["last_move_dir"] = to_cell - from_cell
+
+# Light-capped LOS check from entity's perspective — reuses LightLevels.vision_cap
+# with the entity's own light tier as observer, the player's as target.
+func _entity_can_see_player(entity: Node, player: Node) -> bool:
+	var zone: TileScene = GameManager.current_zone as TileScene
+	if zone == null:
+		return false
+	var entity_cell: Vector2i = entity.get("grid_cell")
+	var player_cell: Vector2i = player.get("grid_cell")
+	var observer_level: int = zone.get_light_level(entity_cell)
+	var target_level: int   = zone.get_light_level(player_cell)
+	var base_radius_v = entity.get("aggro_range")
+	var base_radius: int = base_radius_v if base_radius_v != null else 20
+	var cap: int = LightLevels.vision_cap(observer_level, target_level, base_radius)
+	var dist: float = entity_cell.distance_to(player_cell)
+	if dist > float(cap):
+		return false
+	return zone.has_line_of_sight(entity_cell, player_cell)
+
+# Called the instant any participant gains a qualifying sighting — updates
+# shared group memory and snaps everyone back to "engaged".
+func _on_sighting_confirmed(player_cell: Vector2i) -> void:
+	group_has_sight = true
+	player_last_known_cell = player_cell
+	var zone: TileScene = GameManager.current_zone as TileScene
+	if zone != null:
+		player_last_known_light = zone.get_light_level(player_cell)
+	_disengage_round_counter = 0
+	for e in turn_state.keys():
+		if is_instance_valid(e):
+			turn_state[e]["ai_state"] = "engaged"
+
+# Recomputes group_has_sight fresh — the only place it can flip back to
+# false (it can only flip true via _on_sighting_confirmed). Called once per
+# entity turn so the state machine stays correct regardless of turn order.
+func _refresh_group_awareness() -> void:
+	var player: Node = GameManager.player
+	if player == null or not is_instance_valid(player):
+		return
+	var anyone_sees: bool = false
+	for p in participants:
+		if p == player or not is_instance_valid(p) or not _is_alive(p):
+			continue
+		if _entity_can_see_player(p, player):
+			anyone_sees = true
+			_on_sighting_confirmed(player.get("grid_cell"))
+			break
+	if not anyone_sees:
+		group_has_sight = false
+
+func _pick_wander_target_cell(entity: Node, ts: Dictionary) -> Vector2i:
+	var entity_cell: Vector2i = entity.get("grid_cell")
+	var zone: TileScene = GameManager.current_zone as TileScene
+	var last_dir: Vector2i = ts.get("last_move_dir", Vector2i.ZERO)
+	var cur_dir: Vector2i = ts.get("wander_dir", Vector2i.ZERO)
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	# Keep going in the current wander direction if it's still viable.
+	if cur_dir != Vector2i.ZERO:
+		var next: Vector2i = entity_cell + cur_dir
+		if zone != null and zone.is_walkable(next):
+			return next
+	# Pick a new direction, excluding the reverse of the most recent move.
+	var reverse: Vector2i = -last_dir
+	dirs.shuffle()
+	for d in dirs:
+		if d == reverse:
+			continue
+		var next: Vector2i = entity_cell + d
+		if zone != null and zone.is_walkable(next):
+			ts["wander_dir"] = d
+			return next
+	# Fully boxed in (including reverse) — allow reverse as a last resort.
+	if zone != null and zone.is_walkable(entity_cell + reverse):
+		ts["wander_dir"] = reverse
+		return entity_cell + reverse
+	return entity_cell  # nowhere to go — stay put this turn
+
+# Returns the cell this entity's AI should path toward this turn, in place of
+# reading player.grid_cell directly. Entities keep their own movement/attack
+# code unchanged — they just swap their target-cell source to this call for
+# MOVEMENT targets only (attack-phase targeting should stay a live read).
+func resolve_ai_target_cell(entity: Node, player: Node) -> Vector2i:
+	if not turn_state.has(entity):
+		return player.get("grid_cell")
+	var ts: Dictionary = turn_state[entity]
+	var entity_cell: Vector2i = entity.get("grid_cell")
+	var player_cell: Vector2i = player.get("grid_cell")
+
+	if _entity_can_see_player(entity, player):
+		_on_sighting_confirmed(player_cell)
+		ts["ai_state"] = "engaged"
+		return player_cell
+
+	if group_has_sight:
+		ts["ai_state"] = "engaged"
+		return player_cell
+
+	match ts.get("ai_state", "engaged"):
+		"alerted":
+			var origin: Vector2i = ts.get("alert_origin", player_cell)
+			if maxi(abs(entity_cell.x - origin.x), abs(entity_cell.y - origin.y)) <= 1:
+				if player_last_known_cell != Vector2i(-1, -1):
+					ts["ai_state"] = "searching"
+					return player_last_known_cell
+				ts["ai_state"] = "wandering"
+				return _pick_wander_target_cell(entity, ts)
+			return origin
+		"searching":
+			if player_last_known_cell == Vector2i(-1, -1):
+				ts["ai_state"] = "wandering"
+				return _pick_wander_target_cell(entity, ts)
+			if maxi(abs(entity_cell.x - player_last_known_cell.x), abs(entity_cell.y - player_last_known_cell.y)) <= 1:
+				ts["ai_state"] = "wandering"
+				return _pick_wander_target_cell(entity, ts)
+			# Stall escape hatch: if the last-known cell is unreachable (e.g. a
+			# closed door), don't get stuck searching forever — give up after a
+			# few turns of making no progress and start wandering instead.
+			var stall: int = ts.get("search_stall_count", 0)
+			if entity_cell == ts.get("_last_search_cell", Vector2i(-2, -2)):
+				stall += 1
+			else:
+				stall = 0
+			ts["_last_search_cell"] = entity_cell
+			ts["search_stall_count"] = stall
+			if stall >= 3:
+				ts["ai_state"] = "wandering"
+				return _pick_wander_target_cell(entity, ts)
+			return player_last_known_cell
+		"wandering":
+			return _pick_wander_target_cell(entity, ts)
+		_:  # "engaged" — normal live tracking, unless the group has already
+			# lost the player (player_last_known_cell set, nobody currently
+			# sees them) in which case fall back to searching instead of
+			# blindly walking toward a stale player cell.
+			if player_last_known_cell != Vector2i(-1, -1) and not group_has_sight:
+				ts["ai_state"] = "searching"
+				return player_last_known_cell
+			return player_cell
+
+# Called once per full round (when turn_index wraps to 0 in end_turn()): if
+# every living enemy participant is "wandering" with nobody sighted, count
+# rounds toward a full disengage.
+func _check_disengage() -> void:
+	var all_wandering: bool = true
+	var any_enemy: bool = false
+	for p in participants:
+		if p == GameManager.player or not is_instance_valid(p) or not _is_alive(p):
+			continue
+		any_enemy = true
+		var ts = turn_state.get(p, {})
+		if ts.get("ai_state", "engaged") != "wandering":
+			all_wandering = false
+			break
+	if not any_enemy:
+		return
+	if all_wandering and not group_has_sight:
+		_disengage_round_counter += 1
+		if _disengage_round_counter >= DISENGAGE_ROUNDS_REQUIRED:
+			_end_combat("disengaged")
+	else:
+		_disengage_round_counter = 0
 
 func begin_smoke_deploy(item: Dictionary, inv_idx: int) -> void:
 	pending_smoke_deploy = true
@@ -605,6 +811,10 @@ func _begin_turn() -> void:
 			return
 		_begin_turn()
 		return
+
+	if active and not tactical_mode and GameManager.player != null:
+		_refresh_group_awareness()
+
 	var ts = turn_state.get(e)
 	if ts == null:
 		return

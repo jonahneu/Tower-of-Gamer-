@@ -36,11 +36,15 @@ func _execute_ai_turn() -> void:
 		return
 
 	var bow_cost: int = _attack_weapon.get("ap_cost", 2)
-	var p_cell: Vector2i = player_typed.grid_cell
+	# Bow-range closing only makes sense against a target we can currently see
+	# — otherwise just approach whatever cell resolve_ai_target_cell gives us
+	# (alert origin / last-known cell / wander direction).
+	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
+	var engaged: bool = p_cell == player_typed.grid_cell
 
 	# ── Move phase: close to within bow range if currently farther away ──────
 	var cheby: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-	if cheby > BOW_RANGE and _tile_scene != null:
+	if (engaged and cheby > BOW_RANGE or not engaged and cheby > 1) and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - bow_cost)
 		var adj: Vector2i = _find_adjacent_to(p_cell)
 		if adj != Vector2i(-1, -1) and move_budget > 0:
@@ -53,6 +57,7 @@ func _execute_ai_turn() -> void:
 				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 				var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 				_tile_scene.unregister_entity(grid_cell)
+				CombatManager.record_move(self, grid_cell, next_cell)
 				grid_cell = next_cell
 				_tile_scene.register_entity(grid_cell, self)
 				CombatManager.spend_move()
@@ -63,7 +68,7 @@ func _execute_ai_turn() -> void:
 				if not is_instance_valid(self) or not _in_combat:
 					return
 				cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
-				if cheby <= BOW_RANGE:
+				if engaged and cheby <= BOW_RANGE:
 					break
 
 	# ── Attack phase: fire while in range with line of sight ──────────────────

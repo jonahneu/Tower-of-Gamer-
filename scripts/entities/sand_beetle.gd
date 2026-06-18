@@ -199,13 +199,21 @@ func _find_ram_setup_cell(player_typed: Player, move_budget: int) -> Vector2i:
 # Normal move + mandible attack (mirrors base Enemy AI logic)
 func _normal_turn(player_typed: Player) -> void:
 	var attack_cost: int = _attack_weapon.get("ap_cost", 1)
-	var p_cell: Vector2i = player_typed.grid_cell
+	# Ram-alignment seeking only makes sense against a target we can currently
+	# see — if resolve_ai_target_cell sends us somewhere other than the live
+	# player (alerted/searching/wandering), just approach that cell normally.
+	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
+	var engaged: bool = p_cell == player_typed.grid_cell
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
-		var align_cell: Vector2i = _find_ram_setup_cell(player_typed, move_budget)
-		var dest: Vector2i = align_cell if align_cell != Vector2i(-1, -1) else _find_adjacent_to(p_cell)
+		var dest: Vector2i = Vector2i(-1, -1)
+		if engaged:
+			var align_cell: Vector2i = _find_ram_setup_cell(player_typed, move_budget)
+			dest = align_cell if align_cell != Vector2i(-1, -1) else _find_adjacent_to(p_cell)
+		else:
+			dest = _find_adjacent_to(p_cell)
 		if dest != Vector2i(-1, -1) and move_budget > 0:
 			var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, dest, _tile_scene)
 			var steps: int = mini(move_budget, path.size())
@@ -216,6 +224,7 @@ func _normal_turn(player_typed: Player) -> void:
 				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 				var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 				_tile_scene.unregister_entity(grid_cell)
+				CombatManager.record_move(self, grid_cell, next_cell)
 				grid_cell = next_cell
 				_tile_scene.register_entity(grid_cell, self)
 				CombatManager.spend_move()

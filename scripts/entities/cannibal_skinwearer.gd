@@ -103,7 +103,7 @@ func _try_grapple(player_typed: Player) -> void:
 # Move + knife attack — mirrors the base Enemy AI loop.
 func _normal_turn(player_typed: Player) -> void:
 	var attack_cost: int = _attack_weapon.get("ap_cost", 1)
-	var p_cell: Vector2i = player_typed.grid_cell
+	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 
 	if manhattan > 1 and _tile_scene != null:
@@ -119,6 +119,7 @@ func _normal_turn(player_typed: Player) -> void:
 				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 				var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 				_tile_scene.unregister_entity(grid_cell)
+				CombatManager.record_move(self, grid_cell, next_cell)
 				grid_cell = next_cell
 				_tile_scene.register_entity(grid_cell, self)
 				CombatManager.spend_move()

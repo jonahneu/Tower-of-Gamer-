@@ -54,6 +54,7 @@ signal journal_updated(kind: String)                         # "quest" | "note" 
 signal inventory_changed                                    # fired when player inventory is modified outside the shop/craft UI
 signal player_moved(cell: Vector2i)                         # fired each time the player steps to a new grid cell
 signal los_blockers_changed                                  # fired when a door/gate opens or closes
+signal light_levels_changed                                  # fired when TileScene recomputes per-cell light (source added/removed/moved)
 signal open_dream_scene                                      # fired after first protected rest to show the premonition dream
 signal show_move_range(grey_cells: Array, yellow_cells: Array, enemy_cells: Array)  # BFS reachable tiles this turn
 signal hide_move_range()

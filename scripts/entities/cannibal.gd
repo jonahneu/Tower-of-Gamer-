@@ -76,6 +76,7 @@ func _yell_phase() -> bool:
 	for enemy in idle_cannibals:
 		if is_instance_valid(enemy):
 			CombatManager.add_participant(enemy)
+			CombatManager.alert_entity(enemy, grid_cell)
 	return true
 
 

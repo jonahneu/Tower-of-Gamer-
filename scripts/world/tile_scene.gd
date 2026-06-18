@@ -33,9 +33,15 @@ func _ready() -> void:
 	EventBus.show_attack_range_overlay.connect(_on_show_attack_range_overlay)
 	EventBus.hide_attack_range_overlay.connect(_on_hide_attack_range_overlay)
 	EventBus.blast_tag_detonation.connect(_on_blast_tag_detonation)
+	default_light_level = LightLevels.FULL if GameManager.world_layer == 0 else LightLevels.DARK
 	_fog = FogOfWar.new()
 	_fog.name = "FogOfWar"
 	add_child(_fog)
+	# Synchronous, not deferred — every light-source prop already in the scene
+	# file has already registered by now (Godot calls child _ready() before
+	# parent _ready()), so this sees the full light source set before the
+	# first compute_fov() call below.
+	_recompute_light()
 	if GameManager.player != null and is_instance_valid(GameManager.player):
 		_fog.compute_fov(GameManager.player.grid_cell)
 		_fog.update_entity_visibility()
@@ -124,6 +130,69 @@ var cell_fill_colors: Dictionary = {}  # Vector2i -> Color (for terrain like riv
 var pit_tiles: Dictionary = {}       # Vector2i -> true (draw depth faces, no outline)
 var channel_tiles: Dictionary = {}   # Vector2i -> true (shallow water channel)
 var _fog: FogOfWar = null
+
+# ── Light/darkness ────────────────────────────────────────────────────────────
+var light_levels: Dictionary = {}        # Vector2i -> LightLevels.DARK/DIM/FULL (sparse; absent = default_light_level)
+var default_light_level: int = LightLevels.FULL
+var _light_sources: Dictionary = {}      # Node -> {cell: Vector2i, bright_radius: int, dim_radius: int}
+
+# bright_radius = -1 means "no bright tier at all" (e.g. glowing fungi — DIM only).
+func register_light_source(owner: Node, cell: Vector2i, bright_radius: int, dim_radius: int) -> void:
+	_light_sources[owner] = {"cell": cell, "bright_radius": bright_radius, "dim_radius": dim_radius}
+	_recompute_light()
+
+func unregister_light_source(owner: Node) -> void:
+	if not _light_sources.has(owner):
+		return
+	_light_sources.erase(owner)
+	_recompute_light()
+
+func update_light_source_position(owner: Node, new_cell: Vector2i) -> void:
+	if not _light_sources.has(owner):
+		return
+	_light_sources[owner]["cell"] = new_cell
+	_recompute_light()
+
+func get_light_level(cell: Vector2i) -> int:
+	return light_levels.get(cell, default_light_level)
+
+# Rebuilds light_levels from scratch via BFS flood-fill from every registered
+# source, bounded by dim_radius and blocked by los_blocked_cells (the same
+# wall data line-of-sight already uses) — light doesn't bleed through walls.
+# Event-driven (register/unregister/move only), never per-frame.
+func _recompute_light() -> void:
+	light_levels.clear()
+	for owner in _light_sources.keys():
+		if not is_instance_valid(owner):
+			continue
+		var src: Dictionary = _light_sources[owner]
+		_flood_light_from(src["cell"], src["bright_radius"], src["dim_radius"])
+	EventBus.light_levels_changed.emit()
+
+func _flood_light_from(source_cell: Vector2i, bright_radius: int, dim_radius: int) -> void:
+	if not is_in_bounds(source_cell):
+		return
+	var visited: Dictionary = {source_cell: 0}  # cell -> BFS depth
+	var queue: Array[Vector2i] = [source_cell]
+	var head: int = 0
+	while head < queue.size():
+		var cur: Vector2i = queue[head]
+		head += 1
+		var depth: int = visited[cur]
+		var tier: int = LightLevels.FULL if depth <= bright_radius else LightLevels.DIM
+		var existing: int = light_levels.get(cur, -1)
+		if tier > existing:
+			light_levels[cur] = tier
+		if depth >= dim_radius:
+			continue
+		if los_blocked_cells.has(cur) and cur != source_cell:
+			continue  # walls receive light but don't transmit it further
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nb: Vector2i = cur + d
+			if not is_in_bounds(nb) or visited.has(nb):
+				continue
+			visited[nb] = depth + 1
+			queue.append(nb)
 
 func register_entity(cell: Vector2i, entity: Node) -> void:
 	# A mover (enemy/NPC) can step onto a non-blocking entity's cell (e.g. a

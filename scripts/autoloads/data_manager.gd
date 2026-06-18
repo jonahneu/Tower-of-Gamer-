@@ -1245,6 +1245,13 @@ func _load_items() -> void:
 		"properties": [], "abilities": [],
 	}
 
+	items["torch"] = {
+		"id": "torch", "weight": 1.0, "name": "Torch", "type": "tool", "slot": "hand",
+		"description": "A pitch-soaked length of wood, bound and lit. Casts a steady ring of light.",
+		"light_source": true,
+		"properties": [], "abilities": [],
+	}
+
 	items["desert_shawl"] = {
 		"id": "desert_shawl", "weight": 1.0, "name": "Desert Shawl", "type": "tool", "slot": "back",
 		"description": "A wide cloth wrap that shields from sun and sand. (Desert mechanics TBD.)",

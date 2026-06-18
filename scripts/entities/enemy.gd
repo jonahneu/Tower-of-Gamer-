@@ -177,7 +177,7 @@ func _process(delta: float) -> void:
 			var dx: int   = grid_cell.x - player_typed.grid_cell.x
 			var dy: int   = grid_cell.y - player_typed.grid_cell.y
 			var dist: float = sqrt(float(dx * dx + dy * dy))
-			if dist <= float(aggro_range):
+			if dist <= float(effective_aggro_range()):
 				if not _aggro_entered:
 					_aggro_entered = true
 					if dist <= 1:
@@ -253,10 +253,23 @@ func _check_join_active_combat() -> bool:
 		var cell: Vector2i = p_cell
 		var dx: int = grid_cell.x - cell.x
 		var dy: int = grid_cell.y - cell.y
-		if sqrt(float(dx * dx + dy * dy)) <= float(aggro_range):
+		if sqrt(float(dx * dx + dy * dy)) <= float(effective_aggro_range()):
 			CombatManager.add_participant(self)
 			return true
 	return false
+
+# Caps aggro_range by how well this entity can currently perceive the player
+# given both their light tiers (LightLevels.vision_cap) — an enemy in the dark
+# (or whose target is in the dark) can't spot the player from as far away.
+func effective_aggro_range() -> int:
+	if _tile_scene == null or GameManager.player == null:
+		return aggro_range
+	var player_typed: Player = GameManager.player as Player
+	if player_typed == null:
+		return aggro_range
+	var my_light: int = _tile_scene.get_light_level(grid_cell)
+	var player_light: int = _tile_scene.get_light_level(player_typed.grid_cell)
+	return LightLevels.vision_cap(my_light, player_light, aggro_range)
 
 func _trigger_combat() -> void:
 	if _in_combat or GameManager.combat_mode:
@@ -275,7 +288,7 @@ func _trigger_combat() -> void:
 					continue
 				var dx: int = other.grid_cell.x - player_typed.grid_cell.x
 				var dy: int = other.grid_cell.y - player_typed.grid_cell.y
-				if sqrt(float(dx * dx + dy * dy)) <= float(other.aggro_range):
+				if sqrt(float(dx * dx + dy * dy)) <= float(other.effective_aggro_range()):
 					combatants.append(other)
 	if GameManager.is_sneaking and GameManager.player != null:
 		var player_typed_inner: Player = GameManager.player as Player
@@ -289,7 +302,10 @@ func _trigger_combat() -> void:
 		var smoke_bonus: int  = 25 if (GameManager.is_in_smoke(player_typed_inner.grid_cell) or GameManager.is_in_smoke(grid_cell)) else 0
 		var eff_sneak: float  = (sneak_skill + smoke_bonus) * (1.0 + dex_mod * 0.1)
 		var per_mod: int      = Entity.modifier(stat_perception)
-		var eff_per: float    = (1.0 + per_mod) * 5.0 * enemy_level
+		var light_penalty: int = 0
+		if _tile_scene != null:
+			light_penalty = LightLevels.perception_penalty(_tile_scene.get_light_level(player_typed_inner.grid_cell))
+		var eff_per: float    = (1.0 + per_mod) * 5.0 * enemy_level + light_penalty
 		var detect_chance: int = clampi(50 + int((eff_per - eff_sneak) * 2.0), 5, 95)
 
 		# Bump: player walked directly adjacent — enemy gets 3 detection rolls
@@ -439,7 +455,7 @@ func _execute_tactical_turn() -> void:
 func _tactical_check_detection(player_typed: Player) -> bool:
 	var dx: int = grid_cell.x - player_typed.grid_cell.x
 	var dy: int = grid_cell.y - player_typed.grid_cell.y
-	if sqrt(float(dx * dx + dy * dy)) > float(aggro_range):
+	if sqrt(float(dx * dx + dy * dy)) > float(effective_aggro_range()):
 		return false
 
 	if not GameManager.is_sneaking:
@@ -456,7 +472,10 @@ func _tactical_check_detection(player_typed: Player) -> bool:
 	var dex_mod: int      = Entity.modifier(GameManager.player.stat_dexterity)
 	var eff_sneak: float  = sneak_skill * (1.0 + dex_mod * 0.1)
 	var per_mod: int      = Entity.modifier(stat_perception)
-	var eff_per: float    = (1.0 + per_mod) * 5.0 * enemy_level
+	var light_penalty: int = 0
+	if _tile_scene != null:
+		light_penalty = LightLevels.perception_penalty(_tile_scene.get_light_level(player_typed.grid_cell))
+	var eff_per: float    = (1.0 + per_mod) * 5.0 * enemy_level + light_penalty
 	var detect_chance: int = clampi(50 + int((eff_per - eff_sneak) * 2.0), 5, 95)
 	var die: int           = randi_range(1, 100)
 	if die > detect_chance:
@@ -491,7 +510,7 @@ func _start_combat_from_tactical(stealth_info: Dictionary = {}) -> void:
 					continue
 				var dx: int = other.grid_cell.x - player_typed.grid_cell.x
 				var dy: int = other.grid_cell.y - player_typed.grid_cell.y
-				if sqrt(float(dx * dx + dy * dy)) <= float(other.aggro_range):
+				if sqrt(float(dx * dx + dy * dy)) <= float(other.effective_aggro_range()):
 					combatants.append(other)
 	CombatManager.force_start_combat(combatants, stealth_info)
 
@@ -512,7 +531,7 @@ func _execute_ai_turn() -> void:
 	var attack_cost: int = _attack_weapon.get("ap_cost", 1) if not _attack_weapon.is_empty() else 0
 
 	# ── Move phase: spend MP then spare AP to close distance ──────────────────
-	var p_cell: Vector2i = player_typed.grid_cell
+	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
@@ -526,6 +545,7 @@ func _execute_ai_turn() -> void:
 				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 				var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 				_tile_scene.unregister_entity(grid_cell)
+				CombatManager.record_move(self, grid_cell, next_cell)
 				grid_cell = next_cell
 				_tile_scene.register_entity(grid_cell, self)
 				CombatManager.spend_move()

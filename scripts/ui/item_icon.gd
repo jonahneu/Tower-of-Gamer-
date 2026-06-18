@@ -552,14 +552,18 @@ func _draw_shawl(w: float, h: float, col: Color) -> void:
 	], [col])
 
 func _draw_talisman(w: float, h: float, cloth_col: Color, ink_col: Color) -> void:
-	# Small cloth square with a symbolic line/mark on it
+	# Small cloth square with an inscribed warding glyph on it
 	draw_rect(Rect2(w * 0.15, h * 0.12, w * 0.70, h * 0.76), cloth_col)
 	draw_rect(Rect2(w * 0.15, h * 0.12, w * 0.70, h * 0.76), cloth_col.darkened(0.3), false, 1.5)
-	# Simple protective symbol — vertical line + horizontal bar
-	var cx := w * 0.5
-	var cy := h * 0.5
-	draw_line(Vector2(cx, h * 0.26), Vector2(cx, h * 0.74), ink_col, 2.0)
-	draw_line(Vector2(w * 0.28, cy - h * 0.08), Vector2(w * 0.72, cy - h * 0.08), ink_col, 2.0)
+	# Inscribed script glyph — angular zigzag mark, evoking the sacred script
+	# the scribes inscribe talismans with (not any real-world religious symbol)
+	var top: float = h * 0.28
+	var bot: float = h * 0.72
+	var mid1: float = top + (bot - top) * 0.33
+	var mid2: float = top + (bot - top) * 0.66
+	draw_line(Vector2(w * 0.32, top),  Vector2(w * 0.68, mid1), ink_col, 2.0)
+	draw_line(Vector2(w * 0.68, mid1), Vector2(w * 0.32, mid2), ink_col, 2.0)
+	draw_line(Vector2(w * 0.32, mid2), Vector2(w * 0.68, bot),  ink_col, 2.0)
 
 func _draw_ink_pot(w: float, h: float) -> void:
 	# Small squat pot, dark liquid inside

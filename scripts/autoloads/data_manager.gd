@@ -647,7 +647,7 @@ const COOKING_RECIPES: Dictionary = {
 	"pottage": {
 		"id":                 "pottage",
 		"name":               "Pottage",
-		"lore":               "Boil it low and slow with whatever scraps are at hand — meat or root, herbs if you've got them. You can always find water enough to make this work.",
+		"lore":               "Boil it low and slow with whatever scraps are at hand — meat or root, herbs if you've got them.",
 		"required_materials": ["protein"],
 		"optional_materials": ["scraps"],
 		"optional_max":       2,

@@ -73,7 +73,7 @@ func _build_options() -> Array:
 		GameManager.add_quest({
 			"id":          "apothecary_delivery",
 			"title":       "Deliver the apothecary's package",
-			"description": "The apothecary asked you to deliver a small pouch to the keeper of the rest house next door. Three coins upon delivery.",
+			"description": "The apothecary asked you to deliver a small pouch to the keeper of the rest house north of here. Three coins upon delivery.",
 			"threads":     [],
 			"completed":   false,
 		})
@@ -128,7 +128,7 @@ func _build_options() -> Array:
 	if not pd.get("apothecary_job_given", false):
 		options.append({
 			"label":    "Do you have any work?",
-			"response": "Yes, I have an errand that needs running. Can you deliver this to the keeper of the rest house next door? He will give you three coins payment upon arrival.",
+			"response": "Yes, I have an errand that needs running. Can you deliver this to the keeper of the rest house north of here? He will give you three coins payment upon arrival.",
 			"next_options": [
 				{
 					"label":  "Ok.",

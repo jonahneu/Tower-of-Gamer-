@@ -1319,7 +1319,7 @@ func _load_items() -> void:
 		"type":        "quest_item",
 		"slot":        null,
 		"weight":      0.2,
-		"description": "A small cloth pouch sealed with twine. The apothecary asked you to deliver this to the keeper of the rest house next door.",
+		"description": "A small cloth pouch sealed with twine. The apothecary asked you to deliver this to the keeper of the rest house north of here.",
 		"properties": [], "abilities": [],
 	}
 

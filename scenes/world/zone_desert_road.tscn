@@ -1,9 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://zone_desert_road"]
+[gd_scene load_steps=5 format=3 uid="uid://zone_desert_road"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/world/road.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/entities/rock.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/guard.gd" id="5"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -54,3 +55,17 @@ rock_size = "small"
 script = ExtResource("4")
 grid_cell = Vector2i(70, 25)
 rock_size = "small"
+
+[node name="GateGuardNorth" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(76, 33)
+
+[node name="GateGuardSouth" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(76, 46)
+
+[node name="PatrolGuard" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(38, 40)
+patrol_min_x = 10
+patrol_max_x = 68

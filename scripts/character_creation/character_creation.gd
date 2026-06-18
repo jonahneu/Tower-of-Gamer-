@@ -14,7 +14,7 @@ const SKILL_DISPLAY = {
 	"smithing":"Smithing","survival":"Survival","cooking":"Cooking",
 }
 const SKILL_GOV = {
-	"melee":"STR/DEX","ranged":"PER+STR/DEX","dodge":"DEX/AGI",
+	"melee":"STR/DEX","ranged":"PER+STR/DEX","dodge":"DEX",
 	"convince":"WIL","intimidate":"STR/WIL","sneak":"DEX",
 	"sleight_of_hand":"DEX","alchemy":"INT","occultism":"INT/WIL",
 	"smithing":"INT/STR","survival":"CON/WIL/PER","cooking":"INT",
@@ -23,7 +23,7 @@ const SKILL_GOV = {
 const SKILL_GOV_NOTE: Dictionary = {
 	"melee":           "Higher of STR or DEX modifier.\nImproves both hit chance and damage.",
 	"ranged":          "To-hit: 70% PER modifier + 30% best(STR/DEX).\nDamage governing set per-weapon (STR or DEX).",
-	"dodge":           "Higher of DEX or AGI modifier.\nAGI also grants more AP and MB in combat.",
+	"dodge":           "Dexterity modifier.\nAGI grants more AP and MP in combat, but no longer affects Dodge.",
 	"convince":        "Willpower modifier.\nHigh WIL = more persuasive speech.",
 	"intimidate":      "Higher of STR or WIL modifier.\nPhysical presence (STR) or force of will (WIL).",
 	"sneak":           "Dexterity modifier.\nOpposed by enemy Perception stat when detected.",
@@ -37,8 +37,8 @@ const SKILL_GOV_NOTE: Dictionary = {
 
 const STAT_TOOLTIP: Dictionary = {
 	"strength": "Skills: Melee (STR/DEX), Ranged to-hit (PER+STR/DEX), Smithing (INT/STR), Intimidate (STR/WIL)\n• Melee and Ranged damage bonus (+mod per hit, per weapon)\n• Ranged to-hit: STR competes with DEX for the 30% non-PER portion\n• Carry capacity: +10 per modifier\n• Modifier = stat − 5  (e.g. STR 7 → +2)",
-	"dexterity": "Skills: Melee (STR/DEX), Ranged to-hit (PER+STR/DEX), Dodge (DEX/AGI),\n  Sneak (DEX), Sleight of Hand (DEX)\n• Ranged/Melee damage bonus (+mod per hit, per weapon)\n• Crit chance: 30% weight\n• Initiative bonus (+mod)\n• Modifier = stat − 5",
-	"agility": "Skills: Dodge (DEX/AGI)\n• Action Points (AP) = Agility stat  (attacks per turn)\n• Movement Points (MP) = Agility stat  (tiles per turn)\n• Initiative bonus (+mod)\n• Modifier = stat − 5",
+	"dexterity": "Skills: Melee (STR/DEX), Ranged to-hit (PER+STR/DEX), Dodge (DEX),\n  Sneak (DEX), Sleight of Hand (DEX)\n• Ranged/Melee damage bonus (+mod per hit, per weapon)\n• Crit chance: 30% weight\n• Initiative bonus (+mod)\n• Modifier = stat − 5",
+	"agility": "Doesn't govern any skill.\n• Action Points (AP) = Agility stat  (attacks per turn)\n• Movement Points (MP) = Agility stat  (tiles per turn)\n• Initiative bonus (+mod)\n• Modifier = stat − 5",
 	"constitution": "Skills: Survival (CON/WIL/PER)\n• Max HP = 5 × (5 + CON mod) × (level + 1)\n• Carry capacity: +5 per modifier\n• Bleed resistance: reduces bleed application chance\n• CON increases applied retroactively to HP\n• Modifier = stat − 5",
 	"intelligence": "Skills: Alchemy (INT), Occultism (INT/WIL), Smithing (INT/STR)\n• Skill points per level: base 30 + floor(INT mod × 2.5)\n  (character creation pool is 60 + INT mod × 5)\n• Skill cap per level: 20 at Lv.1, +10 each level after\n• Modifier = stat − 5",
 	"willpower": "Skills: Convince (WIL), Intimidate (STR/WIL),\n  Occultism (INT/WIL), Survival (CON/WIL/PER)\n• Spirit pool: WIL × 10 (resource for all magic abilities)\n• Magic damage bonus: WIL modifier applies to spell damage\n• Governs mental resilience and spiritual attunement\n• Modifier = stat − 5",
@@ -879,7 +879,7 @@ func _gov_mod(skill: String) -> float:
 		"melee":             return float(max(_eff_stat("strength")-5, _eff_stat("dexterity")-5))
 		"convince":          return float(_eff_stat("willpower")-5)
 		"intimidate":        return float(max(_eff_stat("strength")-5, _eff_stat("willpower")-5))
-		"dodge":             return float(max(_eff_stat("dexterity")-5, _eff_stat("agility")-5))
+		"dodge":             return float(_eff_stat("dexterity")-5)
 		"sneak","sleight_of_hand": return float(_eff_stat("dexterity")-5)
 		"alchemy","cooking": return float(_eff_stat("intelligence")-5)
 		"occultism":         return float(max(_eff_stat("intelligence")-5, _eff_stat("willpower")-5))

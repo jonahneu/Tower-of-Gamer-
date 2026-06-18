@@ -1722,7 +1722,7 @@ func _player_governing_mod(skill_name: String, stats: Dictionary) -> float:
 
 	const GOV = {
 		"melee":            ["strength", "dexterity"],
-		"dodge":            ["dexterity", "agility"],
+		"dodge":            ["dexterity"],
 		"convince":         ["willpower"],
 		"intimidate":       ["strength", "willpower"],
 		"sneak":            ["dexterity"],

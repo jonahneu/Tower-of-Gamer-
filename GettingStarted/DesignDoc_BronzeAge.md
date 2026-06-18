@@ -482,7 +482,7 @@ Score 5 = +0 modifier. Modifier = score − 5.
 |---|---|---|
 | Melee | STR / DEX | Higher of the two modifiers applies. |
 | Ranged | PER + STR / DEX | To-hit: 70% PER modifier + 30% higher of STR or DEX. |
-| Dodge | DEX / AGI | Higher of the two. AGI also governs AP and MP. |
+| Dodge | DEX | AGI governs AP and MP, but no longer Dodge — kept separate so it isn't doubly powerful. |
 | Deceive | WIL | Force of will behind a convincing lie. |
 | Convince | WIL | Force of will behind persuasion. |
 | Intimidate | STR / WIL | Higher of physical presence or force of will. |

@@ -24,7 +24,7 @@ const SKILL_GOVERNING_STATS: Dictionary = {
 	"ranged":           ["perception", "dexterity"],
 	"convince":         ["willpower"],
 	"intimidate":       ["strength", "willpower"],
-	"dodge":            ["dexterity", "agility"],
+	"dodge":            ["dexterity"],
 	"sneak":            ["dexterity"],
 	"sleight_of_hand":  ["dexterity"],
 	"alchemy":          ["intelligence"],

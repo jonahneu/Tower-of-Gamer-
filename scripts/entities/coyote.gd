@@ -5,8 +5,8 @@ class_name Coyote
 # CON 5  → base max_hp = 50, hp_flat_bonus = -30 → max_hp = 20
 # CON 5 (mod 0) keeps bleed chance at 60% base (vs 84% with CON 2)
 # AGI 6  → max_ap = 6, max_mp = 12 (mp = agility * 2)
-# STR/DEX all 5 (mod 0); AGI 6 (mod +1) governs dodge
-# Melee 20 → effective 20.0; Dodge 20 → effective 22.0 (AGI +1 mod)
+# STR/DEX all 5 (mod 0); AGI no longer governs dodge (DEX does)
+# Melee 20 → effective 20.0; Dodge 20 → effective 20.0 (DEX mod 0)
 # Innate armor: 1 flat + 5% physical damage reduction
 
 func _ready() -> void:

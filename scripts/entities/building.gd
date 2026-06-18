@@ -51,6 +51,23 @@ func _spawn_wall_cells() -> void:
 		wc.position = TileScene.grid_to_screen(cell)
 		_tile_scene.add_child(wc)
 		_wall_nodes.append(wc)
+	# Dim the inside of real, enterable rooms by default — relevant on the
+	# surface, where the outdoor default is FULL daylight and an indoor space
+	# with no door (DOOR_X == 999 marks a perimeter/decorative wall, not a
+	# room) shouldn't read as just as bright as standing outside.
+	if _tile_scene.default_light_level == LightLevels.FULL and DOOR_X != 999:
+		var interior := _compute_interior_cells()
+		if not interior.is_empty():
+			_tile_scene.register_ambient_region(interior, LightLevels.DIM)
+
+func _compute_interior_cells() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if X2 - X1 < 2 or Y2 - Y1 < 2:
+		return cells
+	for x in range(X1 + 1, X2):
+		for y in range(Y1 + 1, Y2):
+			cells.append(Vector2i(x, y))
+	return cells
 
 func _exit_tree() -> void:
 	for wc in _wall_nodes:

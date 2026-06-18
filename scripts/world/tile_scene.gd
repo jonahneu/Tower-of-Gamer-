@@ -135,6 +135,18 @@ var _fog: FogOfWar = null
 var light_levels: Dictionary = {}        # Vector2i -> LightLevels.DARK/DIM/FULL (sparse; absent = default_light_level)
 var default_light_level: int = LightLevels.FULL
 var _light_sources: Dictionary = {}      # Node -> {cell: Vector2i, bright_radius: int, dim_radius: int}
+var _ambient_overrides: Dictionary = {}  # Vector2i -> int; per-cell baseline used instead of default_light_level (e.g. dim building interiors)
+
+# Sets the baseline light level for a region of cells (before light sources are
+# added on top), e.g. a building interior that should read as dim even though
+# the surrounding outdoor zone is in full daylight.
+func register_ambient_region(cells: Array, level: int) -> void:
+	for cell in cells:
+		_ambient_overrides[cell] = level
+	_recompute_light()
+
+func _cell_ambient(cell: Vector2i) -> int:
+	return _ambient_overrides.get(cell, default_light_level)
 
 # bright_radius = -1 means "no bright tier at all" (e.g. glowing fungi — DIM only).
 func register_light_source(owner: Node, cell: Vector2i, bright_radius: int, dim_radius: int) -> void:
@@ -154,7 +166,7 @@ func update_light_source_position(owner: Node, new_cell: Vector2i) -> void:
 	_recompute_light()
 
 func get_light_level(cell: Vector2i) -> int:
-	return light_levels.get(cell, default_light_level)
+	return maxi(light_levels.get(cell, -1), _cell_ambient(cell))
 
 # Rebuilds light_levels from scratch via BFS flood-fill from every registered
 # source, bounded by dim_radius and blocked by los_blocked_cells (the same
@@ -180,7 +192,7 @@ func _flood_light_from(source_cell: Vector2i, bright_radius: int, dim_radius: in
 		head += 1
 		var depth: int = visited[cur]
 		var tier: int = LightLevels.FULL if depth <= bright_radius else LightLevels.DIM
-		var existing: int = light_levels.get(cur, -1)
+		var existing: int = maxi(light_levels.get(cur, -1), _cell_ambient(cur))
 		if tier > existing:
 			light_levels[cur] = tier
 		if depth >= dim_radius:

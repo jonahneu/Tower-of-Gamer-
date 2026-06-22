@@ -28,3 +28,6 @@ Smith, Scribe, Apothecary, and the Fire Cult (member/elder) each need a new dial
 
 ## New NPCs wanted
 - **Fisher** — docks district. Likely the source of the fishing rod (design doc leaves this TBD: vendor, fisher NPC, or craftable). Needs personality, exact location/stall, and what he sells/teaches beyond the rod itself.
+
+## Full city layout (bigger-picture, not Act-1-blocking)
+Right now the map is really just a thin corridor of built districts (Market, Market Gate, Residential + East, the Ditch chain) plus the desert/river sprawl to the west — there's no actual outline yet of the city as a whole (where the wall is, what other districts/neighborhoods exist, where it ends). Needs at least a rough outline pass. Tied to this: the city needs farmland marked somewhere outside it to make sense — west is already claimed by the riverbank/desert content built so far, so it should go **northeast or south** of the city instead. Both are still totally open — no decision made yet on which, or what's actually out there.

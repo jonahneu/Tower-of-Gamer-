@@ -208,6 +208,7 @@ func _ready() -> void:
 				"exits":                    {
 					"south": Vector2i(7, 11),
 					"east":  Vector2i(8, 10),
+					"north": Vector2i(7, 9),
 				},
 			},
 			Vector2i(8, 10): {
@@ -219,6 +220,40 @@ func _ready() -> void:
 					"south": Vector2i(8, 11),
 					"east":  Vector2i(9, 10),
 					"west":  Vector2i(7, 10),
+					"north": Vector2i(8, 9),
+				},
+			},
+			Vector2i(7, 9): {
+				"scene":                    "res://scenes/world/zone_desert_camp_southwest.tscn",
+				"label":                    "Riverbank",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(7, 10),
+					"north": Vector2i(7, 8),
+					"east":  Vector2i(8, 9),
+				},
+			},
+			Vector2i(7, 8): {
+				"scene":                    "res://scenes/world/zone_desert_camp_west.tscn",
+				"label":                    "Riverbank",
+				"thumbnail_type":           "wilderness",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(7, 9),
+					"east":  Vector2i(8, 8),
+				},
+			},
+			Vector2i(8, 9): {
+				"scene":                    "res://scenes/world/zone_desert_camp_south.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 10),
+					"north": Vector2i(8, 8),
+					"west":  Vector2i(7, 9),
+					"east":  Vector2i(9, 9),
 				},
 			},
 			Vector2i(9, 10): {
@@ -240,6 +275,7 @@ func _ready() -> void:
 				"exits":                    {
 					"south": Vector2i(9, 10),
 					"north": Vector2i(9, 8),
+					"west":  Vector2i(8, 9),
 				},
 			},
 			Vector2i(9, 8): {
@@ -258,7 +294,9 @@ func _ready() -> void:
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
-					"east": Vector2i(9, 8),
+					"east":  Vector2i(9, 8),
+					"south": Vector2i(8, 9),
+					"west":  Vector2i(7, 8),
 				},
 			},
 			Vector2i(7, 13): {

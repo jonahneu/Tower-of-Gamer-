@@ -1,8 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://zone_desert_flats"]
+[gd_scene load_steps=5 format=3 uid="uid://zone_desert_flats"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/entities/rock.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/sand_beetle.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/plant.gd" id="5"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -35,3 +37,21 @@ rock_size = "small"
 script = ExtResource("3")
 grid_cell = Vector2i(10, 65)
 rock_size = "small"
+
+[node name="SandBeetle1" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(44, 36)
+
+[node name="DesertSucculent1" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(25, 30)
+plant_id = "desert_flats::DesertSucculent1"
+plant_type = "succulent"
+item_id = "desert_succulent"
+
+[node name="DesertSucculent2" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(55, 50)
+plant_id = "desert_flats::DesertSucculent2"
+plant_type = "succulent"
+item_id = "desert_succulent"

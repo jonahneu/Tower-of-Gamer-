@@ -208,6 +208,10 @@ func _process(delta: float) -> void:
 			_tile_scene.unregister_entity(grid_cell)
 			grid_cell = next_cell
 			_tile_scene.register_entity(grid_cell, self)
+			# Outside combat, only the player's own movement refreshes fog-of-war
+			# visibility — without this, a wandering enemy stepping into or out
+			# of view doesn't show up until the player happens to move too.
+			_tile_scene.update_entity_visibility()
 		_wander_target_pos = TileScene.grid_to_screen(grid_cell)
 		queue_redraw()
 	else:

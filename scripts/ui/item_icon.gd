@@ -170,6 +170,8 @@ func _draw() -> void:
 			_draw_boots(w, h, Color(0.42, 0.32, 0.22), true)
 		"leather_vest":
 			_draw_corselet(w, h, Color(0.45, 0.35, 0.22))
+		"padded_cloth_armor":
+			_draw_corselet(w, h, Color(0.72, 0.65, 0.50))
 		"desert_shawl":
 			_draw_shawl(w, h, Color(0.85, 0.78, 0.58))
 		_:

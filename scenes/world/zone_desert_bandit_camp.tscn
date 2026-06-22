@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://zone_desert_bandit_camp"]
+[gd_scene load_steps=10 format=3 uid="uid://zone_desert_bandit_camp"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/entities/bandit.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/entities/bandit_archer.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/entities/bandit_leader.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/entities/crate.gd" id="10"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -88,3 +89,15 @@ Y1 = 33
 Y2 = 36
 DOOR_X = 999
 DOOR_Y = -1
+
+[node name="LeaderCrate" type="Node2D" parent="."]
+script = ExtResource("10")
+grid_cell = Vector2i(43, 32)
+container_id = "bandit_camp_leader_crate"
+loot_item_ids = PackedStringArray("coin", "coin", "coin", "coin", "coin", "coin", "coin", "coin", "coin", "coin", "ancient_bronze_scrap", "ancient_bronze_scrap", "basic_lingering_poison")
+
+[node name="FoodCrate" type="Node2D" parent="."]
+script = ExtResource("10")
+grid_cell = Vector2i(30, 40)
+container_id = "bandit_camp_food_crate"
+loot_item_ids = PackedStringArray("smoked_sand_beetle_meat", "smoked_sand_beetle_meat")

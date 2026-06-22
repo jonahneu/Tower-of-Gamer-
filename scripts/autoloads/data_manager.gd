@@ -1554,8 +1554,15 @@ func _load_items() -> void:
 	items["leather_vest"] = {
 		"id": "leather_vest", "weight": 1.5, "name": "Leather Vest", "type": "clothing", "slot": "torso",
 		"description": "A close-fitting vest of cured leather.",
-		"defense_flat": 0, "defense_pct": 0.03,
+		"defense_flat": 3, "defense_pct": 0.0,
 		"skill_bonus": {}, "carry_weight_bonus": 0,
+	}
+
+	items["padded_cloth_armor"] = {
+		"id": "padded_cloth_armor", "weight": 2.0, "name": "Padded Cloth Armor", "type": "armor", "slot": "torso",
+		"description": "Layers of dense cloth, quilted thick enough to take the sting out of a blow.",
+		"defense_flat": 0, "defense_pct": 0.10,
+		"skill_bonus": {"sneak": -6, "dodge": -6}, "carry_weight_bonus": 0,
 	}
 
 	items["work_trousers"] = {
@@ -1583,7 +1590,7 @@ func _load_items() -> void:
 	items["bronze_scale_hauberk"] = {
 		"id": "bronze_scale_hauberk", "weight": 6.0, "name": "Bronze Scale Hauberk", "type": "armor", "slot": "torso",
 		"description": "Overlapping bronze scales wired to a leather backing. Expensive, heavy, and highly effective.",
-		"defense_flat": 3, "defense_pct": 0.10, "skill_bonus": {"sneak": -12, "dodge": -12}, "carry_weight_bonus": 0,
+		"defense_flat": 5, "defense_pct": 0.10, "skill_bonus": {"sneak": -12, "dodge": -12}, "carry_weight_bonus": 0,
 	}
 	items["bronze_greaves"] = {
 		"id": "bronze_greaves", "weight": 2.0, "name": "Bronze Greaves", "type": "armor", "slot": "legs",

@@ -35,6 +35,7 @@ func _ready() -> void:
 	var poisoned_scimitar: Dictionary = DataManager.get_item("scimitar")
 	poisoned_scimitar["poisoned"]     = true   # same flag the player's Basic Lingering Poison item sets
 	equipment["hand_1"]               = poisoned_scimitar
+	equipment["torso"]                = DataManager.get_item("leather_vest")
 	_attack_weapon                    = poisoned_scimitar
 	feats.append("brutal")
 	feats.append("bloodletting")

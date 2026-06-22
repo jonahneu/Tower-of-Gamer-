@@ -1,20 +1,23 @@
 extends NPC
 # The Fletcher — runs an open stall in the Market District.
-# Sells primitive/natural weapons: bows, stone knife, wooden spear, whip, quiver.
+# Sells primitive/natural weapons and light armor: bows, stone knife, wooden
+# spear, whip, quiver, hide/leather/cloth gear.
 # Buys nothing for now (trading window's buy_list is empty).
 
 const SHOP_ITEMS: Array = [
-	{"id": "knife",        "price": 2},
-	{"id": "sling",        "price": 4},
-	{"id": "stone_axe",    "price": 5},
-	{"id": "spear",        "price": 6},
-	{"id": "whip",         "price": 7},
-	{"id": "shortbow",     "price": 22},
-	{"id": "longbow",      "price": 35},
-	{"id": "quiver",       "price": 5},
-	{"id": "fishing_rod",  "price": 6},
-	{"id": "hide_shield",  "price": 4},
-	{"id": "wooden_shield","price": 8},
+	{"id": "knife",             "price": 2},
+	{"id": "sling",             "price": 4},
+	{"id": "stone_axe",         "price": 5},
+	{"id": "spear",             "price": 6},
+	{"id": "whip",              "price": 7},
+	{"id": "shortbow",          "price": 22},
+	{"id": "longbow",           "price": 35},
+	{"id": "quiver",            "price": 5},
+	{"id": "fishing_rod",       "price": 6},
+	{"id": "hide_shield",       "price": 4},
+	{"id": "wooden_shield",     "price": 8},
+	{"id": "leather_vest",      "price": 6},
+	{"id": "padded_cloth_armor", "price": 8},
 ]
 
 func _ready() -> void:

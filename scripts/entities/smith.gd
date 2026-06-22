@@ -10,10 +10,10 @@ const SHOP_ITEMS: Array = [
 	{"id": "sword",                  "price": 22},
 	{"id": "axe",                    "price": 20},
 	{"id": "bronze_spear",           "price": 16},
-	{"id": "bronze_scale_hauberk",   "price": 30},
-	{"id": "bronze_helm",            "price": 20},
-	{"id": "bronze_greaves",         "price": 16},
-	{"id": "bronze_shield",          "price": 16},
+	{"id": "bronze_scale_hauberk",   "price": 20},
+	{"id": "bronze_helm",            "price": 10},
+	{"id": "bronze_greaves",         "price": 8},
+	{"id": "bronze_shield",          "price": 14},
 	{"id": "bronze_spirit_armband",  "price": 12},
 ]
 

@@ -2595,6 +2595,25 @@ func _hide_item_hover_tooltip() -> void:
 	if _item_hover_tooltip != null:
 		_item_hover_tooltip.visible = false
 
+# Plain-text variant of _show_item_hover_tooltip, for hover targets that
+# aren't items (e.g. feat buttons) but still want the same tooltip panel.
+func _show_text_tooltip(text: String, screen_pos: Vector2) -> void:
+	if _item_hover_tooltip == null or text == "":
+		return
+	var margin := _item_hover_tooltip.get_child(0) as MarginContainer
+	if margin == null:
+		return
+	var lbl := margin.get_child(0) as RichTextLabel
+	if lbl == null:
+		return
+	lbl.text = text
+	var vp_size := get_viewport().get_visible_rect().size
+	var pos := screen_pos + Vector2(20, 16)
+	pos.x = clampf(pos.x, 4.0, vp_size.x - 220.0)
+	pos.y = clampf(pos.y, 4.0, vp_size.y - 120.0)
+	_item_hover_tooltip.position = pos
+	_item_hover_tooltip.visible = true
+
 # Builds a sized ItemIcon for `item`. pass_through=true (default) ignores mouse
 # input so a surrounding Button keeps receiving clicks/hover; pass false for an
 # icon placed directly in a plain row with no enclosing button, so the icon
@@ -6288,10 +6307,12 @@ func _refresh_feats() -> void:
 				row.add_theme_constant_override("separation", 6)
 				var btn := Button.new()
 				btn.text = f.get("name", feat_id)
-				btn.tooltip_text = f.get("description", "")
 				btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				btn.custom_minimum_size = Vector2(0, 26)
 				btn.disabled = not meets
+				var fdesc: String = f.get("description", "")
+				btn.mouse_entered.connect(func(): _show_text_tooltip(fdesc, get_viewport().get_mouse_position()))
+				btn.mouse_exited.connect(_hide_item_hover_tooltip)
 				var fid: String = feat_id
 				btn.pressed.connect(func():
 					if GameManager.grant_feat(fid):

@@ -1573,8 +1573,8 @@ func _load_items() -> void:
 	}
 
 	items["work_boots"] = {
-		"id": "work_boots", "weight": 2.0, "name": "Work Boots", "type": "clothing", "slot": "feet",
-		"description": "Heavy boots worn in from years of hard use.",
+		"id": "work_boots", "weight": 2.0, "name": "Hide Boots", "type": "clothing", "slot": "feet",
+		"description": "Stitched hide boots, broken in from years of hard use.",
 		"defense_flat": 0, "defense_pct": 0.02,
 		"skill_bonus": {}, "carry_weight_bonus": 0,
 	}

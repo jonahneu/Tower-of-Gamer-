@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/entities/thug.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/entities/scripture_customer.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/urn.gd" id="6"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -86,3 +87,9 @@ grid_cell = Vector2i(41, 63)
 
 [node name="ScriptureCustomer" type="Node2D" parent="."]
 script = ExtResource("5")
+
+[node name="NEHouseBackUrn" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(67, 3)
+container_id = "residential_ne_house_back_urn"
+loot_item_ids = PackedStringArray("coin", "coin", "coin")

@@ -433,6 +433,12 @@ func record_move(entity: Node, from_cell: Vector2i, to_cell: Vector2i) -> void:
 	if not turn_state.has(entity):
 		return
 	turn_state[entity]["last_move_dir"] = to_cell - from_cell
+	# Refresh fog-of-war immediately rather than waiting for turn_ended, so an
+	# enemy that moves into view mid-turn (e.g. around a corner) is visible
+	# before it gets to attack, not only after.
+	var zone: TileScene = GameManager.current_zone as TileScene
+	if zone != null:
+		zone.update_entity_visibility()
 
 # Light-capped LOS check from entity's perspective — reuses LightLevels.vision_cap
 # with the entity's own light tier as observer, the player's as target.
@@ -494,6 +500,14 @@ func _pick_wander_target_cell(entity: Node, ts: Dictionary) -> Vector2i:
 		var next: Vector2i = entity_cell + cur_dir
 		if zone != null and zone.is_walkable(next):
 			return next
+	# First instinct on giving up the chase: keep heading the way it was already
+	# moving (e.g. continue around the corner the player just vanished behind)
+	# rather than immediately picking a direction at random.
+	if last_dir != Vector2i.ZERO:
+		var straight: Vector2i = entity_cell + last_dir
+		if zone != null and zone.is_walkable(straight):
+			ts["wander_dir"] = last_dir
+			return straight
 	# Pick a new direction, excluding the reverse of the most recent move.
 	var reverse: Vector2i = -last_dir
 	dirs.shuffle()

@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/entities/meat_hawker.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/entities/sign.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/entities/bone_pile.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/entities/urn.gd" id="12"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -104,3 +105,9 @@ Y = 42
 
 [node name="MeatHawker" type="Node2D" parent="."]
 script = ExtResource("9")
+
+[node name="EastDitchUrn" type="Node2D" parent="."]
+script = ExtResource("12")
+grid_cell = Vector2i(71, 38)
+container_id = "market_lower_east_ditch_urn"
+loot_item_ids = PackedStringArray("coin", "coin", "coin")

@@ -44,7 +44,7 @@ func _update_dialogue() -> void:
 				pd["inventory"] = inv
 				pd["fire_cult_invoice_paid"] = true,
 			"response": "*They glance at the clay tablet and set it aside.* Standard order. Here. *They produce a sealed clay jar from a satchel and hand it over.* Tell him the seal holds better if he warms the jar first.",
-			"next_options": [{"label": "I will. Thank you.", "closes": true}],
+			"next_options": [{"label": "I will. Thank you.", "closes": true, "action": reopen}],
 		})
 
 	# ── Got any work ──────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ func _update_dialogue() -> void:
 							"completed":   false,
 						}),
 					"response": "Go talk to [Name TBD], his hut is directly across the ditch from here.",
-					"next_options": [{"label": "I will.", "closes": true}],
+					"next_options": [{"label": "I will.", "closes": true, "action": reopen}],
 				},
 			],
 		})

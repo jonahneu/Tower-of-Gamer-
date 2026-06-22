@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/entities/tunnel_entrance.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/entities/ladder.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/urn.gd" id="6"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -38,4 +39,10 @@ script = ExtResource("4")
 script = ExtResource("5")
 direction = "down"
 grid_cell = Vector2i(40, 17)
+
+[node name="SouthUrn" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(40, 75)
+container_id = "ditch_undercity_south_urn"
+loot_item_ids = PackedStringArray("coin", "coin")
 

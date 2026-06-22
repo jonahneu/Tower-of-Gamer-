@@ -2055,7 +2055,8 @@ func _build_inventory_panel() -> Control:
 	var _equip_slot_pairs: Array = [
 		["hand_1","Hand 1"],            ["hand_2","Hand 2"],
 		["head","Head"],                ["torso","Torso"],
-		["feet","Feet"],                ["back","Back"],
+		["legs","Legs"],                ["feet","Feet"],
+		["back","Back"],
 		["right_upper_arm","R. Arm"],   ["left_upper_arm","L. Arm"],
 		["right_forearm","R. Forearm"], ["left_forearm","L. Forearm"],
 		["necklace","Necklace"],         ["ring_right_1","Ring R1"],

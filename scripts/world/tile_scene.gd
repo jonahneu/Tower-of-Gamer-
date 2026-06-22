@@ -47,6 +47,10 @@ func _ready() -> void:
 		_fog.update_entity_visibility()
 		_fog.redraw_all()
 
+func update_entity_visibility() -> void:
+	if _fog != null:
+		_fog.update_entity_visibility()
+
 func save_fov_data(scene_path: String) -> void:
 	if _fog == null:
 		return

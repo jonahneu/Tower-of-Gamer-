@@ -38,11 +38,12 @@ func _ready() -> void:
 
 func _display_name() -> String:
 	match plant_type:
-		"flower":    return "Dusk Flower"
-		"succulent": return "Desert Succulent"
-		"reed":      return "Reed Patch"
-		"salt":      return "Salt Deposit"
-		"fish":      return "Fishing Spot"
+		"flower":     return "Dusk Flower"
+		"succulent":  return "Desert Succulent"
+		"reed":       return "Reed Patch"
+		"salt":       return "Salt Deposit"
+		"fish":       return "Fishing Spot"
+		"wild_onion": return "Wild Onion"
 	return "Plant"
 
 @export var grid_cell: Vector2i = Vector2i(10, 10)
@@ -65,11 +66,12 @@ func get_interaction_options() -> Array:
 
 func get_description() -> String:
 	match plant_type:
-		"flower":    return "A darkly colored flower growing at the river's edge. Its petals are a deep, bruised purple."
-		"succulent": return "A small, waxy succulent with thick leaves. It thrives in the dry desert soil."
-		"reed":      return "A dense stand of river reeds. Their roots hide starchy tubers."
-		"salt":      return "A crust of white salt left where the river's edge has dried under the sun."
-		"fish":      return "A calm eddy where fish gather in the shallows."
+		"flower":     return "A darkly colored flower growing at the river's edge. Its petals are a deep, bruised purple."
+		"succulent":  return "A small, waxy succulent with thick leaves. It thrives in the dry desert soil."
+		"reed":       return "A dense stand of river reeds. Their roots hide starchy tubers."
+		"salt":       return "A crust of white salt left where the river's edge has dried under the sun."
+		"fish":       return "A calm eddy where fish gather in the shallows."
+		"wild_onion": return "A pungent onion bulb, growing in a small scattered cluster."
 	return "A plant."
 
 func interact() -> void:
@@ -113,9 +115,10 @@ func _draw() -> void:
 		_:
 			var color: Color
 			match plant_type:
-				"flower":    color = Color(0.08, 0.05, 0.12)
-				"succulent": color = Color(0.20, 0.55, 0.20)
-				_:           color = Color(0.4, 0.4, 0.4)
+				"flower":     color = Color(0.08, 0.05, 0.12)
+				"succulent":  color = Color(0.20, 0.55, 0.20)
+				"wild_onion": color = Color(0.82, 0.78, 0.82)
+				_:            color = Color(0.4, 0.4, 0.4)
 			var half := SPRITE_W / 2.0
 			draw_rect(Rect2(-half, -SPRITE_H, SPRITE_W, SPRITE_H), color)
 	if _highlighted:

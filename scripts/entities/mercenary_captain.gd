@@ -2,6 +2,13 @@ extends NPC
 # The Mercenary Captain — runs a stall on the southeast side of the Market
 # District. Entry point to the mercenary path: first job is the bandit camp's
 # leader, the "audition" job from the design doc's [The Mercenary Fixer] notes.
+# Second job escalates to the cannibal camp in the undercity.
+
+const CANNIBAL_CAMP_SCENE: String = "res://scenes/world/zone_undercity_east_camp.tscn"
+const CANNIBAL_CAMP_ENEMIES: Array = [
+	"CannibalLeader", "CannibalSkinwearer1", "CannibalSkinwearer2", "Cannibal1",
+	"CannibalScout1", "CannibalScout2", "Cannibal4", "Cannibal5",
+]
 
 func _ready() -> void:
 	grid_cell             = Vector2i(64, 63)
@@ -28,11 +35,39 @@ func get_interaction_options() -> Array:
 	_update_dialogue()
 	return super.get_interaction_options()
 
+func _cannibal_camp_cleared() -> bool:
+	var dead: Array = GameManager.player_data.get("dead_permanent", [])
+	for enemy_name in CANNIBAL_CAMP_ENEMIES:
+		if not (CANNIBAL_CAMP_SCENE + "::" + enemy_name) in dead:
+			return false
+	return true
+
+func _cannibal_job_offer_options(pd: Dictionary) -> Array:
+	var accept_cannibal_quest := func():
+		GameManager.add_quest({
+			"id":          "cannibal_camp_bounty",
+			"title":       "Cannibals in the Undercity",
+			"description": "The Mercenary Captain wants the cannibal camp cleared out — tunnels east of the central pipe, first level of the undercity. He sent a couple of his men to find them; they never came back. He'll pay 50 coins once they're dead.",
+			"threads":     [],
+			"completed":   false,
+		})
+		GameManager.add_quest_thread("cannibal_camp_bounty", {
+			"id":    "clear_cannibal_camp",
+			"title": "Clear out the cannibal camp east of the central pipe and report back.",
+		})
+
+	return [
+		{"label": "I'll do it.", "action": accept_cannibal_quest, "closes": true},
+		{"label": "No thanks.", "closes": true},
+	]
+
 func _update_dialogue() -> void:
 	var pd: Dictionary = GameManager.player_data
 
-	var has_quest: bool  = GameManager.has_quest("bandit_leader_bounty")
-	var quest_done: bool = pd.get("bandit_leader_bounty_done", false)
+	var has_bandit_quest: bool  = GameManager.has_quest("bandit_leader_bounty")
+	var bandit_done: bool       = pd.get("bandit_leader_bounty_done", false)
+	var has_cannibal_quest: bool = GameManager.has_quest("cannibal_camp_bounty")
+	var cannibal_done: bool      = pd.get("cannibal_camp_bounty_done", false)
 
 	var inv: Array = pd.get("inventory", [])
 	var has_head: bool = false
@@ -41,15 +76,51 @@ func _update_dialogue() -> void:
 			has_head = true
 			break
 
-	if quest_done:
-		dialogue_text = "[DIALOGUE TBD — Mercenary Captain, after the bandit-leader bounty is paid]"
+	var cannibal_job_offer_response: String = "\"You seem like you're tough, want to do another job for me? There's a group of cannibals that has taken up residence in the tunnels to the east of the central pipe, in the first level of the undercity. I sent a couple of my men to track down their hideout but they haven't returned. I'll give you 50 coins if you can kill them. What do you say?\""
+
+	# ── Cannibal bounty paid — end state for now ──────────────────────────────
+	if cannibal_done:
+		dialogue_text = "[DIALOGUE TBD — Mercenary Captain, after the cannibal-camp bounty is paid]"
 		dialogue_options = [
 			{"label": "Goodbye.", "closes": true},
 		]
 		return
 
-	if has_quest and has_head:
-		var turn_in := func():
+	# ── Cannibal bounty active ────────────────────────────────────────────────
+	if has_cannibal_quest:
+		if _cannibal_camp_cleared():
+			var turn_in_cannibals := func():
+				var player_inv: Array = pd.get("inventory", [])
+				for _c in range(50):
+					player_inv.append(DataManager.get_item("coin"))
+				pd["inventory"] = player_inv
+				pd["cannibal_camp_bounty_done"] = true
+				GameManager.complete_quest_thread("cannibal_camp_bounty", "clear_cannibal_camp")
+				GameManager.complete_quest("cannibal_camp_bounty")
+				EventBus.inventory_changed.emit()
+
+			dialogue_text = "[DIALOGUE TBD — Mercenary Captain reacts to the cannibal camp being cleared]"
+			dialogue_options = [
+				{"label": "It's done.", "action": turn_in_cannibals, "closes": true},
+				{"label": "Not yet.", "closes": true},
+			]
+			return
+
+		dialogue_text = "[DIALOGUE TBD — Mercenary Captain, cannibal bounty still open]"
+		dialogue_options = [
+			{"label": "Still working on it.", "closes": true},
+		]
+		return
+
+	# ── Bandit bounty done, cannibal job not yet offered/accepted ─────────────
+	if bandit_done:
+		dialogue_text = cannibal_job_offer_response
+		dialogue_options = _cannibal_job_offer_options(pd)
+		return
+
+	# ── Bandit bounty active ──────────────────────────────────────────────────
+	if has_bandit_quest and has_head:
+		var turn_in_bandit := func():
 			var player_inv: Array = pd.get("inventory", [])
 			for i in range(player_inv.size() - 1, -1, -1):
 				if player_inv[i].get("id", "") == "bandit_leader_head":
@@ -63,25 +134,33 @@ func _update_dialogue() -> void:
 			GameManager.complete_quest("bandit_leader_bounty")
 			EventBus.inventory_changed.emit()
 
-		dialogue_text = "[DIALOGUE TBD — Mercenary Captain reacts to the bandit leader's head]"
+		dialogue_text = "You see a scarred, salt-and-pepper-haired man in tight leather armor with a sword at his side."
 		dialogue_options = [
 			{
-				"label":  "Here's your proof.",
-				"action": turn_in,
-				"closes": true,
+				"label":        "Here's your proof.",
+				"action":       turn_in_bandit,
+				"response":     "\"Huh, who are you? Oh right. Wow you made it back alive. Well done.\"",
+				"next_options": [
+					{
+						"label":        "Continue",
+						"response":     cannibal_job_offer_response,
+						"next_options": _cannibal_job_offer_options(pd),
+					},
+				],
 			},
 			{"label": "Not yet.", "closes": true},
 		]
 		return
 
-	if has_quest:
-		dialogue_text = "[DIALOGUE TBD — Mercenary Captain, bounty still open]"
+	if has_bandit_quest:
+		dialogue_text = "[DIALOGUE TBD — Mercenary Captain, bandit bounty still open]"
 		dialogue_options = [
 			{"label": "Still working on it.", "closes": true},
 		]
 		return
 
-	var accept_quest := func():
+	# ── First meeting — no jobs offered yet ───────────────────────────────────
+	var accept_bandit_quest := func():
 		GameManager.add_quest({
 			"id":          "bandit_leader_bounty",
 			"title":       "The Bandit Leader's Head",
@@ -99,7 +178,7 @@ func _update_dialogue() -> void:
 	var job_offer_options: Array = [
 		{
 			"label":  "I'll do it.",
-			"action": accept_quest,
+			"action": accept_bandit_quest,
 			"closes": true,
 		},
 		{"label": "No thanks.", "closes": true},

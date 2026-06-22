@@ -11,6 +11,7 @@ var grid_cell: Vector2i = Vector2i(0, 0)
 var beast_type: String = ""
 var beast_quality_mod: int = 0
 var is_human: bool = false
+var loot_item_ids: Array = []
 var _carved: bool = false
 var _tile_scene: TileScene = null
 

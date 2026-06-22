@@ -39,5 +39,6 @@ func _ready() -> void:
 	_attack_weapon                    = poisoned_scimitar
 	feats.append("brutal")
 	feats.append("bloodletting")
+	loot_item_ids = ["bandit_leader_head"]
 
 	super._ready()

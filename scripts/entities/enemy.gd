@@ -41,6 +41,11 @@ var beast_type: String = ""         # e.g. "coyote" — keys DataManager carve t
 var beast_quality_mod: int = 0      # quality offset applied to carving results
 var is_human: bool = false          # true = corpse is searched, never carved
 
+# ── Searchable loot (set by subclass before super._ready()) ───────────────────
+# Specific item ids found when a human corpse is searched (quest tokens, etc).
+# Unrelated to is_human's carve-vs-search branching above.
+var loot_item_ids: Array = []
+
 # ── XP (set by subclass before super._ready()) ────────────────────────────────
 var xp_value: int    = 0    # base XP awarded on death (scaled by level diff)
 var enemy_level: int = 1    # internal level; not shown to player
@@ -135,6 +140,7 @@ func _spawn_corpse() -> void:
 	corpse.beast_type        = beast_type
 	corpse.beast_quality_mod = beast_quality_mod
 	corpse.is_human          = is_human
+	corpse.loot_item_ids     = loot_item_ids
 	_record_death()
 	_tile_scene.unregister_entity(grid_cell)
 	_tile_scene.add_child(corpse)

@@ -1339,9 +1339,25 @@ func _handle_search(corpse: Node) -> void:
 	if corpse.has_method("mark_carved"):
 		corpse.mark_carved()
 
+	var loot_ids: Array = corpse.get("loot_item_ids") if corpse.get("loot_item_ids") != null else []
+	var found_names: Array = []
+	if not loot_ids.is_empty():
+		var inv: Array = GameManager.player_data.get("inventory", [])
+		for item_id in loot_ids:
+			var item_data: Dictionary = DataManager.get_item(item_id)
+			if item_data.is_empty():
+				continue
+			inv.append(item_data)
+			found_names.append(item_data.get("name", item_id))
+		GameManager.player_data["inventory"] = inv
+		EventBus.inventory_changed.emit()
+
 	_close_all()
 	_dialogue_name_lbl.text = "Search"
-	_dialogue_text_lbl.text = "You search the body, but there's nothing worth taking."
+	if found_names.is_empty():
+		_dialogue_text_lbl.text = "You search the body, but there's nothing worth taking."
+	else:
+		_dialogue_text_lbl.text = "You search the body and find: %s" % ", ".join(found_names)
 	_populate_dialogue_options([{"label": "OK", "response": "", "closes": true}])
 	_dialogue_panel.visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP

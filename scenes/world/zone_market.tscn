@@ -11,6 +11,8 @@
 [ext_resource type="Script" path="res://scripts/entities/table.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/entities/chair.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/entities/sign.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/entities/mercenary_captain.gd" id="12"]
+[ext_resource type="Script" path="res://scripts/entities/crate.gd" id="13"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -99,3 +101,22 @@ Y1 = 44
 Y2 = 79
 DOOR_X = 999
 DOOR_Y = -1
+
+[node name="MercenaryStallCounter" type="Node2D" parent="."]
+script = ExtResource("6")
+X1 = 60
+X2 = 68
+Y  = 65
+
+[node name="MercenaryCaptain" type="Node2D" parent="."]
+script = ExtResource("12")
+
+[node name="MercenaryCrate1" type="Node2D" parent="."]
+script = ExtResource("13")
+grid_cell = Vector2i(60, 60)
+container_id = "mercenary_stall_crate_1"
+
+[node name="MercenaryCrate2" type="Node2D" parent="."]
+script = ExtResource("13")
+grid_cell = Vector2i(68, 60)
+container_id = "mercenary_stall_crate_2"

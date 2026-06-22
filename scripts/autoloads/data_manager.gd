@@ -1357,6 +1357,13 @@ func _load_items() -> void:
 		"properties": [], "abilities": [],
 	}
 
+	items["bandit_leader_head"] = {
+		"id": "bandit_leader_head", "name": "Bandit Leader's Head", "type": "material",
+		"slot": null, "weight": 2.0,
+		"description": "Grim proof that the bandit camp's leader is dead.",
+		"properties": [], "abilities": [],
+	}
+
 	# ── Smithed items (static fallback; craft_smithing() generates quality-scaled versions) ──
 
 	items["bronze_spirit_armband"] = {

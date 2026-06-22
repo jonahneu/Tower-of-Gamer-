@@ -30,6 +30,16 @@ func _ready() -> void:
 func prepare_dialogue() -> void:
 	if not GameManager.player_data.get("met_adventurer", false):
 		GameManager.player_data["met_adventurer"] = true
+		# Same quest id a future "saw it with your own eyes" hook would use further
+		# in — add_quest no-ops if it's already tracked, so whichever the player
+		# hits first is the one that sticks.
+		GameManager.add_quest({
+			"id":          "great_frog",
+			"title":       "The Great Frog",
+			"description": "An adventurer at the descent hole said the main route deeper into the undercity is blocked by a great toad from far below. Its kind are usually docile — something disturbed it badly enough to drive it up this high, and it's settled in rather than moving on. Find another way down, or deal with the frog directly.",
+			"threads":     [],
+			"completed":   false,
+		})
 		GameManager.add_note({
 			"id":    "great_frog",
 			"title": "The Great Frog",

@@ -18,7 +18,7 @@ script = ExtResource("3")
 X1 = 0
 X2 = 34
 Y1 = 0
-Y2 = 31
+Y2 = 34
 DOOR_X = 999
 DOOR_Y = -1
 
@@ -35,7 +35,7 @@ DOOR_Y = -1
 script = ExtResource("3")
 X1 = 0
 X2 = 34
-Y1 = 33
+Y1 = 45
 Y2 = 79
 DOOR_X = 999
 DOOR_Y = -1
@@ -49,18 +49,36 @@ Y2 = 79
 DOOR_X = 999
 DOOR_Y = -1
 
-[node name="ChokeWall" type="Node2D" parent="."]
+[node name="WallWestSeal" type="Node2D" parent="."]
 script = ExtResource("3")
-X1 = 8
+X1 = 0
 X2 = 34
-Y1 = 32
-Y2 = 32
+Y1 = 35
+Y2 = 44
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="ChokeWallE_Top" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 45
+X2 = 71
+Y1 = 35
+Y2 = 37
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="ChokeWallE_Bottom" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 45
+X2 = 71
+Y1 = 39
+Y2 = 44
 DOOR_X = 999
 DOOR_Y = -1
 
 [node name="JammedDoor" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(7, 32)
+grid_cell = Vector2i(72, 38)
 
 [node name="UndercityWater" type="Node2D" parent="."]
 script = ExtResource("4")

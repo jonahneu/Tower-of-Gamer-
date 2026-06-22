@@ -75,6 +75,15 @@ Y2 = 79
 DOOR_X = 999
 DOOR_Y = -1
 
+[node name="WallSouthSeal" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 35
+X2 = 44
+Y1 = 74
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
 [node name="UndercityWater" type="Node2D" parent="."]
 script = ExtResource("4")
 

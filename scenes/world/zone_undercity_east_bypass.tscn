@@ -1,9 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://zone_undercity_east_bypass"]
+[gd_scene load_steps=5 format=3 uid="uid://zone_undercity_east_bypass"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/world/undercity_water.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/jammed_door.gd" id="5"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -47,6 +48,37 @@ Y1 = 53
 Y2 = 79
 DOOR_X = 999
 DOOR_Y = -1
+
+[node name="WallEastSeal" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 45
+X2 = 79
+Y1 = 43
+Y2 = 52
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="ChokeWallW_Top" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 8
+X2 = 34
+Y1 = 35
+Y2 = 37
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="ChokeWallW_Bottom" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 8
+X2 = 34
+Y1 = 39
+Y2 = 44
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="JammedDoor" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(7, 38)
 
 [node name="RockA" type="Node2D" parent="."]
 script = ExtResource("3")

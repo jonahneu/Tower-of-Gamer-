@@ -419,67 +419,32 @@ func _ready() -> void:
 			Vector2i(11, 13): {
 				"scene":                    "res://scenes/world/zone_undercity_east_s1.tscn",
 				"label":                    "Undercity — East Tunnels",
-				"thumbnail_type":           "tunnel_te",
+				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
 					"south": Vector2i(11, 14),
 					"north": Vector2i(11, 12),
-					"east":  Vector2i(12, 13),
-				},
-			},
-			Vector2i(12, 13): {
-				"scene":                    "res://scenes/world/zone_undercity_east_s2.tscn",
-				"label":                    "Undercity — East Tunnels",
-				"thumbnail_type":           "tunnel_nw",
-				"required_protection_level": 1,
-				"exits":                    {
-					"west":  Vector2i(11, 13),
-					"north": Vector2i(12, 12),
 				},
 			},
 			Vector2i(11, 12): {
 				"scene":                    "res://scenes/world/zone_undercity_east_bypass.tscn",
 				"label":                    "Undercity — East Tunnels",
-				"thumbnail_type":           "tunnel_x",
+				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
 					"south": Vector2i(11, 13),
 					"north": Vector2i(11, 11),
 					"west":  Vector2i(10, 12),
-					"east":  Vector2i(12, 12),
-				},
-			},
-			Vector2i(12, 12): {
-				"scene":                    "res://scenes/world/zone_undercity_east_m2.tscn",
-				"label":                    "Undercity — East Tunnels",
-				"thumbnail_type":           "tunnel_tw",
-				"required_protection_level": 1,
-				"exits":                    {
-					"south": Vector2i(12, 13),
-					"north": Vector2i(12, 11),
-					"west":  Vector2i(11, 12),
 				},
 			},
 			Vector2i(11, 11): {
 				"scene":                    "res://scenes/world/zone_undercity_east_u1.tscn",
 				"label":                    "Undercity — East Tunnels",
-				"thumbnail_type":           "tunnel_te",
+				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
 					"south": Vector2i(11, 12),
 					"north": Vector2i(11, 10),
-					"east":  Vector2i(12, 11),
-				},
-			},
-			Vector2i(12, 11): {
-				"scene":                    "res://scenes/world/zone_undercity_east_u2.tscn",
-				"label":                    "Undercity — East Tunnels",
-				"thumbnail_type":           "tunnel_tw",
-				"required_protection_level": 1,
-				"exits":                    {
-					"west":  Vector2i(11, 11),
-					"south": Vector2i(12, 12),
-					"north": Vector2i(12, 10),
 				},
 			},
 			Vector2i(11, 10): {
@@ -495,12 +460,11 @@ func _ready() -> void:
 			},
 			Vector2i(12, 10): {
 				"scene":                    "res://scenes/world/zone_undercity_east_camp.tscn",
-				"label":                    "Undercity — Bandit Camp",
+				"label":                    "Undercity — Cannibal Camp",
 				"thumbnail_type":           "tunnel_sw",
 				"required_protection_level": 1,
 				"exits":                    {
-					"west":  Vector2i(11, 10),
-					"south": Vector2i(12, 11),
+					"west": Vector2i(11, 10),
 				},
 			},
 			Vector2i(10, 13): {
@@ -515,7 +479,7 @@ func _ready() -> void:
 			},
 			Vector2i(10, 12): {
 				"scene":                    "res://scenes/world/zone_undercity_north2.tscn",
-				"label":                    "Undercity — Main Passage",
+				"label":                    "Undercity — The Cave-In",
 				"thumbnail_type":           "tunnel_ts",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -547,89 +511,42 @@ func _ready() -> void:
 			Vector2i(9, 14): {
 				"scene":                    "res://scenes/world/zone_undercity_west_arm.tscn",
 				"label":                    "Undercity — West Passage",
-				"thumbnail_type":           "tunnel_tn",
+				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
 					"east":  Vector2i(10, 14),
-					"west":  Vector2i(8, 14),
 					"north": Vector2i(9, 13),
-				},
-			},
-			Vector2i(8, 14): {
-				"scene":                    "res://scenes/world/zone_undercity_west_arm2.tscn",
-				"label":                    "Undercity — West Passage",
-				"thumbnail_type":           "tunnel_ne",
-				"required_protection_level": 1,
-				"exits":                    {
-					"east":  Vector2i(9, 14),
-					"north": Vector2i(8, 13),
 				},
 			},
 			Vector2i(9, 13): {
 				"scene":                    "res://scenes/world/zone_undercity_west_s1.tscn",
 				"label":                    "Undercity — West Tunnels",
-				"thumbnail_type":           "tunnel_tw",
+				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
 					"south": Vector2i(9, 14),
 					"north": Vector2i(9, 12),
-					"west":  Vector2i(8, 13),
-				},
-			},
-			Vector2i(8, 13): {
-				"scene":                    "res://scenes/world/zone_undercity_west_s2.tscn",
-				"label":                    "Undercity — West Tunnels",
-				"thumbnail_type":           "tunnel_te",
-				"required_protection_level": 1,
-				"exits":                    {
-					"south": Vector2i(8, 14),
-					"east":  Vector2i(9, 13),
-					"north": Vector2i(8, 12),
 				},
 			},
 			Vector2i(9, 12): {
 				"scene":                    "res://scenes/world/zone_undercity_west_bypass.tscn",
 				"label":                    "Undercity — West Tunnels",
-				"thumbnail_type":           "tunnel_x",
+				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
 					"south": Vector2i(9, 13),
 					"north": Vector2i(9, 11),
 					"east":  Vector2i(10, 12),
-					"west":  Vector2i(8, 12),
-				},
-			},
-			Vector2i(8, 12): {
-				"scene":                    "res://scenes/world/zone_undercity_west_m2.tscn",
-				"label":                    "Undercity — West Tunnels",
-				"thumbnail_type":           "tunnel_te",
-				"required_protection_level": 1,
-				"exits":                    {
-					"south": Vector2i(8, 13),
-					"north": Vector2i(8, 11),
-					"east":  Vector2i(9, 12),
 				},
 			},
 			Vector2i(9, 11): {
 				"scene":                    "res://scenes/world/zone_undercity_west_u1.tscn",
 				"label":                    "Undercity — West Tunnels",
-				"thumbnail_type":           "tunnel_tw",
+				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
 					"south": Vector2i(9, 12),
 					"north": Vector2i(9, 10),
-					"west":  Vector2i(8, 11),
-				},
-			},
-			Vector2i(8, 11): {
-				"scene":                    "res://scenes/world/zone_undercity_west_u2.tscn",
-				"label":                    "Undercity — West Tunnels",
-				"thumbnail_type":           "tunnel_te",
-				"required_protection_level": 1,
-				"exits":                    {
-					"south": Vector2i(8, 12),
-					"north": Vector2i(8, 10),
-					"east":  Vector2i(9, 11),
 				},
 			},
 			Vector2i(9, 10): {
@@ -649,8 +566,7 @@ func _ready() -> void:
 				"thumbnail_type":           "tunnel_se",
 				"required_protection_level": 1,
 				"exits":                    {
-					"east":  Vector2i(9, 10),
-					"south": Vector2i(8, 11),
+					"east": Vector2i(9, 10),
 				},
 			},
 		},

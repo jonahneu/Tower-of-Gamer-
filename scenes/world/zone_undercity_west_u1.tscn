@@ -39,6 +39,15 @@ Y2 = 79
 DOOR_X = 999
 DOOR_Y = -1
 
+[node name="WallWestSeal" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 0
+X2 = 34
+Y1 = 43
+Y2 = 52
+DOOR_X = 999
+DOOR_Y = -1
+
 [node name="RockA" type="Node2D" parent="."]
 script = ExtResource("3")
 X1 = 6

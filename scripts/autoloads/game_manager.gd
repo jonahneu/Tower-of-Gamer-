@@ -229,6 +229,36 @@ func _ready() -> void:
 				"exits":                    {
 					"south": Vector2i(9, 11),
 					"west":  Vector2i(8, 10),
+					"north": Vector2i(9, 9),
+				},
+			},
+			Vector2i(9, 9): {
+				"scene":                    "res://scenes/world/zone_desert_north_pass.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 10),
+					"north": Vector2i(9, 8),
+				},
+			},
+			Vector2i(9, 8): {
+				"scene":                    "res://scenes/world/zone_desert_north_flat.tscn",
+				"label":                    "The Desert",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 9),
+					"west":  Vector2i(8, 8),
+				},
+			},
+			Vector2i(8, 8): {
+				"scene":                    "res://scenes/world/zone_desert_bandit_camp.tscn",
+				"label":                    "The Desert — Bandit Camp",
+				"thumbnail_type":           "desert",
+				"required_protection_level": 1,
+				"exits":                    {
+					"east": Vector2i(9, 8),
 				},
 			},
 			Vector2i(7, 13): {
@@ -499,7 +529,7 @@ func _ready() -> void:
 			},
 			Vector2i(10, 10): {
 				"scene":                    "res://scenes/world/zone_undercity_north4.tscn",
-				"label":                    "Undercity — The Frog's Lair",
+				"label":                    "Undercity — The Toad's Lair",
 				"thumbnail_type":           "tunnel_ts",
 				"required_protection_level": 1,
 				"exits":                    {

@@ -1422,7 +1422,7 @@ func _try_apply_bleed(defender: Node, attacker: Node = null, chance_mult: float 
 		chance = 0.60 * pow(0.85, float(con_mod))
 	else:
 		chance = min(0.95, 0.60 + abs(con_mod) * 0.08)
-	if attacker == GameManager.player and GameManager.has_feat("bloodletting"):
+	if _entity_has_feat(attacker, "bloodletting"):
 		chance = minf(0.95, chance * 1.3)
 	chance *= chance_mult
 
@@ -1601,6 +1601,7 @@ func _get_weapon_governing_mod(entity: Node, weapon: Dictionary) -> int:
 func _get_weapon_governing_info(entity: Node, weapon: Dictionary) -> Dictionary:
 	var governing: Array  = weapon.get("governing", [])
 	var half_dex: bool    = weapon.get("half_dex_damage", false)
+	var heavy_weapon: bool = "heavy_weapon" in weapon.get("properties", [])
 	var best := 0
 	var best_stat: String = ""
 	for stat in governing:
@@ -1611,6 +1612,8 @@ func _get_weapon_governing_info(entity: Node, weapon: Dictionary) -> Dictionary:
 			best_stat = stat
 	if half_dex and best_stat == "dexterity":
 		best = best / 2
+	if heavy_weapon and best_stat == "strength":
+		best = best * 2
 	return {"mod": best, "stat": best_stat}
 
 # ── Shield blocking ────────────────────────────────────────────────────────────

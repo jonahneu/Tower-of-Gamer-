@@ -1,7 +1,7 @@
 extends NPC
 # Experienced adventurer standing at the ditch hole — the first person the player
-# meets who has actually been deep below. Mentions the great frog, references
-# forge+scribe training. Serves as a role-model figure for the descent ahead.
+# meets who has actually been deep below. Mentions the toad blocking the passage,
+# references forge+scribe training. Serves as a role-model figure for the descent ahead.
 # Disappears once the player has spoken to him and left the zone.
 
 func _ready() -> void:
@@ -34,15 +34,15 @@ func prepare_dialogue() -> void:
 		# in — add_quest no-ops if it's already tracked, so whichever the player
 		# hits first is the one that sticks.
 		GameManager.add_quest({
-			"id":          "great_frog",
-			"title":       "The Great Frog",
-			"description": "An adventurer at the descent hole said the main route deeper into the undercity is blocked by a great toad from far below. Its kind are usually docile — something disturbed it badly enough to drive it up this high, and it's settled in rather than moving on. Find another way down, or deal with the frog directly.",
+			"id":          "undercity_toad",
+			"title":       "The Toad in the Passage",
+			"description": "An adventurer at the descent hole said the main route deeper into the undercity is blocked by a great toad from far below. Its kind are usually docile — something disturbed it badly enough to drive it up this high, and it's settled in rather than moving on. Find another way down, or deal with the toad directly.",
 			"threads":     [],
 			"completed":   false,
 		})
 		GameManager.add_note({
-			"id":    "great_frog",
-			"title": "The Great Frog",
+			"id":    "undercity_toad",
+			"title": "The Toad in the Passage",
 			"body":  "An experienced adventurer at the descent hole mentioned that the usual route deeper into the undercity is blocked by a large toad from the deep. He said its kind are usually docile — something must have disturbed it badly to bring it this high up.",
 		}, 0)
 

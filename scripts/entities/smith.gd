@@ -6,9 +6,9 @@ extends NPC
 #   armband crafting → property choice (Blessed Weapon or Barrier Armor) → second item.
 
 const SHOP_ITEMS: Array = [
-	{"id": "bronze_shortsword",      "price": 12},
-	{"id": "bronze_sword",           "price": 22},
-	{"id": "bronze_axe",             "price": 20},
+	{"id": "shortsword",             "price": 12},
+	{"id": "sword",                  "price": 22},
+	{"id": "axe",                    "price": 20},
 	{"id": "bronze_spear",           "price": 16},
 	{"id": "bronze_scale_hauberk",   "price": 30},
 	{"id": "bronze_helm",            "price": 20},
@@ -29,10 +29,10 @@ func _ready() -> void:
 	level                 = 4
 	skills["melee"]       = 35
 	skills["dodge"]       = 8
-	equipment["hand_1"]   = DataManager.get_item("bronze_axe")
+	equipment["hand_1"]   = DataManager.get_item("axe")
 	equipment["torso"]    = DataManager.get_item("bronze_scale_hauberk")
 	equipment["legs"]     = DataManager.get_item("work_trousers")
-	_attack_weapon        = DataManager.get_item("bronze_axe")
+	_attack_weapon        = DataManager.get_item("axe")
 	pocket_items          = [DataManager.get_item("coin"), DataManager.get_item("coin")]
 	drops_loot            = true
 	super._ready()

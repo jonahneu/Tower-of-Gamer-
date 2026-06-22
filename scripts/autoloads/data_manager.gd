@@ -499,8 +499,11 @@ const SMITHING_RECIPES: Dictionary = {
 			"type":              "weapon",
 			"slot":              "hand_1",
 			"damage":            "1d6",
+			"ap_cost":           3,
+			"range":             1,
 			"damage_type":       "physical",
 			"skill":             "melee",
+			"governing":         ["strength", "dexterity"],
 			"armor_ignore_pct":  0.20,
 			"harms_intangible":  true,
 			"defense_flat":      0.0,
@@ -626,6 +629,17 @@ const COOKING_RECIPES: Dictionary = {
 		"produces":           "salt_cured",
 		"expires_in_rests":   10,
 	},
+	"smoke_meat": {
+		"id":                  "smoke_meat",
+		"name":                "Smoke Meat",
+		"lore":                "Hang it over a low, smoky fire and let it sit. Keeps as long as salt-curing, and the smoke works its way into the meat — whatever you cook it into later turns out better for it.",
+		"required_materials":  ["meat"],
+		"cooking_level":       8,
+		"survival_level":      15,
+		"produces":            "smoked",
+		"expires_in_rests":    10,
+		"cooking_potency_mult": 1.2,
+	},
 	"stick_roast": {
 		"id":                 "stick_roast",
 		"name":               "Stick Roast",
@@ -721,6 +735,9 @@ func craft_cooking(recipe_id: String, primary_item: Dictionary) -> Dictionary:
 	# rest (without cooking it into a recipe) grants a small passive buff.
 	if prefix == "salt_cured":
 		result["passive_meal_buff"] = {"id": "salted_provisions", "name": "Salted Provisions", "hp_pct": 0.03}
+	# Smoked meat doesn't add its own buff, but makes whatever it's cooked into stronger.
+	if recipe.has("cooking_potency_mult"):
+		result["cooking_potency_mult"] = recipe["cooking_potency_mult"]
 	return result
 
 # ── Rest-time recipe ingredient bonuses ──────────────────────────────────────
@@ -782,6 +799,14 @@ func compute_meal_buff(recipe_id: String, primary_item: Dictionary, secondary_it
 			"stat_flat":
 				var stat_key: String = bonus["stat"]
 				buff[stat_key] = buff.get(stat_key, 0) + bonus["amount"]
+
+	# Smoked meat (and any future ingredient marked the same way) makes the
+	# resulting meal stronger across the board, not just its own bonus line.
+	var potency: float = primary_item.get("cooking_potency_mult", 1.0)
+	if potency != 1.0:
+		for k in buff:
+			if buff[k] is float or buff[k] is int:
+				buff[k] = buff[k] * potency
 	return buff
 
 # Human-readable description lines for the numeric keys of an active/passive
@@ -1069,15 +1094,6 @@ func _load_items() -> void:
 		"half_dex_damage": true,
 	}
 
-	items["brass_knuckles"] = {
-		"id": "brass_knuckles", "weight": 0.5, "name": "Brass Knuckles", "type": "weapon", "slot": "hand",
-		"description": "Weighted metal rings that turn a punch into something more serious.",
-		"damage": "1d4", "ap_cost": 1, "range": 1,
-		"skill": "melee", "governing": ["strength"],
-		"damage_type": "physical",
-		"properties": [], "abilities": [],
-	}
-
 	items["knife"] = {
 		"id": "knife", "weight": 1.0, "name": "Simple Stone Knife", "type": "weapon", "slot": "hand",
 		"description": "A crudely knapped stone blade hafted with sinew. Light enough to throw.",
@@ -1090,8 +1106,17 @@ func _load_items() -> void:
 	}
 
 	items["shortsword"] = {
-		"id": "shortsword", "weight": 2.5, "name": "Shortsword", "type": "weapon", "slot": "hand",
-		"description": "A compact blade. Easy to conceal, quick to draw.",
+		"id": "shortsword", "weight": 2.5, "name": "Bronze Shortsword", "type": "weapon", "slot": "hand",
+		"description": "A compact bronze blade. Heavier than iron would be, but well-shaped and reliably sharp.",
+		"damage": "1d6+3", "ap_cost": 3, "range": 1,
+		"skill": "melee", "governing": ["strength", "dexterity"],
+		"damage_type": "physical",
+		"properties": ["bleed"], "abilities": [],
+	}
+
+	items["scimitar"] = {
+		"id": "scimitar", "weight": 2.5, "name": "Scimitar", "type": "weapon", "slot": "hand",
+		"description": "",
 		"damage": "1d6", "ap_cost": 2, "range": 1,
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical",
@@ -1105,6 +1130,14 @@ func _load_items() -> void:
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical",
 		"properties": [], "abilities": [],
+	}
+
+	items["bronze_spear"] = {
+		"id": "bronze_spear", "weight": 4.0, "name": "Bronze Spear", "type": "weapon", "slot": "hand",
+		"description": "A long hardwood shaft tipped with a cast bronze point. Standard issue for soldiers.",
+		"damage": "1d6+1", "ap_cost": 3, "range": 2,
+		"skill": "melee", "governing": ["strength", "dexterity"],
+		"damage_type": "physical", "properties": [], "abilities": [],
 	}
 
 	items["stone_axe"] = {
@@ -1126,27 +1159,28 @@ func _load_items() -> void:
 	}
 
 	items["sword"] = {
-		"id": "sword", "weight": 4.0, "name": "Sword", "type": "weapon", "slot": "hand",
-		"description": "A standard military blade. Balanced for power and precision.",
-		"damage": "1d8", "ap_cost": 2, "range": 1,
+		"id": "sword", "weight": 4.0, "name": "Bronze Sword", "type": "weapon", "slot": "hand",
+		"description": "A full-length bronze blade, double-edged and well-balanced. The mark of a serious fighter.",
+		"damage": "1d8+3", "ap_cost": 3, "range": 1,
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical",
 		"properties": ["bleed"], "abilities": [],
 	}
 
 	items["axe"] = {
-		"id": "axe", "weight": 6.0, "name": "Axe", "type": "weapon", "slot": "hand",
-		"description": "A heavy chopping axe. Punches through armor.",
-		"damage": "1d10", "ap_cost": 3, "range": 1,
+		"id": "axe", "weight": 6.0, "name": "Bronze Axe", "type": "weapon", "slot": "hand",
+		"description": "A heavy axe head cast in bronze, mounted on a hardwood haft. Punches through armor.",
+		"damage": "1d10", "ap_cost": 4, "range": 1,
 		"skill": "melee", "governing": ["strength"],
 		"damage_type": "physical",
-		"properties": ["armor_pierce"], "abilities": [],
+		# heavy_weapon: strength's contribution to this weapon's damage roll is doubled.
+		"properties": ["armor_pierce", "heavy_weapon"], "abilities": [],
 	}
 
 	items["sling"] = {
 		"id": "sling", "weight": 0.3, "name": "Sling", "type": "weapon", "slot": "hand",
 		"description": "A leather strap for hurling stones. Cheap, silent, and effective at range. No special ammunition needed — any loose stone will do.",
-		"damage": "1d3", "ap_cost": 2, "range": 12,
+		"damage": "1d3", "ap_cost": 3, "range": 12,
 		"skill": "ranged", "governing": ["dexterity", "strength"],
 		"damage_type": "physical",
 		"properties": [], "abilities": [],
@@ -1156,7 +1190,7 @@ func _load_items() -> void:
 	items["shortbow"] = {
 		"id": "shortbow", "weight": 2.0, "name": "Shortbow", "type": "weapon", "slot": "hand",
 		"description": "A compact bow, quick to draw and easy to carry.",
-		"damage": "1d6", "ap_cost": 2, "range": 18,
+		"damage": "1d6", "ap_cost": 3, "range": 18,
 		"skill": "ranged", "governing": ["dexterity"],
 		"damage_type": "physical",
 		"properties": [], "abilities": [],
@@ -1167,22 +1201,12 @@ func _load_items() -> void:
 	items["longbow"] = {
 		"id": "longbow", "weight": 3.0, "name": "Longbow", "type": "weapon", "slot": "hand",
 		"description": "A powerful bow with exceptional range.",
-		"damage": "1d8", "ap_cost": 3, "range": 24,
+		"damage": "1d8", "ap_cost": 4, "range": 24,
 		"skill": "ranged", "governing": ["dexterity"],
 		"damage_type": "physical",
 		"properties": [], "abilities": [],
 		"ammo": "quiver",
 		"point_blank": "blocked",   # cannot fire when an enemy is adjacent
-	}
-
-	items["blunderbuss"] = {
-		"id": "blunderbuss", "weight": 5.0, "name": "Blunderbuss", "type": "weapon", "slot": "hand",
-		"description": "A short, wide-barreled firearm. Devastating at close range. Requires reloading after each shot.",
-		"damage": "2d6", "ap_cost": 4, "range": 12,
-		"skill": "ranged", "governing": ["dexterity"],
-		"damage_type": "physical",
-		"properties": ["reload", "clumsy"], "abilities": [],
-		"reload_cost": 3,
 	}
 
 	# ── Pyromancy spells ─────────────────────────────────────────────────────
@@ -1345,7 +1369,8 @@ func _load_items() -> void:
 
 	items["bronze_shortsword_blessed"] = {
 		"id": "bronze_shortsword_blessed", "name": "Blessed Bronze Shortsword", "type": "weapon",
-		"slot": "hand_1", "damage": "1d6", "damage_type": "physical", "skill": "melee",
+		"slot": "hand_1", "damage": "1d6", "ap_cost": 3, "range": 1,
+		"skill": "melee", "governing": ["strength", "dexterity"], "damage_type": "physical",
 		"armor_ignore_pct": 0.20, "harms_intangible": true, "weight": 1.5, "defense_flat": 0.0,
 		"description": "A short blade worked with metal-prayer. Something about it feels wrong to spirits.\n\nArmor ignore: 20%\nCan harm intangible enemies.",
 		"properties": ["blessed_weapon"], "abilities": [],
@@ -1416,6 +1441,60 @@ func _load_items() -> void:
 		"description": "A heavy-bodied river catfish. Less common than tilapia.",
 		"properties": [], "abilities": [],
 	}
+
+	# ── Meat (sold raw or preserved by the Meat-Hawker) ──────────────────────
+	items["coyote_meat"] = {
+		"id": "coyote_meat", "name": "Coyote Meat", "type": "material",
+		"material_type": "meat", "beast_source": "coyote", "slot": null, "weight": 1.5,
+		"quality": 2, "quality_name": "Common",
+		"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 2,
+		"description": "Standard cuts of coyote meat, butchered and ready to cook.",
+		"properties": [], "abilities": [],
+	}
+	items["lizard_meat"] = {
+		"id": "lizard_meat", "name": "Lizard Meat", "type": "material",
+		"material_type": "meat", "beast_source": "lizard", "slot": null, "weight": 1.5,
+		"quality": 2, "quality_name": "Common",
+		"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 2,
+		"description": "Standard cuts of lizard meat, butchered and ready to cook.",
+		"properties": [], "abilities": [],
+	}
+	items["sand_beetle_meat"] = {
+		"id": "sand_beetle_meat", "name": "Sand Beetle Meat", "type": "material",
+		"material_type": "meat", "beast_source": "sand_beetle", "slot": null, "weight": 1.5,
+		"quality": 2, "quality_name": "Common",
+		"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 2,
+		"description": "Standard cuts of sand beetle meat, butchered and ready to cook.",
+		"properties": [], "abilities": [],
+	}
+	for beast in ["coyote", "lizard", "sand_beetle"]:
+		var beast_display: String = CARVE_TABLES[beast]["display_name"]
+		items["sun_dried_%s_meat" % beast] = {
+			"id": "sun_dried_%s_meat" % beast, "name": "Sun-Dried %s Meat" % beast_display, "type": "material",
+			"material_type": "meat", "beast_source": beast, "preservation": "sun_dried", "slot": null, "weight": 1.5,
+			"quality": 2, "quality_name": "Common",
+			"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 4,
+			"description": "%s meat, preserved by sun-drying." % beast_display,
+			"properties": [], "abilities": [],
+		}
+		items["salt_cured_%s_meat" % beast] = {
+			"id": "salt_cured_%s_meat" % beast, "name": "Salt-Cured %s Meat" % beast_display, "type": "material",
+			"material_type": "meat", "beast_source": beast, "preservation": "salt_cured", "slot": null, "weight": 1.5,
+			"quality": 2, "quality_name": "Common",
+			"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 10,
+			"description": "%s meat, preserved by salt-curing." % beast_display,
+			"passive_meal_buff": {"id": "salted_provisions", "name": "Salted Provisions", "hp_pct": 0.03},
+			"properties": [], "abilities": [],
+		}
+		items["smoked_%s_meat" % beast] = {
+			"id": "smoked_%s_meat" % beast, "name": "Smoked %s Meat" % beast_display, "type": "material",
+			"material_type": "meat", "beast_source": beast, "preservation": "smoked", "slot": null, "weight": 1.5,
+			"quality": 2, "quality_name": "Common",
+			"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 10,
+			"description": "%s meat, preserved by smoking over a slow fire." % beast_display,
+			"cooking_potency_mult": 1.2,
+			"properties": [], "abilities": [],
+		}
 
 	# ── Consumables ───────────────────────────────────────────────────────────
 
@@ -1494,36 +1573,6 @@ func _load_items() -> void:
 	}
 
 	# ── Smithy wares ─────────────────────────────────────────────────────────────
-
-	# Bronze weapons — sold by the smith
-	items["bronze_shortsword"] = {
-		"id": "bronze_shortsword", "weight": 2.5, "name": "Bronze Shortsword", "type": "weapon", "slot": "hand",
-		"description": "A compact bronze blade. Heavier than iron would be, but well-shaped and reliably sharp.",
-		"damage": "1d6+1", "ap_cost": 2, "range": 1,
-		"skill": "melee", "governing": ["strength", "dexterity"],
-		"damage_type": "physical", "properties": ["bleed"], "abilities": [],
-	}
-	items["bronze_sword"] = {
-		"id": "bronze_sword", "weight": 4.5, "name": "Bronze Sword", "type": "weapon", "slot": "hand",
-		"description": "A full-length bronze blade, double-edged and well-balanced. The mark of a serious fighter.",
-		"damage": "1d8+1", "ap_cost": 2, "range": 1,
-		"skill": "melee", "governing": ["strength", "dexterity"],
-		"damage_type": "physical", "properties": ["bleed"], "abilities": [],
-	}
-	items["bronze_axe"] = {
-		"id": "bronze_axe", "weight": 6.0, "name": "Bronze Axe", "type": "weapon", "slot": "hand",
-		"description": "A heavy axe head cast in bronze, mounted on a hardwood haft. Punches through armor.",
-		"damage": "1d10+1", "ap_cost": 3, "range": 1,
-		"skill": "melee", "governing": ["strength"],
-		"damage_type": "physical", "properties": ["armor_pierce"], "abilities": [],
-	}
-	items["bronze_spear"] = {
-		"id": "bronze_spear", "weight": 4.0, "name": "Bronze Spear", "type": "weapon", "slot": "hand",
-		"description": "A long hardwood shaft tipped with a cast bronze point. Standard issue for soldiers.",
-		"damage": "1d6+1", "ap_cost": 3, "range": 2,
-		"skill": "melee", "governing": ["strength", "dexterity"],
-		"damage_type": "physical", "properties": [], "abilities": [],
-	}
 
 	# Bronze armor — sold by the smith
 	items["bronze_helm"] = {

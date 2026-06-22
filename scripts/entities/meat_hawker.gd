@@ -1,15 +1,31 @@
 extends NPC
 # The Meat-Hawker — runs a stall in front of the smoke house in the Lower Market District, near the Fletcher.
-# Sells meat (raw/smoked/cured — shop inventory TBD) and teaches meat-preservation
-# and meat-cooking recipes.
+# Sells coyote, lizard, and sand beetle meat, each raw or preserved (sun-dried/
+# salt-cured/smoked), and teaches meat-preservation and meat-cooking recipes.
 
-const SHOP_ITEMS: Array = []  # TBD
+const SHOP_ITEMS: Array = [
+	{"id": "coyote_meat",            "price": 1},
+	{"id": "sun_dried_coyote_meat",  "price": 2},
+	{"id": "salt_cured_coyote_meat", "price": 3},
+	{"id": "smoked_coyote_meat",     "price": 4},
+
+	{"id": "lizard_meat",            "price": 1},
+	{"id": "sun_dried_lizard_meat",  "price": 2},
+	{"id": "salt_cured_lizard_meat", "price": 3},
+	{"id": "smoked_lizard_meat",     "price": 4},
+
+	{"id": "sand_beetle_meat",            "price": 2},
+	{"id": "sun_dried_sand_beetle_meat",  "price": 3},
+	{"id": "salt_cured_sand_beetle_meat", "price": 4},
+	{"id": "smoked_sand_beetle_meat",     "price": 5},
+]
 
 # Recipes for preserving meat to carry while travelling.
-const PRESERVE_RECIPE_ORDER: Array = ["sun_dry", "cure_meat"]
+const PRESERVE_RECIPE_ORDER: Array = ["sun_dry", "cure_meat", "smoke_meat"]
 const PRESERVE_RECIPE_PRICES: Dictionary = {
-	"sun_dry":   2,
-	"cure_meat": 3,
+	"sun_dry":    2,
+	"cure_meat":  3,
+	"smoke_meat": 4,
 }
 
 # Recipes for cooking the meat he sells.

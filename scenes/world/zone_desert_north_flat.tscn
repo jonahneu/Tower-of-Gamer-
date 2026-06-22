@@ -1,0 +1,37 @@
+[gd_scene load_steps=4 format=3 uid="uid://zone_desert_north_flat"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/rock.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="4"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(40, 40)
+
+[node name="Rock1" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(58, 20)
+rock_size = "large"
+
+[node name="Rock2" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(22, 60)
+rock_size = "small"
+
+[node name="Rock3" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(15, 30)
+rock_size = "small"
+
+[node name="RuinChunk1" type="Node2D" parent="."]
+script = ExtResource("4")
+X1 = 48
+X2 = 56
+Y1 = 50
+Y2 = 54
+DOOR_X = 999
+DOOR_Y = -1

@@ -65,30 +65,21 @@ func _draw() -> void:
 		"quiver":
 			_draw_quiver(w, h, Color(0.55, 0.38, 0.18))
 		# ── Bronze Weapons ───────────────────────────────────────────────────────
-		"bronze_shortsword":
+		"shortsword":
 			_draw_sword(w, h, Color(0.78, 0.58, 0.18), 0.55)
-		"bronze_sword":
+		"scimitar":
+			_draw_sword(w, h, Color(0.78, 0.58, 0.18), 0.45)
+		"sword":
 			_draw_sword(w, h, Color(0.78, 0.58, 0.18), 0.75)
-		"bronze_axe":
+		"axe":
 			_draw_axe(w, h, Color(0.78, 0.58, 0.18), Color(0.55, 0.42, 0.28))
 		"bronze_spear":
 			_draw_spear(w, h, Color(0.78, 0.58, 0.18), Color(0.55, 0.42, 0.28))
 		"bronze_shortsword_blessed":
 			_draw_sword(w, h, Color(0.95, 0.88, 0.55), 0.55)
-		# ── Iron/steel weapons ───────────────────────────────────────────────────
-		"sword":
-			_draw_sword(w, h, Color(0.74, 0.76, 0.80), 0.75)
-		"shortsword":
-			_draw_sword(w, h, Color(0.74, 0.76, 0.80), 0.55)
-		"axe":
-			_draw_axe(w, h, Color(0.70, 0.72, 0.76), Color(0.45, 0.32, 0.20))
-		"blunderbuss":
-			_draw_blunderbuss(w, h, Color(0.45, 0.40, 0.35), Color(0.30, 0.22, 0.15))
 		# ── Unarmed / fist weapons ───────────────────────────────────────────────
 		"unarmed":
 			_draw_fist(w, h, Color(0.80, 0.68, 0.55))
-		"brass_knuckles":
-			_draw_knuckles(w, h, Color(0.80, 0.65, 0.30))
 		"enchanted_fist_wraps":
 			_draw_fist(w, h, Color(0.65, 0.55, 0.85))
 		# ── Armor ────────────────────────────────────────────────────────────────
@@ -699,22 +690,6 @@ func _draw_fishing_rod(w: float, h: float, col: Color) -> void:
 	# Hook: small arc at line end
 	draw_arc(Vector2(lx2 - w * 0.04, ly2), w * 0.045, PI * 0.1, PI * 1.1, 10, col.lightened(0.3), 1.5)
 
-func _draw_blunderbuss(w: float, h: float, barrel_col: Color, stock_col: Color) -> void:
-	# Diagonal barrel (flared muzzle) + angled stock
-	var bx1 := w * 0.22
-	var by1 := h * 0.85
-	var bx2 := w * 0.62
-	var by2 := h * 0.18
-	draw_line(Vector2(bx1, by1), Vector2(bx2, by2), barrel_col, 5.0)
-	# Flared muzzle
-	draw_polygon([
-		Vector2(bx2, by2),
-		Vector2(bx2 + w * 0.16, by2 + h * 0.02),
-		Vector2(bx2 + w * 0.04, by2 + h * 0.16),
-	], [barrel_col.lightened(0.15)])
-	# Stock
-	draw_line(Vector2(bx1, by1), Vector2(bx1 - w * 0.16, by1 + h * 0.02), stock_col, 6.0)
-
 func _draw_fist(w: float, h: float, col: Color) -> void:
 	# Simple clenched fist: rounded palm block + four knuckle bumps
 	var cx := w * 0.5
@@ -724,16 +699,6 @@ func _draw_fist(w: float, h: float, col: Color) -> void:
 		draw_circle(Vector2(kx, h * 0.38), w * 0.075, col.lightened(0.12))
 	# Thumb
 	draw_rect(Rect2(cx - w * 0.34, h * 0.52, w * 0.12, h * 0.20), col.darkened(0.1))
-
-func _draw_knuckles(w: float, h: float, col: Color) -> void:
-	# Four linked rings in a row
-	var ry := h * 0.42
-	var r: float = w * 0.11
-	for i in range(4):
-		var rx := w * 0.22 + i * (w * 0.19)
-		draw_arc(Vector2(rx, ry), r, 0.0, TAU, 20, col, 3.0)
-	# Connecting bar beneath
-	draw_rect(Rect2(w * 0.16, ry + r * 0.6, w * 0.68, h * 0.10), col.darkened(0.2))
 
 func _draw_blast_tag(w: float, h: float, col: Color) -> void:
 	# Small tag/label shape with a burst mark on it

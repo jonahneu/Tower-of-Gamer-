@@ -412,7 +412,7 @@ The player has demonstrated curiosity and persistence — and having voluntarily
 
 If the player brings up the dream: she listens with the expression of someone who has heard strange things before and has no particular reaction to one more. Her honest answer is *"I don't know what that means"* — not dismissive, genuinely outside her frame. She believes the player. She just doesn't have vocabulary for it. What she does know: there are people in the undercity who practice what she does as a serious spiritual discipline, not trade knowledge. They would have more of an answer. She is not connected to them — she sells remedies in the market, she is not a devotee — but she knows they exist and she knows they know more. *"Ask them. Not me. I make things that work. They make things that mean something."* Then the teaching offer.
 
-**Frog appeasement path:** If the player encounters the Great Frog and returns to her, she has a practical angle. She knows what deep creatures respond to — or knows enough to work it out. She sends the player into the desert to collect specific ingredients (TBD), then teaches them to brew something that will induce the frog to return home rather than fight it. No mysticism involved — applied alchemy, correctly targeted. This errand is comparable in scope and difficulty to the smith's iron retrieval and the scribe's transcription quest — it is the apothecary path's real Act 1 desert content, distinct from the quick early ingredient gather for the vial itself.
+**Toad appeasement path:** If the player encounters the toad and returns to her, she has a practical angle. She knows what deep creatures respond to — or knows enough to work it out. She sends the player into the desert to collect specific ingredients (TBD), then teaches them to brew something that will induce the toad to return home rather than fight it. No mysticism involved — applied alchemy, correctly targeted. This errand is comparable in scope and difficulty to the smith's iron retrieval and the scribe's transcription quest — it is the apothecary path's real Act 1 desert content, distinct from the quick early ingredient gather for the vial itself.
 
 **Natural entry point for:** Apothecary's Assistant background. Anyone with INT or Alchemy investment. Anyone who asked about protection and didn't like the other options.
 
@@ -583,7 +583,7 @@ An elderly man sitting outside the city gate skinning an improbably large desert
 
 **Quest:** Kill any animal. Return with any part of it. Survival roll required after the kill — small animals near the city walls are feasible unarmed or with improvised tools. Basic trophy talisman as reward, plus a simple knife if the player arrived unarmed.
 
-**The Great Frog:** If the player slept at his fire, he'll mention in the morning that he's heard there's something large and strong that's recently made its home near the surface of the undercity — blocking the passage. He wants it dead. Not because it's in his way — he has his own routes, secret paths the frog doesn't cover, and he gets where he's going regardless. He wants it dead because if the player is the kind of person who can kill it, he'd like to meet them again deeper down. It's a statement of respect framed as mild personal interest. He won't press it.
+**The Toad:** If the player slept at his fire, he'll mention in the morning that he's heard there's something large and strong that's recently made its home near the surface of the undercity — blocking the passage. He wants it dead. Not because it's in his way — he has his own routes, secret paths the toad doesn't cover, and he gets where he's going regardless. He wants it dead because if the player is the kind of person who can kill it, he'd like to meet them again deeper down. It's a statement of respect framed as mild personal interest. He won't press it.
 
 **Morning storyboard** *(after sleeping at his fire)*
 Dialogue opens after waking. First presented option prompts the player to bring up the dream — framed to make asking feel natural, skippable. If the player asks: he's heard of godless people seeing things, doesn't know what it means specifically, but his read is simple — go deeper, get strong enough to go there. Points toward the undercity without elaborating. Then, as a separate beat: he mentions casually that he's heard something large has recently made its home near the surface of the undercity, blocking the passage. Says it the way he'd mention interesting weather. Implies he's already thinking about going down himself. Then flows into the existing goodbye: *"Get strong enough to go below if you want to meet again."* He leaves after the player's next rest.
@@ -646,7 +646,7 @@ Separately or in the same beat: the quest. Brief, businesslike. *"Iron from that
 
 **Undercity hook:** After the desert ruin quest, the Forge Master sends the player into the shallow undercity to recover more ancient metalwork — tools or fragments from the Layer 1 civilization that are worth studying or reclaiming. The undercity has better and stranger examples than anything poking out of the desert. This is his path's reason to descend.
 
-**Great Frog resolution:** Kill it. The metal religion has no method of appeasement and no interest in one — the frog is a problem, the solution is force. The Forge Master expects the player to be strong enough by the time they're ready, and treats the expectation as a given. He may give the player a weapon for it or advise on what to bring.
+**Toad resolution:** Kill it. The metal religion has no method of appeasement and no interest in one — the toad is a problem, the solution is force. The Forge Master expects the player to be strong enough by the time they're ready, and treats the expectation as a given. He may give the player a weapon for it or advise on what to bring.
 
 ---
 
@@ -670,7 +670,7 @@ She frames the quest as collaborative: *"I want you to go to the ruin. Transcrib
 
 **Undercity hook:** The transcription from the desert ruin is a fragment — a surface exposure of something older and more complete underground. After the player returns with it, she tells them directly: there are inscriptions in the shallow undercity that predate anything in the library, and she has been trying to get someone down there who can copy them. The player goes, transcribes, brings back. Each layer of descent produces older and stranger text. This is the pictographic religion's knowledge-descent principle in practice.
 
-**Great Frog resolution:** A method exists, TBD in detail. The scribes' approach will involve inscription or text — either a symbol that compels the creature, or knowledge of what the frog is and how to communicate with something that old. The Library Teacher will know that the frog's presence is not random; she won't know why it's there yet, but she'll treat it as something to be understood rather than simply killed.
+**Toad resolution:** A method exists, TBD in detail. The scribes' approach will involve inscription or text — either a symbol that compels the creature, or knowledge of what it is and how to communicate with it. The Library Teacher will know that the toad's presence is not random; she won't know why it's there yet, but she'll treat it as something to be understood rather than simply killed.
 
 ---
 
@@ -1026,7 +1026,7 @@ These are backend changes that don't require new zones or content. Do these firs
 
 ---
 
-## 18. Act 1 Structure — The Great Frog
+## 18. Act 1 Structure — The Toad
 
 ### Shape of Act 1
 
@@ -1034,23 +1034,25 @@ These are backend changes that don't require new zones or content. Do these firs
 
 **Shallow undercity:** Player descends. Open fire cult practitioners near the entrance. Strange atmosphere, stronger spirits. Exploration and early discovery.
 
-**The roadblock:** A very large frog from the depths has taken up residence in a key passage leading deeper into the undercity. The player encounters it and cannot pass — it will kill them on approach and has exceptional detection range. Cannot be sneaked past. NPCs in the shallow undercity warn about it; the encounter itself confirms the warning.
+**The roadblock:** A very large toad from the depths has taken up residence in a key passage leading deeper into the undercity. The player encounters it and cannot pass — it will kill them on approach and has exceptional detection range. Cannot be sneaked past. NPCs in the shallow undercity warn about it; the encounter itself confirms the warning.
 
 **Turned back:** Player returns to the surface. The early game sidequests — desert hunting, market work, faction errands, exploration — now have a purpose. The player gets stronger, earns coin, finds better gear.
 
 **Desert arc:** Most of the early sidequest content that points outward from the city points toward the desert. The desert is dangerous (requires basic protection to survive at night) but traversable. No single specific item or key is required from the desert — the arc is about capability: levels, gear, money, and potentially the nomad faction if the player goes far enough.
 
-**Resolution:** Player returns ready to deal with the frog. Two paths:
+**Resolution:** Player returns ready to deal with the toad. Two paths, and both converge on the same outcome — the passage opens either way:
 - **Kill it** — the primary path. Requires the strength and method gained through the desert arc and surface quests.
-- **Appease it / send it home** — an alternative. The poison cult and the scribes each have a method for getting the frog to return to the depths. Details TBD per faction.
+- **Appease it / send it home** — an alternative. The poison cult and the scribes each have a method for getting the toad to return to the depths. Details TBD per faction.
 
 **Act 2 begins:** The passage is clear. The real undercity opens.
 
 ---
 
-### The Great Frog
+### The Toad
 
-A creature from the deep layers — the swamp or below — that has been drawn upward and taken residence in a passage near the undercity surface. It did not come up on its own. The spiritual machinery of the king's shrine activating has disturbed something below. The player will eventually be able to piece this together but will not know it on first encounter. At first it is simply an enormous, ancient, dangerous animal in a place it should not be.
+A creature from the deep layers — the swamp or below — that has been drawn upward and taken residence in a passage near the undercity surface. It did not come up on its own; the spiritual machinery of the king's shrine activating has disturbed something below. The player will eventually be able to piece this together but will not know it on first encounter.
+
+It has no name and isn't unique — it's an ordinary animal of its kind. Down at the depth it actually belongs to, a toad this size is unremarkable, just another resident of the deep undercity/swamp ecosystem. It only reads as a monstrous, dangerous anomaly because the surface world has never had to deal with something this large before. At first encounter, the player has no way to know this — it's simply an enormous, dangerous animal in a place it should not be.
 
 **Mechanical properties:**
 - Blocks a key passage physically
@@ -1060,19 +1062,17 @@ A creature from the deep layers — the swamp or below — that has been drawn u
 
 **Resolution paths:**
 - *Kill:* Combat method and required preparation TBD. The Old Hunter wants this outcome and will look forward to meeting the player again deeper down if they accomplish it.
-- *Appease:* Getting it to return home — not killing it, but removing it. Each method is a substantial errand comparable in scope to the smith/scribe ruin quests — this is Act 1 desert content, not a quick task. Poison cult method: apothecary sends player to collect specific desert ingredients to brew a compound that induces the frog to leave (ingredients TBD). Scribe method TBD. Possibly others.
+- *Appease:* Getting it to return home — not killing it, but removing it. Each method is a substantial errand comparable in scope to the smith/scribe ruin quests — this is Act 1 desert content, not a quick task. Poison cult method: apothecary sends player to collect specific desert ingredients to brew a compound that induces the toad to leave (ingredients TBD). Scribe method TBD. Possibly others.
 
-**Downstream consequences (to be fleshed out):**
-- Kill: passage permanently clear; something the poison cult considered significant is gone; Old Hunter will eventually appear in the undercity
-- Appease: passage clear but frog returns to depth; different faction reactions; poison cult relationship deepened; frog may appear again later
+**Downstream consequences (to be fleshed out):** Both paths converge on the same gate result — passage clear, Act 2 opens. They diverge only in flavor/faction reaction: kill removes it permanently and the Old Hunter takes a personal interest in the player; appease sends it back down alive, deepens the poison-cult relationship, and leaves open the possibility it (or one like it) is encountered again later, deeper down where it actually belongs.
 
 **Narrative function:** First evidence that the premonition dream is already real — the machinery is moving, things are being disturbed, the cycle has started. The player does not have the context to read it this way yet.
 
 ---
 
-### The Old Hunter and the Frog
+### The Old Hunter and the Toad
 
-He is not blocked by the frog. He has his own routes — secret paths, knowledge of the undercity's older geography. He gets where he is going regardless of what's living in the main passage. He mentions the frog to the player not as a problem he needs solved but as a filter: if you can get past that, I want to meet you again. It is respect, stated as mild personal interest. He will be found deeper in the undercity by players who clear the way.
+He is not blocked by the toad. He has his own routes — secret paths, knowledge of the undercity's older geography. He gets where he is going regardless of what's living in the main passage. He mentions the toad to the player not as a problem he needs solved but as a filter: if you can get past that, I want to meet you again. It is respect, stated as mild personal interest. He will be found deeper in the undercity by players who clear the way.
 
 ---
 
@@ -1128,9 +1128,11 @@ A small number of starting observations to design toward:
 
 Preservation recipes appear in the normal crafting menu under a new `cooking` category, parallel to `alchemy` and `smithing`. These produce food items with extended `expires_in_rests` timers.
 
-**Smoke Meat** — the base recipe, available at low cooking skill. Takes any raw meat and produces **Smoked [Beast] Meat** or **[Beast] Jerky** (name TBD per beast type). Requires no special ingredient — the player is already making fires to rest, and smoking is an extension of that. Produces a preserved item with a meaningfully longer expiration timer than raw meat.
+**Smoke Meat** — takes any raw meat and produces **Smoked [Beast] Meat**. Requires no special ingredient — the player is already making fires to rest, and smoking is an extension of that. Gated by Cooking 8 or Survival 15 (either qualifies). Keeps as long as salt-cured meat, and carries no passive buff of its own, but whatever rest recipe it's later cooked into comes out **20% more effective** across the board.
 
-**Salt-Cure Meat** — the superior tier above smoking. Requires **salt** as an ingredient and a higher cooking skill threshold. Produces a better-preserved result: longer expiration timer than smoked meat, and likely a higher quality floor when used as a cooking ingredient at rest. Salt is gathered directly from the mineral deposits along the riverbank (see Section 6) — it is free but finite. A player who has been to the docks recently will have a supply; one who has been descending into the undercity or crossing the desert will eventually run out and fall back to smoking until they return to the surface.
+**Salt-Cure Meat** — requires **salt** as an ingredient and a higher cooking skill threshold (15). Produces a preserved item with the same long expiration timer as smoked meat, plus a small passive buff (Salted Provisions, +3% max HP) if eaten plain at rest without being cooked into a recipe. Salt is gathered directly from the mineral deposits along the riverbank (see Section 6) — it is free but finite. A player who has been to the docks recently will have a supply; one who has been descending into the undercity or crossing the desert will eventually run out and fall back to smoking until they return to the surface.
+
+Smoking and salt-curing are now both available from the Meat-Hawker, who sells raw, sun-dried, salt-cured, and smoked cuts of coyote, lizard, and sand beetle meat directly, and teaches all three preservation recipes.
 
 Other preservation methods (fermentation, drying, specific nomad techniques) are TBD and will be added as the world content is designed.
 

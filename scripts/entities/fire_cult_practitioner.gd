@@ -4,7 +4,7 @@ extends NPC
 # Shows as "Old Man" until the player is referred by the fire cult member, then "Fire Cult Elder".
 
 func _ready() -> void:
-	grid_cell             = Vector2i(70, 44)
+	grid_cell             = Vector2i(68, 44)
 	stat_strength         = 5
 	stat_dexterity        = 6
 	stat_agility          = 5

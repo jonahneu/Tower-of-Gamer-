@@ -5,7 +5,7 @@ func _ready() -> void:
 	if GameManager.player_data.get("taskmaster_left", false):
 		queue_free()
 		return
-	grid_cell             = Vector2i(18, 7)
+	grid_cell             = Vector2i(20, 7)
 	stat_strength         = 8
 	stat_dexterity        = 5
 	stat_agility          = 5

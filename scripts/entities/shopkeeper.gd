@@ -5,7 +5,7 @@ extends NPC
 const SHOP_ITEMS: Array = []  # TBD
 
 func _ready() -> void:
-	grid_cell             = Vector2i(65, 20)
+	grid_cell             = Vector2i(62, 21)
 	interaction_reach     = 2
 	stat_strength         = 5
 	stat_dexterity        = 6

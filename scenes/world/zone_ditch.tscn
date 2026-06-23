@@ -52,11 +52,11 @@ script = ExtResource("3")
 col_sw = Color(0.55, 0.46, 0.33, 1)
 col_se = Color(0.42, 0.35, 0.22, 1)
 col_top = Color(0.67, 0.59, 0.46, 1)
-X1 = 6
-X2 = 17
+X1 = 8
+X2 = 19
 Y1 = 3
 Y2 = 9
-DOOR_X = 17
+DOOR_X = 19
 DOOR_Y = 6
 
 [node name="Inn" type="Node2D" parent="."]
@@ -77,11 +77,11 @@ script = ExtResource("3")
 col_sw = Color(0.55, 0.46, 0.33, 1)
 col_se = Color(0.42, 0.35, 0.22, 1)
 col_top = Color(0.67, 0.59, 0.46, 1)
-X1 = 58
-X2 = 72
+X1 = 55
+X2 = 69
 Y1 = 3
 Y2 = 11
-DOOR_X = 58
+DOOR_X = 55
 DOOR_Y = 7
 
 [node name="PawnShop" type="Node2D" parent="."]
@@ -89,36 +89,36 @@ script = ExtResource("3")
 col_sw = Color(0.55, 0.46, 0.33, 1)
 col_se = Color(0.42, 0.35, 0.22, 1)
 col_top = Color(0.67, 0.59, 0.46, 1)
-X1 = 58
-X2 = 72
-Y1 = 13
-Y2 = 26
-DOOR_X = 58
-DOOR_Y = 20
+X1 = 55
+X2 = 69
+Y1 = 14
+Y2 = 27
+DOOR_X = 55
+DOOR_Y = 21
 
 [node name="BuildingC" type="Node2D" parent="."]
 script = ExtResource("3")
 col_sw = Color(0.55, 0.46, 0.33, 1)
 col_se = Color(0.42, 0.35, 0.22, 1)
 col_top = Color(0.67, 0.59, 0.46, 1)
-X1 = 60
-X2 = 73
-Y1 = 28
-Y2 = 37
-DOOR_X = 60
-DOOR_Y = 32
+X1 = 57
+X2 = 70
+Y1 = 30
+Y2 = 39
+DOOR_X = 57
+DOOR_Y = 34
 
 [node name="BuildingD" type="Node2D" parent="."]
 script = ExtResource("3")
 col_sw = Color(0.55, 0.46, 0.33, 1)
 col_se = Color(0.42, 0.35, 0.22, 1)
 col_top = Color(0.67, 0.59, 0.46, 1)
-X1 = 62
-X2 = 73
-Y1 = 39
-Y2 = 46
-DOOR_X = 62
-DOOR_Y = 43
+X1 = 59
+X2 = 70
+Y1 = 42
+Y2 = 49
+DOOR_X = 59
+DOOR_Y = 46
 
 [node name="Taskmaster" type="Node2D" parent="."]
 script = ExtResource("4")
@@ -132,13 +132,13 @@ script = ExtResource("8")
 
 [node name="PawnShopDoor" type="Node2D" parent="."]
 script = ExtResource("7")
-grid_cell = Vector2i(58, 20)
+grid_cell = Vector2i(55, 21)
 
 [node name="PawnShopCounter" type="Node2D" parent="."]
 script = ExtResource("9")
-X1 = 59
-X2 = 71
-Y  = 18
+X1 = 56
+X2 = 68
+Y  = 19
 
 [node name="Shopkeeper" type="Node2D" parent="."]
 script = ExtResource("15")

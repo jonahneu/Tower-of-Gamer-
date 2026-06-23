@@ -60,23 +60,23 @@ grid_cell = Vector2i(14, 33)
 
 [node name="PractitionerHut" type="Node2D" parent="."]
 script = ExtResource("3")
-X1 = 67
-X2 = 73
+X1 = 65
+X2 = 71
 Y1 = 41
 Y2 = 47
-DOOR_X = 67
+DOOR_X = 65
 DOOR_Y = 44
 
 [node name="ElderHutDoor" type="Node2D" parent="."]
 script = ExtResource("7")
-grid_cell = Vector2i(67, 44)
+grid_cell = Vector2i(65, 44)
 
 [node name="FireCultPractitioner" type="Node2D" parent="."]
 script = ExtResource("6")
 
 [node name="RitualFire" type="Node2D" parent="."]
 script = ExtResource("8")
-grid_cell = Vector2i(70, 46)
+grid_cell = Vector2i(68, 46)
 
 [node name="ApothecarySign" type="Node2D" parent="."]
 script = ExtResource("10")

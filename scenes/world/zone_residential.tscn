@@ -54,8 +54,8 @@ DOOR_Y = -1
 script = ExtResource("3")
 X1 = 24
 X2 = 37
-Y1 = 55
-Y2 = 73
+Y1 = 53
+Y2 = 71
 DOOR_X = 999
 DOOR_Y = -1
 
@@ -63,8 +63,8 @@ DOOR_Y = -1
 script = ExtResource("3")
 X1 = 43
 X2 = 56
-Y1 = 55
-Y2 = 73
+Y1 = 53
+Y2 = 71
 DOOR_X = 999
 DOOR_Y = -1
 
@@ -72,8 +72,8 @@ DOOR_Y = -1
 script = ExtResource("3")
 X1 = 58
 X2 = 77
-Y1 = 4
-Y2 = 22
+Y1 = 5
+Y2 = 23
 DOOR_X = 67
 DOOR_Y = -1
 

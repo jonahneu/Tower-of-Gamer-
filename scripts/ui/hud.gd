@@ -260,7 +260,7 @@ func _ready() -> void:
 
 	_pause_panel = _build_pause_panel()
 	_pause_panel.visible = false
-	_pause_panel.z_index = 2
+	_pause_panel.z_index = 3   # above regular panels (2) so it stays on top if both are open
 	add_child(_pause_panel)
 
 	_dialogue_panel = _build_dialogue_panel()
@@ -502,7 +502,9 @@ func _close_all() -> void:
 	var crafting_was_open: bool = (_open == "crafting")
 	var object_panel_was_open: bool = _object_panel.visible
 	for p in _panels.values(): p.visible = false
-	_pause_panel.visible = false
+	# Pause is intentionally NOT closed here — it's an independent overlay that
+	# can sit above inventory/stats/etc. without being torn down when one of
+	# those closes. Use _close_pause() to close it specifically.
 	_dialogue_panel.visible = false
 	_object_panel.visible = false
 	_object_entity = null
@@ -523,7 +525,7 @@ func _close_all() -> void:
 	if _pickpocket_panel != null: _pickpocket_panel.visible = false
 	_pickpocket_entity = null
 	_open = ""
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mouse_filter = Control.MOUSE_FILTER_STOP if _pause_panel.visible else Control.MOUSE_FILTER_IGNORE
 	# Emit deferred so listeners run after _close_all() fully completes
 	if dialogue_was_open:
 		call_deferred("_emit_dialogue_closed", _dialogue_entity)
@@ -538,12 +540,26 @@ func _on_escape() -> void:
 	if _context_menu != null:
 		_close_context_menu()
 		return
-	if _open != "" or _pause_panel.visible or _dialogue_panel.visible or _object_panel.visible \
+	# Pause is the topmost overlay — closing it should never also close
+	# whatever's open underneath (inventory/stats/etc).
+	if _pause_panel.visible:
+		_close_pause()
+		return
+	if _open != "" or _dialogue_panel.visible or _object_panel.visible \
 			or (_pickpocket_panel != null and _pickpocket_panel.visible):
 		_close_all()
 	else:
 		_pause_panel.visible = true
 		mouse_filter = Control.MOUSE_FILTER_STOP
+
+# Closes only the pause overlay, leaving whatever's open underneath (inventory,
+# stats, the combat hotbar, etc.) untouched.
+func _close_pause() -> void:
+	_pause_panel.visible = false
+	var anything_else_open: bool = _open != "" or _dialogue_panel.visible or _object_panel.visible \
+			or (_pickpocket_panel != null and _pickpocket_panel.visible)
+	if not anything_else_open:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAUSE MENU
@@ -749,7 +765,7 @@ func _build_pause_panel() -> Control:
 
 	_pause_spacer(col, 16)
 
-	_pause_btn(col, "Resume",           _close_all)
+	_pause_btn(col, "Resume",           _close_pause)
 	_pause_btn(col, "Save Game",        _open_save_panel)
 	_pause_btn(col, "Load Game",        _open_load_panel)
 	_pause_btn(col, "Settings",         _on_settings)
@@ -1273,6 +1289,11 @@ func _on_interaction_triggered(entity: Node, action_id: String) -> void:
 			_close_all()
 			if entity.has_method("go_hostile"):
 				entity.go_hostile(true)
+		"attack_enemy":
+			_close_all()
+			var player: Node = GameManager.player
+			if player != null and player.has_method("initiate_normal_attack"):
+				player.initiate_normal_attack(entity)
 		"pickpocket":
 			_do_pickpocket(entity)
 		_:

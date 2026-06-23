@@ -339,7 +339,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			var opts: Array = entity.get_interaction_options() \
 					if entity.is_interactable and not (entity is Enemy) else []
 			EventBus.show_context_menu.emit(entity, opts, get_viewport().get_mouse_position())
-		elif entity != null and entity.is_interactable and not (GameManager.combat_mode and entity is Corpse):
+		elif entity != null and (entity.is_interactable or (entity is Enemy and not entity.get("_dead"))) \
+				and not (GameManager.combat_mode and entity is Corpse):
 			if _is_in_reach_of(entity):
 				_show_context_menu_for(entity)
 			else:
@@ -552,6 +553,26 @@ func _initiate_sneak_attack(target: Enemy) -> void:
 				combatants.append(other)
 	CombatManager.force_start_combat(combatants, {}, true)
 
+# Deliberately picking a fight via right-click → Attack — same as a sneak
+# attack's combatant pull-in, but no sneak bonus and no requirement to be
+# sneaking (initiative is rolled normally for everyone, player included).
+func initiate_normal_attack(target: Enemy) -> void:
+	if GameManager.combat_mode or target == null or target.get("_dead"):
+		return
+	var combatants: Array = [self, target]
+	if _tile_scene != null:
+		for entity in _tile_scene.get_all_entities():
+			if entity == self or entity == target:
+				continue
+			var other := entity as Enemy
+			if other == null or other._dead or other._in_combat:
+				continue
+			var dx: int = abs(other.grid_cell.x - grid_cell.x)
+			var dy: int = abs(other.grid_cell.y - grid_cell.y)
+			if maxi(dx, dy) <= other.aggro_range:
+				combatants.append(other)
+	CombatManager.force_start_combat(combatants, {}, false)
+
 func _get_entity_at(mouse_local: Vector2, target_cell: Vector2i) -> Node:
 	# First try the exact grid cell
 	var e := _tile_scene.get_entity_at(target_cell)
@@ -571,6 +592,11 @@ func _get_entity_at(mouse_local: Vector2, target_cell: Vector2i) -> Node:
 
 func _show_context_menu_for(entity: Node) -> void:
 	var options = entity.get_interaction_options()
+	# Hostile creatures aren't "interactable" (no Talk/Examine — see Enemy._ready()),
+	# but the player should still be able to pick a fight with one deliberately via
+	# right-click, not only by sneak-attacking or waiting for its own aggro range.
+	if options.is_empty() and entity is Enemy and not entity.get("_dead"):
+		options = [{"label": "Attack", "id": "attack_enemy", "priority": 10}]
 	# A non-blocking entity (plant, item, ...) can end up buried under this one
 	# (e.g. a corpse landing on top of a harvestable plant) — fold its options
 	# into the same menu, tagged so they route back to it on click.

@@ -1062,7 +1062,13 @@ It has no name and isn't unique — it's an ordinary animal of its kind. Down at
 
 **Resolution paths:**
 - *Kill:* Combat method and required preparation TBD. The Old Hunter wants this outcome and will look forward to meeting the player again deeper down if they accomplish it.
-- *Appease:* Getting it to return home — not killing it, but removing it. Each method is a substantial errand comparable in scope to the smith/scribe ruin quests — this is Act 1 desert content, not a quick task. Poison cult method: apothecary sends player to collect specific desert ingredients to brew a compound that induces the toad to leave (ingredients TBD). Scribe method TBD. Possibly others.
+- *Appease:* Getting it to return home — not killing it, but removing it. Each method is a substantial errand comparable in scope to the smith/scribe ruin quests — this is Act 1 desert content, not a quick task. Poison cult method: see **Swallow** below — this is how the poison cult's appeasement actually resolves mechanically. Scribe method TBD. Possibly others.
+
+**Swallow (combat ability, decided 2026-06-22):** Mid-fight, the toad can swallow the player whole. While swallowed, the player takes damage over time (being digested), but the toad itself becomes more vulnerable in return — a real risk/reward window rather than a death sentence. The interior will use the small-interior-room building block discussed long ago but never actually built — a literal tiny room representing the toad's stomach.
+
+This doubles as the poison cult's appeasement method: the player either douses themselves in something beforehand (so getting swallowed becomes the delivery mechanism) or feeds it to the toad directly once inside. Either way, it's appeasement *through* being eaten rather than around it. What the player douses themselves in/feeds it, exact damage numbers, and how much more vulnerable the toad becomes are all still TBD.
+
+Being swallowed may also double as a traversal shortcut — surviving/escaping from inside could deposit the player at an alternate Act 2 starting location, distinct from the normal "passage opens" route. Not decided whether this applies to the kill path, the appease path, or both.
 
 **Downstream consequences (to be fleshed out):** Both paths converge on the same gate result — passage clear, Act 2 opens. They diverge only in flavor/faction reaction: kill removes it permanently and the Old Hunter takes a personal interest in the player; appease sends it back down alive, deepens the poison-cult relationship, and leaves open the possibility it (or one like it) is encountered again later, deeper down where it actually belongs.
 

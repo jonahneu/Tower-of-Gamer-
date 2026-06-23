@@ -553,6 +553,10 @@ func _initiate_sneak_attack(target: Enemy) -> void:
 				combatants.append(other)
 	CombatManager.force_start_combat(combatants, {}, true)
 
+# Public wrapper so the right-click context menu can offer a sneak attack.
+func initiate_sneak_attack(target: Enemy) -> void:
+	_initiate_sneak_attack(target)
+
 # Deliberately picking a fight via right-click → Attack — same as a sneak
 # attack's combatant pull-in, but no sneak bonus and no requirement to be
 # sneaking (initiative is rolled normally for everyone, player included).
@@ -596,7 +600,13 @@ func _show_context_menu_for(entity: Node) -> void:
 	# but the player should still be able to pick a fight with one deliberately via
 	# right-click, not only by sneak-attacking or waiting for its own aggro range.
 	if options.is_empty() and entity is Enemy and not entity.get("_dead"):
-		options = [{"label": "Attack", "id": "attack_enemy", "priority": 10}]
+		if GameManager.is_sneaking and not GameManager.combat_mode:
+			options = [
+				{"label": "Sneak Attack", "id": "sneak_attack_enemy", "priority": 10},
+				{"label": "Attack",       "id": "attack_enemy",       "priority": 5},
+			]
+		else:
+			options = [{"label": "Attack", "id": "attack_enemy", "priority": 10}]
 	# A non-blocking entity (plant, item, ...) can end up buried under this one
 	# (e.g. a corpse landing on top of a harvestable plant) — fold its options
 	# into the same menu, tagged so they route back to it on click.

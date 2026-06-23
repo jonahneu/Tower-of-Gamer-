@@ -109,7 +109,11 @@ func _build_hotbar_panel() -> Control:
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	root.offset_top = -(SLOT_SIZE + 18)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# STOP, not IGNORE: this strip is opaque (see bg below), so nothing behind
+	# it is visible anyway. Without this, scrolling/clicking anywhere on the
+	# hotbar that isn't exactly on a slot button (gaps, background) fell
+	# through to the world camera and zoomed it instead.
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var bg := ColorRect.new()
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -876,7 +880,10 @@ func _build_turn_order_bar() -> Control:
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	root.offset_bottom = 54
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# STOP, not IGNORE — same reasoning as the hotbar: this is an opaque,
+	# bounded strip, so scrolling/clicking over its background shouldn't
+	# fall through to the world camera underneath.
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var bg := ColorRect.new()
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -1025,7 +1032,9 @@ func _build_log_panel() -> Control:
 	root.offset_right  = -10
 	root.offset_top    = 60
 	root.offset_bottom = -(hotbar_h + 105)
-	root.mouse_filter  = Control.MOUSE_FILTER_IGNORE
+	# STOP, not IGNORE — same reasoning as the hotbar/turn-order bar: bounded,
+	# opaque panel, shouldn't leak scroll/click through to the world camera.
+	root.mouse_filter  = Control.MOUSE_FILTER_STOP
 
 	var bg := ColorRect.new()
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

@@ -51,7 +51,9 @@ func _update_dialogue() -> void:
 	if not pd.get("fire_cult_member_asked_work", false):
 		options.append({
 			"label":    "Got any work?",
-			"action":   func(): pd["fire_cult_member_asked_work"] = true,
+			"action":   func():
+				pd["fire_cult_member_asked_work"] = true
+				reopen.call(),
 			"response": "No.",
 			"closes":   true,
 		})

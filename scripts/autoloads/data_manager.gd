@@ -1675,6 +1675,13 @@ func _load_items() -> void:
 
 	# ── Scribe supplies ───────────────────────────────────────────────────────
 
+	items["transcribed_scripture"] = {
+		"id": "transcribed_scripture", "weight": 0.1, "name": "Transcribed Scripture",
+		"type": "quest_item", "slot": null,
+		"description": "A rolled scripture, carefully transcribed in the scribe's hand. Meant for a customer in the residential district.",
+		"properties": [], "abilities": [],
+	}
+
 	items["ink"] = {
 		"id": "ink", "weight": 0.1, "name": "Ink",
 		"type": "material", "slot": null,

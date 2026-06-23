@@ -102,11 +102,18 @@ func _build_load_overlay() -> Control:
 
 	card.add_child(HSeparator.new())
 
-	# Auto saves, then quick saves, then manual slots — each group separated
+	# All slots, most recently saved first; empty slots sink to the bottom.
 	var display_slots: Array = [GameManager.AUTO_SLOT, GameManager.PREV_AUTO_SLOT,
 		0, GameManager.PREV_QUICK_SLOT]
 	for i in range(1, GameManager.SLOT_COUNT + 1):
 		display_slots.append(i)
+	display_slots.sort_custom(func(a, b):
+		var ia: Dictionary = GameManager.get_save_info(a)
+		var ib: Dictionary = GameManager.get_save_info(b)
+		if ia["exists"] != ib["exists"]:
+			return ia["exists"]
+		return ia["timestamp"] > ib["timestamp"]
+	)
 
 	for slot in display_slots:
 		var info = GameManager.get_save_info(slot)
@@ -156,10 +163,6 @@ func _build_load_overlay() -> Control:
 			var s = slot
 			del_btn.pressed.connect(func(): _delete_slot(s))
 		row.add_child(del_btn)
-
-		# Separator after each group
-		if slot == GameManager.PREV_AUTO_SLOT or slot == GameManager.PREV_QUICK_SLOT:
-			card.add_child(HSeparator.new())
 
 	return overlay
 

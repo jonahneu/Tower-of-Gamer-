@@ -138,6 +138,10 @@ func _update_dialogue() -> void:
 	# ── Delivery quest ────────────────────────────────────────────────────────
 	var accept_delivery := func():
 		if not has_delivery_quest:
+			var player_inv: Array = pd.get("inventory", [])
+			player_inv.append(DataManager.get_item("transcribed_scripture"))
+			pd["inventory"] = player_inv
+			EventBus.inventory_changed.emit()
 			GameManager.add_quest({
 				"id":      "scribe_delivery",
 				"title":   "Scripture Delivery",

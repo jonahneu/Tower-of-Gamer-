@@ -77,6 +77,7 @@ func _build_options() -> Array:
 			"threads":     [],
 			"completed":   false,
 		})
+		reopen.call()
 
 	var options: Array = []
 
@@ -166,7 +167,9 @@ func _build_options() -> Array:
 				"label":    buy_label,
 				"disabled": not _has_coin() or bought_this_cycle,
 				"closes":   true,
-				"action":   func(): _buy_vial(),
+				"action":   func():
+					_buy_vial()
+					reopen.call(),
 			})
 
 	# ── Ingredient gathering — active once player said "sure" ─────────────────
@@ -228,7 +231,8 @@ func _build_options() -> Array:
 							GameManager.update_quest_thread("find_spiritual_protection", "apothecary_vial_path",
 								"The apothecary taught me to brew the First Poison of Acclimation myself. I now have a permanent way to protect myself.")
 							GameManager.complete_quest_thread("find_spiritual_protection", "apothecary_vial_path")
-							GameManager.complete_quest("find_spiritual_protection"),
+							GameManager.complete_quest("find_spiritual_protection")
+							reopen.call(),
 					},
 				],
 			})
@@ -237,6 +241,7 @@ func _build_options() -> Array:
 				"label":    "I tried crafting it.",
 				"response": "Hey, follow instructions if you want me to teach you. Come back when you're done.",
 				"closes":   true,
+				"action":   reopen,
 			})
 
 	# ── Gathering work — available once delivery is done, before accepted ────────

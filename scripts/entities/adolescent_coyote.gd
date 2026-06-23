@@ -108,8 +108,9 @@ func _execute_ai_turn() -> void:
 	if not _howled and CombatManager.current_ap() >= 1 and _tile_scene != null:
 		var idle_coyotes: Array = []
 		for entity in _tile_scene.get_all_entities():
-			var coyote := entity as Coyote
-			if coyote != null and not coyote._in_combat and not coyote._dead:
+			var coyote := entity as Enemy
+			if coyote != null and coyote != self and coyote.beast_type.contains("coyote") \
+					and not coyote._in_combat and not coyote._dead:
 				idle_coyotes.append(coyote)
 		if not idle_coyotes.is_empty():
 			EventBus.damage_floater.emit(self, "Howling!", Color(1.0, 0.80, 0.15))

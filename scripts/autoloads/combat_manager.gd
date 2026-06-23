@@ -582,6 +582,14 @@ func resolve_ai_target_cell(entity: Node, player: Node) -> Vector2i:
 			# sees them) in which case fall back to searching instead of
 			# blindly walking toward a stale player cell.
 			if player_last_known_cell != Vector2i(-1, -1) and not group_has_sight:
+				# The last-known cell is usually right where this entity was
+				# already standing (adjacent, mid-attack) the moment the player
+				# fled — if so, skip straight to wandering instead of "searching"
+				# a cell it's already at, which would otherwise freeze it for a
+				# full turn doing nothing.
+				if maxi(abs(entity_cell.x - player_last_known_cell.x), abs(entity_cell.y - player_last_known_cell.y)) <= 1:
+					ts["ai_state"] = "wandering"
+					return _pick_wander_target_cell(entity, ts)
 				ts["ai_state"] = "searching"
 				return player_last_known_cell
 			return player_cell

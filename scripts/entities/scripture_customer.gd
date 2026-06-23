@@ -27,11 +27,13 @@ func _update_dialogue() -> void:
 	var pd: Dictionary = GameManager.player_data
 	var has_quest: bool = GameManager.has_quest_thread("scribe_delivery", "deliver_scripture")
 	var delivered: bool = pd.get("scripture_delivered", false)
+	var has_scripture: bool = _has_item("transcribed_scripture")
 
 	dialogue_text = "[TBD]"
 
-	if has_quest and not delivered:
+	if has_quest and not delivered and has_scripture:
 		var deliver := func():
+			_remove_item("transcribed_scripture")
 			pd["scripture_delivered"] = true
 			GameManager.complete_quest_thread("scribe_delivery", "deliver_scripture")
 			GameManager.complete_quest("scribe_delivery")
@@ -39,6 +41,7 @@ func _update_dialogue() -> void:
 			for _i in range(10):
 				inv.append(DataManager.get_item("coin"))
 			pd["inventory"] = inv
+			EventBus.inventory_changed.emit()
 
 		dialogue_options = [
 			{
@@ -57,3 +60,17 @@ func _update_dialogue() -> void:
 func _reopen_dialogue() -> void:
 	_update_dialogue()
 	EventBus.interaction_triggered.emit(self, "talk")
+
+func _has_item(item_id: String) -> bool:
+	for item in GameManager.player_data.get("inventory", []):
+		if item.get("id", "") == item_id:
+			return true
+	return false
+
+func _remove_item(item_id: String) -> void:
+	var inv: Array = GameManager.player_data.get("inventory", [])
+	for i in range(inv.size()):
+		if inv[i].get("id", "") == item_id:
+			inv.remove_at(i)
+			break
+	GameManager.player_data["inventory"] = inv

@@ -18,6 +18,8 @@ const DETECTION_RANGE: int = 8
 var _dialogue_triggered: bool = false
 var _dialogue_resolved: bool  = false
 var _backoff_dist: int        = -1   # distance to player at the moment they said they're leaving; -1 = not yet captured
+var _aggro_entered: bool      = false  # edge-trigger guard for the sneak detection roll below
+var _bump_entered: bool       = false
 
 func _ready() -> void:
 	stat_strength     = 7
@@ -82,12 +84,29 @@ func _process(delta: float) -> void:
 		return
 	var dx: int = abs(grid_cell.x - player.grid_cell.x)
 	var dy: int = abs(grid_cell.y - player.grid_cell.y)
-	if maxi(dx, dy) > DETECTION_RANGE:
+	var dist: int = maxi(dx, dy)
+	if dist > DETECTION_RANGE:
+		_aggro_entered = false
+		_bump_entered  = false
 		return
 	if _tile_scene == null or not _tile_scene.has_line_of_sight(grid_cell, player.grid_cell):
 		return
-	# Sneak detection roll — effective PER scales with level
+	# Sneak detection roll — effective PER scales with level. Edge-triggered:
+	# one roll on first entering detection range, one more if the player then
+	# closes to bump range — not re-rolled every single frame, which would
+	# make slipping past all but impossible regardless of sneak skill.
 	if GameManager.is_sneaking:
+		var should_roll: bool = false
+		if not _aggro_entered:
+			_aggro_entered = true
+			should_roll = true
+			if dist <= 1:
+				_bump_entered = true
+		elif dist <= 1 and not _bump_entered:
+			_bump_entered = true
+			should_roll = true
+		if not should_roll:
+			return
 		var player_skills: Dictionary = GameManager.player_data.get("skills", {})
 		var sneak_skill: int  = int(player_skills.get("sneak", 0))
 		var dex_mod: int      = Entity.modifier(GameManager.player.stat_dexterity)
@@ -96,7 +115,7 @@ func _process(delta: float) -> void:
 		var eff_per: float    = (1.0 + per_mod) * 5.0 * float(level)
 		var detect_chance: int = clampi(50 + int((eff_per - eff_sneak) * 2.0), 5, 95)
 		if randi_range(1, 100) > detect_chance:
-			return  # slipped past undetected
+			return  # slipped past undetected this check
 	# Trigger the shakedown dialogue
 	_dialogue_triggered = true
 	GameManager.player_data["gate_toll_triggered"] = true

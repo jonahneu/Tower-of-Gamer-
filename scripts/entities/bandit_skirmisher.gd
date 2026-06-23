@@ -21,7 +21,7 @@ func _ready() -> void:
 	stat_constitution = 6
 	stat_intelligence = 5
 	stat_willpower    = 6
-	stat_perception   = 6
+	stat_perception   = 12
 
 	skills["melee"] = 28
 	skills["dodge"] = 26

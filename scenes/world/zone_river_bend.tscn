@@ -1,9 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://zone_river_bend"]
+[gd_scene load_steps=7 format=3 uid="uid://zone_river_bend"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/world/river_bank.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/entities/rock.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/plant.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/lizard.gd" id="6"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -39,3 +41,93 @@ rock_size = "small"
 script = ExtResource("4")
 grid_cell = Vector2i(40, 10)
 rock_size = "small"
+
+[node name="Rock6" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(20, 5)
+rock_size = "large"
+
+[node name="Rock7" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(45, 18)
+rock_size = "small"
+
+[node name="Rock8" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(70, 8)
+rock_size = "small"
+
+[node name="Rock9" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(15, 35)
+rock_size = "large"
+
+[node name="Rock10" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(60, 45)
+rock_size = "large"
+
+[node name="Rock11" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(35, 50)
+rock_size = "small"
+
+[node name="Rock12" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(50, 70)
+rock_size = "large"
+
+[node name="Rock13" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(18, 74)
+rock_size = "small"
+
+[node name="Rock14" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(72, 55)
+rock_size = "small"
+
+[node name="Rock15" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(30, 25)
+rock_size = "small"
+
+[node name="Reed1" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(9, 15)
+plant_id = "river_bend::Reed1"
+plant_type = "reed"
+item_id = "reed_tuber"
+
+[node name="Reed2" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(8, 62)
+plant_id = "river_bend::Reed2"
+plant_type = "reed"
+item_id = "reed_tuber"
+
+[node name="SaltDeposit1" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(11, 63)
+plant_id = "river_bend::SaltDeposit1"
+plant_type = "salt"
+item_id = "salt"
+
+[node name="FishSpot1" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(10, 40)
+plant_id = "river_bend::FishSpot1"
+plant_type = "fish"
+item_id = "tilapia"
+
+[node name="AcidLizard1" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(7, 10)
+
+[node name="AcidLizard2" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(10, 45)
+
+[node name="AcidLizard3" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(7, 70)

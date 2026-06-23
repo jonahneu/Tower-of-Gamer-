@@ -1,8 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://zone_desert_scrub"]
+[gd_scene load_steps=5 format=3 uid="uid://zone_desert_scrub"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/entities/rock.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/sand_beetle.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/urn.gd" id="5"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -35,3 +37,21 @@ rock_size = "small"
 script = ExtResource("3")
 grid_cell = Vector2i(68, 68)
 rock_size = "small"
+
+[node name="SandBeetle1" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(45, 45)
+
+[node name="SandBeetle2" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(50, 40)
+
+[node name="SandBeetle3" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(48, 50)
+
+[node name="ScrubUrn" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(47, 44)
+container_id = "desert_scrub_beetle_urn"
+loot_item_ids = PackedStringArray("coin", "coin", "coin", "coin", "coin", "coin", "coin", "coin", "coin", "coin")

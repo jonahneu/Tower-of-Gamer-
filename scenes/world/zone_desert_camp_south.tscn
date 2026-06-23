@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://zone_desert_camp_south"]
+[gd_scene load_steps=4 format=3 uid="uid://zone_desert_camp_south"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -20,6 +20,31 @@ rock_size = "small"
 [node name="Rock2" type="Node2D" parent="."]
 script = ExtResource("3")
 grid_cell = Vector2i(60, 55)
+rock_size = "small"
+
+[node name="Rock3" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(70, 15)
+rock_size = "large"
+
+[node name="Rock4" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(15, 60)
+rock_size = "large"
+
+[node name="Rock5" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(35, 70)
+rock_size = "small"
+
+[node name="Rock6" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(65, 30)
+rock_size = "small"
+
+[node name="Rock7" type="Node2D" parent="."]
+script = ExtResource("3")
+grid_cell = Vector2i(25, 45)
 rock_size = "small"
 
 [node name="BanditSkirmisher" type="Node2D" parent="."]

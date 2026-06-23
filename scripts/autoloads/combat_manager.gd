@@ -450,6 +450,12 @@ func _entity_can_see_player(entity: Node, player: Node) -> bool:
 	var player_cell: Vector2i = player.get("grid_cell")
 	var observer_level: int = zone.get_light_level(entity_cell)
 	var target_level: int   = zone.get_light_level(player_cell)
+	# In full light, an already-engaged entity tracks the player by line of
+	# sight alone — outrunning its aggro range in the open shouldn't break
+	# tracking; aggro_range only gates the initial out-of-combat notice (see
+	# Enemy._process). Dim/dark light still caps vision below as normal.
+	if observer_level == LightLevels.FULL and target_level == LightLevels.FULL:
+		return zone.has_line_of_sight(entity_cell, player_cell)
 	var base_radius_v = entity.get("aggro_range")
 	var base_radius: int = base_radius_v if base_radius_v != null else 20
 	var cap: int = LightLevels.vision_cap(observer_level, target_level, base_radius)

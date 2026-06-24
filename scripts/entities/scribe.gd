@@ -181,8 +181,10 @@ func _update_dialogue() -> void:
 			"label":  "I had a dream I wanted to ask you about.",
 			"action": func():
 				pd["scribe_dream_asked"] = true
+				GameManager.update_quest_thread("the_dream", "dream_ask_scribe",
+					"The scribe pointed me to an older Library in the Undercity ruins.")
 				GameManager.complete_quest_thread("the_dream", "dream_ask_scribe"),
-			"response": "[DIALOGUE TBD — Scribe's response when asked about the dream]",
+			"response": "Hmm, I only have vague ideas what that could be referring to. You might be able to learn more if you went to the Library in the Upper City, but... *He looks you over* I don't think you'd be allowed in the upper city. It sounds like your vision was related to the Undercity ruins, and the spirits that come from its depths. I have heard, there is another Library down there. It is from the distant past, when The Undercity was just The City. You might be able to find some of the answers you seek there.",
 			"next_options": [{"label": "Continue", "closes": true, "action": reopen}],
 		})
 

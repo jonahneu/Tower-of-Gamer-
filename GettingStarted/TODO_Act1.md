@@ -23,7 +23,7 @@ Two parallel quest chains to get a fresh character to ~level 5, using existing-b
 - (Already done, no action needed: the Distraught Merchant's "Lost Cargo" quest is fully implemented.)
 
 ## Post-dream dialogue (pointing the player underground)
-Fire Cult Elder and Old Hunter already have real "I had a dream" responses pointing the player underground toward the Toad. Smith (`smith.gd:80`), Scribe (`scribe.gd:181`), and Apothecary (`apothecary.gd:91`) still have literal `"[DIALOGUE TBD]"` placeholder stubs for the same hook — need real lines in each NPC's voice doing the same job.
+Fire Cult Elder, Old Hunter, and the Scribe already have real "I had a dream" responses pointing the player underground toward the Toad. The Scribe's response also surfaces a new lead: an older Library in the Undercity ruins (predating the Upper City one, from "when the Undercity was just the City") — the Upper City Library is explicitly out of reach for the player. Smith (`smith.gd:80`) and Apothecary (`apothecary.gd:91`) still have literal `"[DIALOGUE TBD]"` placeholder stubs for the same hook — need real lines in each NPC's voice doing the same job.
 
 ## Trainer reactions once the player reports the toad
 Smith, Scribe, Apothecary, and the Fire Cult (member/elder) each need a new dialogue branch reacting to the toad, in their established voice, once the resolution-path specifics above are filled in. (Confirmed: Old Hunter gets none, per your note.) Note: this is a separate, later conversation from the post-dream dialogue above — this one happens after the player has been turned back by the encounter.

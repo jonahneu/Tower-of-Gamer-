@@ -23,14 +23,14 @@ script = ExtResource("6")
 
 [node name="DockPier" type="Node2D" parent="."]
 script = ExtResource("7")
-X1 = 0
+X1 = 2
 X2 = 14
 Y1 = 36
 Y2 = 43
 
 [node name="DockHead" type="Node2D" parent="."]
 script = ExtResource("7")
-X1 = 0
+X1 = 2
 X2 = 5
 Y1 = 32
 Y2 = 47

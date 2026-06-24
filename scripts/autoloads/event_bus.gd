@@ -67,3 +67,4 @@ signal hide_path_preview()
 signal show_attack_range_overlay(center: Vector2i, r: int, inner_r: int)  # red ring on attack button hover; inner_r=-1 means no inner ring
 signal blast_tag_detonation(center: Vector2i, radius: int)               # orange flash visual when a blast tag detonates
 signal hide_attack_range_overlay()
+signal crime_witnessed(victim: Node)  # fired when an is_citizen NPC is first made hostile (i.e. attacked)

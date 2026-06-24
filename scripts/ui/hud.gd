@@ -1285,20 +1285,16 @@ func _on_interaction_triggered(entity: Node, action_id: String) -> void:
 				entity.go_hostile()
 			else:
 				_open_examine_panel(entity)
-		"sneak_attack":
+		"sneak_attack", "sneak_attack_enemy":
 			_close_all()
-			if entity.has_method("go_hostile"):
-				entity.go_hostile(true)
+			var sneak_player: Node = GameManager.player
+			if sneak_player != null and sneak_player.has_method("initiate_sneak_attack"):
+				sneak_player.initiate_sneak_attack(entity)
 		"attack_enemy":
 			_close_all()
 			var player: Node = GameManager.player
 			if player != null and player.has_method("initiate_normal_attack"):
 				player.initiate_normal_attack(entity)
-		"sneak_attack_enemy":
-			_close_all()
-			var sneak_player: Node = GameManager.player
-			if sneak_player != null and sneak_player.has_method("initiate_sneak_attack"):
-				sneak_player.initiate_sneak_attack(entity)
 		"pickpocket":
 			_do_pickpocket(entity)
 		_:

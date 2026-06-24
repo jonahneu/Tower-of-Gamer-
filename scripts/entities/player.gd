@@ -229,7 +229,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			var pw: Dictionary = CombatManager.pending_weapon
 			var eff_range: int = _effective_weapon_range(pw)
-			var sneak_target := entity as Enemy
+			var sneak_target := entity as Humanoid
 			if sneak_target != null and is_instance_valid(sneak_target) and not sneak_target._dead:
 				var e_cell: Vector2i = sneak_target.get("grid_cell")
 				var dx: int = grid_cell.x - e_cell.x
@@ -255,6 +255,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	# ── Sneak attack: left-click enemy while sneaking (outside combat) ───────
+	# Deliberately Enemy-only: a peaceful NPC needs the explicit "Sneak Attack"
+	# context-menu pick (see _show_context_menu_for / NPC.get_interaction_options)
+	# so a stray click while sneaking past town doesn't start a fight.
 	if event.button_index == MOUSE_BUTTON_LEFT \
 			and GameManager.is_sneaking and not GameManager.combat_mode:
 		var sneak_target := entity as Enemy
@@ -466,8 +469,19 @@ func _effective_weapon_range(weapon: Dictionary) -> int:
 	return r * 2 if (r > 1 and GameManager.has_feat("long_ranged")) else r
 
 # Starts combat and queues an auto-attack on the first player turn (non-sneak path).
-func _start_combat_with_auto_attack(target: Enemy) -> void:
+func _start_combat_with_auto_attack(target: Humanoid) -> void:
+	_begin_combat_with(target, false)
+
+# Begins combat against any Humanoid target (NPC or Enemy) and queues an
+# auto-attack on the player's first turn. NPC targets route through
+# go_hostile() so their own ally/pull-in logic applies (see NPC.go_hostile);
+# Enemy targets gather nearby allies by aggro range as before.
+func _begin_combat_with(target: Humanoid, sneak: bool) -> void:
 	_sneak_attack_auto_target = target
+	var npc_target := target as NPC
+	if npc_target != null:
+		npc_target.go_hostile(sneak)
+		return
 	var combatants: Array = [self, target]
 	if _tile_scene != null:
 		for ent in _tile_scene.get_all_entities():
@@ -479,7 +493,7 @@ func _start_combat_with_auto_attack(target: Enemy) -> void:
 			if maxi(abs(other.grid_cell.x - grid_cell.x), abs(other.grid_cell.y - grid_cell.y)) \
 					<= other.aggro_range:
 				combatants.append(other)
-	CombatManager.force_start_combat(combatants, {}, false)
+	CombatManager.force_start_combat(combatants, {}, sneak)
 
 func _on_combat_started(_participants: Array) -> void:
 	move_path.clear()
@@ -534,34 +548,25 @@ func _default_attack_weapon() -> Dictionary:
 		return hand1
 	return DataManager.get_item("unarmed")
 
-func _initiate_sneak_attack(target: Enemy) -> void:
+func _initiate_sneak_attack(target: Humanoid) -> void:
 	if GameManager.combat_mode or not GameManager.is_sneaking:
 		return
-	_sneak_attack_auto_target = target
-	var combatants: Array = [self, target]
-	# Pull in any other nearby enemy that would join
-	if _tile_scene != null:
-		for entity in _tile_scene.get_all_entities():
-			if entity == self or entity == target:
-				continue
-			var other := entity as Enemy
-			if other == null or other._dead or other._in_combat:
-				continue
-			var dx: int = abs(other.grid_cell.x - grid_cell.x)
-			var dy: int = abs(other.grid_cell.y - grid_cell.y)
-			if maxi(dx, dy) <= other.aggro_range:
-				combatants.append(other)
-	CombatManager.force_start_combat(combatants, {}, true)
+	_begin_combat_with(target, true)
 
 # Public wrapper so the right-click context menu can offer a sneak attack.
-func initiate_sneak_attack(target: Enemy) -> void:
+func initiate_sneak_attack(target: Humanoid) -> void:
 	_initiate_sneak_attack(target)
 
 # Deliberately picking a fight via right-click → Attack — same as a sneak
 # attack's combatant pull-in, but no sneak bonus and no requirement to be
 # sneaking (initiative is rolled normally for everyone, player included).
-func initiate_normal_attack(target: Enemy) -> void:
+# NPC targets route through go_hostile() for their own ally pull-in.
+func initiate_normal_attack(target: Humanoid) -> void:
 	if GameManager.combat_mode or target == null or target.get("_dead"):
+		return
+	var npc_target := target as NPC
+	if npc_target != null:
+		npc_target.go_hostile()
 		return
 	var combatants: Array = [self, target]
 	if _tile_scene != null:

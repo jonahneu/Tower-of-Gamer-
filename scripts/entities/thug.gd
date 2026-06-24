@@ -33,6 +33,8 @@ func _ready() -> void:
 	skills["intimidate"] = 8
 	skills["dodge"]      = 3
 	sight_range          = DETECTION_RANGE
+	ally_group           = "thugs"   # the two gate thugs back each other up
+	is_citizen           = false     # mugging the player isn't a crime the watch protects against
 	# Equipment — contributes to armor during combat
 	equipment["hand_1"] = DataManager.get_item("shortsword")
 	equipment["torso"]  = DataManager.get_item("leather_vest")

@@ -37,6 +37,16 @@ var _pickpocket_caught: bool = false  # set true when player is caught; removes 
 
 # ── Hostile / combat state ─────────────────────────────────────────────────────
 var is_hostile: bool = false
+# Non-empty ally-group tag — when one member goes hostile, every other living
+# NPC sharing the tag in the same zone goes hostile too (e.g. the two gate
+# thugs backing each other up). Subclasses set this before/in _ready().
+# Unrelated to GameManager.add_faction_contact, which tracks dialogue/quest
+# reputation rather than combat allies.
+var ally_group: String = ""
+# True for ordinary townsfolk the city watch protects. Subclasses engaged in
+# crime against the player (e.g. Thug) set this false so attacking them
+# doesn't summon the guards.
+var is_citizen: bool = true
 var drops_loot: bool = false
 var _dead: bool = false
 var _in_combat: bool = false
@@ -112,8 +122,12 @@ func _process(_delta: float) -> void:
 func go_hostile(sneak_attack: bool = false) -> void:
 	if _dead:
 		return
+	var was_hostile: bool = is_hostile
 	is_hostile = true
 	is_interactable = false
+	if is_citizen and not was_hostile:
+		EventBus.crime_witnessed.emit(self)
+	_alert_allies()
 	if CombatManager.active:
 		CombatManager.add_participant(self)
 		return
@@ -127,6 +141,19 @@ func go_hostile(sneak_attack: bool = false) -> void:
 			if other_npc != null and other_npc.is_hostile and not other_npc._dead:
 				combatants.append(other_npc)
 	CombatManager.force_start_combat(combatants, {}, sneak_attack)
+
+# Makes every living NPC in the zone that shares this NPC's non-empty
+# ally_group tag hostile too. Only reaches allies that aren't hostile yet, so
+# this can't bounce back and forth between two allies forever.
+func _alert_allies() -> void:
+	if ally_group == "" or _tile_scene == null:
+		return
+	for entity in _tile_scene.get_all_entities():
+		if entity == self:
+			continue
+		var ally := entity as NPC
+		if ally != null and ally.ally_group == ally_group and not ally.is_hostile and not ally._dead:
+			ally.go_hostile()
 
 # ── Combat signal handlers ─────────────────────────────────────────────────────
 

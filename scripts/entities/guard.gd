@@ -1,9 +1,8 @@
 extends NPC
 class_name Guard
 
-# City guard — spear-armed, posted at the market gate and patrolling the
-# desert road out to the docks. Placeholder dialogue until the gate-guard
-# questline/dialogue is written.
+# City guard — spear-armed, posted around town (desert road, market district).
+# Placeholder dialogue until the gate-guard questline/dialogue is written.
 
 # When patrol_max_x > patrol_min_x, the guard paces back and forth along
 # row `grid_cell.y` between those two columns. Left at -1/-1 (default), the
@@ -39,6 +38,18 @@ func _ready() -> void:
 	]
 	if patrol_max_x > patrol_min_x:
 		_patrol_loop()
+	EventBus.crime_witnessed.connect(_on_crime_witnessed)
+
+# A citizen was just attacked somewhere in the city — if it happened in this
+# guard's own zone, wade in against the player. Citizen NPCs default to
+# is_citizen = true; thugs (mugging is their crime, not a crime against them)
+# opt out, so attacking one doesn't summon the watch.
+func _on_crime_witnessed(victim: Node) -> void:
+	if is_hostile or _dead or victim == self:
+		return
+	if victim.get("_tile_scene") != _tile_scene:
+		return
+	go_hostile()
 
 # Fire-and-forget loop started once from _ready; bails out for good once the
 # guard is freed/dead, just skips a beat for combat.

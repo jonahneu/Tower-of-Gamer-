@@ -694,6 +694,28 @@ func cancel_blast_tag_deploy() -> void:
 # no matter which entry point triggered it (walking off an edge, ladders,
 # tunnels, ...) — main.gd's _on_zone_exit is the single funnel all of those
 # go through, so that's where this belongs.
+# Silently clears every combat/tactical flag before a save load swaps in a
+# whole new scene tree. Loading a save mid-combat must not emit combat_ended
+# (that would run entity death/loot side effects on combatants from the zone
+# being discarded) — it just needs the stale active/combat_mode state gone so
+# the freshly loaded zone isn't born "stuck in combat" with no real
+# participants, which otherwise silently swallows input exactly like
+# reset_pending_actions()'s zone-transition case above.
+func reset_for_load() -> void:
+	active = false
+	tactical_mode = false
+	GameManager.tactical_mode = false
+	GameManager.combat_mode = false
+	participants.clear()
+	turn_state.clear()
+	turn_index = 0
+	round = 0
+	player_last_known_cell = Vector2i(-1, -1)
+	player_last_known_light = LightLevels.FULL
+	group_has_sight = false
+	_disengage_round_counter = 0
+	reset_pending_actions()
+
 func reset_pending_actions() -> void:
 	pending_weapon = {}
 	sneak_attack_pending = false

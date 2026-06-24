@@ -1178,6 +1178,10 @@ func load_from_slot(slot: int) -> void:
 	file.close()
 	if parsed == null:
 		return
+	# Loading mid-combat would otherwise leave combat_mode/active stuck true
+	# after the scene reload, pointing at participants from the zone that's
+	# about to be discarded — that silently swallows all input in the new zone.
+	CombatManager.reset_for_load()
 	player_data = parsed.get("player_data", {})
 	world_layer = parsed.get("layer", 0)
 	var cell    = parsed.get("grid_cell", [40, 40])

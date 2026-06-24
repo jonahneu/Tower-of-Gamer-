@@ -310,23 +310,30 @@ const CHANNEL_DEPTH: float = 5.0
 const COL_CHANNEL_FACE_SW: Color = Color(0.10, 0.11, 0.15)
 const COL_CHANNEL_FACE_SE: Color = Color(0.07, 0.08, 0.11)
 
-# Draws only the outward-facing edges of tiles within Euclidean distance r.
-# Each of the 4 tile edges is drawn only when the grid-neighbour on the other
-# side of that edge is outside the circle — giving a clean circular outline.
+# Returns the absolute-screen-space edges outlining a Euclidean (circular)
+# range ring of radius r grid cells around origin — only the outward-facing
+# edge of each boundary tile, so the outline reads as a clean circle rather
+# than a diamond. Each segment also carries the grid cell it belongs to, so
+# callers can run their own per-segment checks (e.g. line-of-sight) against
+# the actual boundary tile instead of re-deriving it from screen coordinates.
+# Static (and origin-relative-only) so any node can use this for an "around
+# me" ring, not just TileScene's own player-centered overlays — see
+# Enemy._draw_aggro_ring() and NPC._draw()'s sneak sight-range ring.
 #
 # Edge → neighbour mapping (derived from the isometric vertex identities):
 #   T→R  (NE face)  ↔  neighbour (dx, dy-1)
 #   R→B  (SE face)  ↔  neighbour (dx+1, dy)
 #   B→L  (SW face)  ↔  neighbour (dx, dy+1)
 #   L→T  (NW face)  ↔  neighbour (dx-1, dy)
-func _draw_euclidean_ring(origin: Vector2i, r: int, color: Color, width: float) -> void:
+static func euclidean_ring_segments(origin: Vector2i, r: int) -> Array:
+	var segments: Array = []
 	var r2: int = r * r
 	for dx in range(-r, r + 1):
 		for dy in range(-r, r + 1):
 			if dx * dx + dy * dy > r2:
 				continue
 			var cell := Vector2i(origin.x + dx, origin.y + dy)
-			if not is_in_bounds(cell):
+			if cell.x < 0 or cell.x >= GRID_COLS or cell.y < 0 or cell.y >= GRID_ROWS:
 				continue
 			var c := grid_to_screen(cell)
 			var hw: float = TILE_W / 2.0
@@ -336,13 +343,18 @@ func _draw_euclidean_ring(origin: Vector2i, r: int, color: Color, width: float) 
 			var B := c + Vector2(0,    hh)
 			var L := c + Vector2(-hw,   0)
 			if dx * dx + (dy - 1) * (dy - 1) > r2:
-				draw_line(T, R, color, width)
+				segments.append({"a": T, "b": R, "cell": cell})
 			if (dx + 1) * (dx + 1) + dy * dy > r2:
-				draw_line(R, B, color, width)
+				segments.append({"a": R, "b": B, "cell": cell})
 			if dx * dx + (dy + 1) * (dy + 1) > r2:
-				draw_line(B, L, color, width)
+				segments.append({"a": B, "b": L, "cell": cell})
 			if (dx - 1) * (dx - 1) + dy * dy > r2:
-				draw_line(L, T, color, width)
+				segments.append({"a": L, "b": T, "cell": cell})
+	return segments
+
+func _draw_euclidean_ring(origin: Vector2i, r: int, color: Color, width: float) -> void:
+	for seg in euclidean_ring_segments(origin, r):
+		draw_line(seg["a"], seg["b"], color, width)
 
 func _iso_diamond(cell: Vector2i) -> PackedVector2Array:
 	var c := grid_to_screen(cell)

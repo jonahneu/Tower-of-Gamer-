@@ -658,32 +658,16 @@ func _draw_aggro_ring() -> void:
 		_draw_health_bar(-bar_w / 2.0, top_y - 24.0, bar_w)
 	if not GameManager.is_sneaking:
 		return
-	var r: int = aggro_range
-	var rx: float = r * TileScene.TILE_W
-	var ry: float = r * TileScene.TILE_H
-	var corners: Array = [Vector2(0.0, -ry), Vector2(rx, 0.0), Vector2(0.0, ry), Vector2(-rx, 0.0)]
-	if _tile_scene == null:
-		var pts := PackedVector2Array(corners)
-		draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.85, 0.10, 0.10, 0.55), 1.5)
-		return
-	const STEPS: int = 24
-	var samples: Array = []
-	for edge_i in range(4):
-		var a: Vector2 = corners[edge_i]
-		var b: Vector2 = corners[(edge_i + 1) % 4]
-		for s in range(STEPS):
-			var t: float = float(s) / float(STEPS)
-			var offset: Vector2 = a.lerp(b, t)
-			var target_cell: Vector2i = TileScene.screen_to_grid(_visual_pos + offset)
-			samples.append({"off": offset, "los": _tile_scene.has_line_of_sight(grid_cell, target_cell)})
-	samples.append(samples[0])
-	for i in range(samples.size() - 1):
-		var pa: Dictionary = samples[i]
-		var pb: Dictionary = samples[i + 1]
-		if pa["los"] and pb["los"]:
-			draw_line(pa["off"], pb["off"], Color(0.85, 0.10, 0.10, 0.55), 1.5)
+	# Circular outline matching aggro_range's actual Euclidean check (and the
+	# combat ranged-attack indicator's style) rather than a Chebyshev diamond.
+	for seg in TileScene.euclidean_ring_segments(grid_cell, aggro_range):
+		var a: Vector2 = seg["a"] - _visual_pos
+		var b: Vector2 = seg["b"] - _visual_pos
+		var has_los: bool = _tile_scene == null or _tile_scene.has_line_of_sight(grid_cell, seg["cell"])
+		if has_los:
+			draw_line(a, b, Color(0.85, 0.10, 0.10, 0.55), 1.5)
 		else:
-			draw_line(pa["off"], pb["off"], Color(0.55, 0.55, 0.55, 0.18), 1.0)
+			draw_line(a, b, Color(0.55, 0.55, 0.55, 0.18), 1.0)
 
 # Returns base_color tinted orange in proportion to Heated stack count — used
 # by subclasses with a custom _draw() so the tint applies to their sprite too.

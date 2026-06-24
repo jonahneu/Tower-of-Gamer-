@@ -392,12 +392,8 @@ func _draw() -> void:
 		draw_rect(rect, Color(1.0, 0.85, 0.0), false, 2.0)
 		_draw_name_label(rect.position.y - 4)
 		_draw_health_bar(-float(SPRITE_W) / 2.0, rect.position.y - 22.0, float(SPRITE_W))
-	# Show sight range ring when player is sneaking
+	# Show sight range ring when player is sneaking — circular outline matching
+	# the combat ranged-attack indicator's style rather than a diamond.
 	if GameManager.is_sneaking:
-		var r: int = sight_range
-		var rx: float = r * TileScene.TILE_W
-		var ry: float = r * TileScene.TILE_H
-		var pts: PackedVector2Array = PackedVector2Array([
-			Vector2(0, -ry), Vector2(rx, 0), Vector2(0, ry), Vector2(-rx, 0),
-		])
-		draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.85, 0.80, 0.10, 0.45), 1.5)
+		for seg in TileScene.euclidean_ring_segments(grid_cell, sight_range):
+			draw_line(seg["a"] - _visual_pos, seg["b"] - _visual_pos, Color(0.85, 0.80, 0.10, 0.45), 1.5)

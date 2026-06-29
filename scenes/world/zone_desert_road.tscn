@@ -56,13 +56,6 @@ script = ExtResource("4")
 grid_cell = Vector2i(70, 25)
 rock_size = "small"
 
-[node name="GateGuardNorth" type="Node2D" parent="."]
-script = ExtResource("5")
-grid_cell = Vector2i(76, 33)
-
-[node name="GateGuardSouth" type="Node2D" parent="."]
-script = ExtResource("5")
-grid_cell = Vector2i(76, 46)
 
 [node name="PatrolGuard" type="Node2D" parent="."]
 script = ExtResource("5")

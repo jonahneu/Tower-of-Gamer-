@@ -2363,7 +2363,7 @@ func _on_inv_slot_pressed(stack_idx: int) -> void:
 			if eq.get("trophy_type", "") == tt and eq.get("beast_source", "") == bs:
 				return  # already wearing the same trophy from the same animal
 
-	# Determine target slot key
+	# Determine target slot key (prefer empty; fall back to first slot for replacement)
 	var target_slot: String = ""
 	if slot_type == "hand":
 		if equip.get("hand_1") == null:
@@ -2371,23 +2371,22 @@ func _on_inv_slot_pressed(stack_idx: int) -> void:
 		elif equip.get("hand_2") == null:
 			target_slot = "hand_2"
 		else:
-			return  # both hand slots full
+			target_slot = "hand_1"
 	elif slot_type == "ring":
 		for rk in ["ring_right_1", "ring_right_2", "ring_left_1", "ring_left_2"]:
 			if equip.get(rk) == null:
 				target_slot = rk
 				break
 		if target_slot == "":
-			return  # all ring slots full
+			target_slot = "ring_right_1"
 	elif slot_type == "upper_arm":
 		if equip.get("right_upper_arm") == null:
 			target_slot = "right_upper_arm"
 		elif equip.get("left_upper_arm") == null:
 			target_slot = "left_upper_arm"
 		else:
-			return  # both upper arm slots full
+			target_slot = "right_upper_arm"
 	elif slot_type == "talisman":
-		# Talismans can go in any slot except hands, feet, and back
 		var talisman_slots: Array = [
 			"necklace", "right_upper_arm", "left_upper_arm",
 			"right_forearm", "left_forearm",
@@ -2399,10 +2398,8 @@ func _on_inv_slot_pressed(stack_idx: int) -> void:
 				target_slot = ts
 				break
 		if target_slot == "":
-			return  # no available slot
-	elif equip.has(slot_type):
-		if equip.get(slot_type) != null:
-			return  # slot occupied
+			target_slot = talisman_slots[0]
+	elif slot_type in ["head", "torso", "legs", "feet", "back", "right_forearm", "left_forearm", "necklace"]:
 		target_slot = slot_type
 	else:
 		return  # unknown slot
@@ -2416,6 +2413,9 @@ func _on_inv_slot_pressed(stack_idx: int) -> void:
 		if not CombatManager.spend_ap(4):
 			return
 
+	var displaced = equip.get(target_slot)
+	if displaced != null:
+		inv.append(displaced)
 	equip[target_slot] = item
 	inv.remove_at(idx)
 	GameManager.player_data["equipment"] = equip
@@ -6299,6 +6299,7 @@ func _refresh_feats() -> void:
 	if _cs_feat_picker_box != null:
 		_cs_feat_picker_box.visible = unspent_feat > 0
 		for child in _cs_feat_picker_box.get_children():
+			_cs_feat_picker_box.remove_child(child)
 			child.queue_free()
 		if unspent_feat > 0:
 			var pick_hdr := Label.new()
@@ -6359,6 +6360,7 @@ func _refresh_feats() -> void:
 
 	# ── Owned feats list ──────────────────────────────────────────────────────
 	for child in _cs_feats_box.get_children():
+		_cs_feats_box.remove_child(child)
 		child.queue_free()
 	var feats: Array = GameManager.player_data.get("feats", [])
 	if feats.is_empty():

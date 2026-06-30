@@ -17,6 +17,18 @@ const SHOP_ITEMS: Array = [
 	{"id": "bronze_spirit_armband",  "price": 12},
 ]
 
+const BUY_LIST: Array = [
+	{"id": "shortsword",             "price": 3, "remaining": 99},
+	{"id": "sword",                  "price": 6, "remaining": 99},
+	{"id": "axe",                    "price": 5, "remaining": 99},
+	{"id": "bronze_spear",           "price": 4, "remaining": 99},
+	{"id": "bronze_scale_hauberk",   "price": 5, "remaining": 99},
+	{"id": "bronze_helm",            "price": 3, "remaining": 99},
+	{"id": "bronze_greaves",         "price": 2, "remaining": 99},
+	{"id": "bronze_shield",          "price": 4, "remaining": 99},
+	{"id": "bronze_spirit_armband",  "price": 3, "remaining": 99},
+]
+
 func _ready() -> void:
 	grid_cell             = Vector2i(10, 8)
 	interaction_reach     = 2
@@ -53,7 +65,7 @@ func _update_dialogue() -> void:
 
 	var open_shop := func():
 		EventBus.dialogue_closed.connect(
-			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, [], Callable()), CONNECT_ONE_SHOT)
+			func(_e): EventBus.open_shop_ui.emit(self, SHOP_ITEMS, BUY_LIST.duplicate(true), Callable()), CONNECT_ONE_SHOT)
 
 	dialogue_text = "The man behind the forge barely glances up. His forearms are thick with old burns."
 

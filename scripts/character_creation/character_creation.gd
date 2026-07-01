@@ -1022,7 +1022,7 @@ func _on_begin() -> void:
 		"unspent_stat_points":    0,
 		"feats":                  [{"id": _feats[selected_feat]["id"], "name": selected_feat, "description": _feats[selected_feat]["effect"]}] if selected_feat != "" else [],
 	}
-	GameManager.player_data["_saved_grid_cell"] = [18, 6]
+	GameManager.player_data["_saved_grid_cell"] = [20, 6]
 
 	# Reset world/run state so a new game always starts fresh in The Ditch,
 	# regardless of where a previous playthrough ended.

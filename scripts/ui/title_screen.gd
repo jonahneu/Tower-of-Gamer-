@@ -28,8 +28,9 @@ func _ready() -> void:
 	_spacer(center, 30)
 
 	_btn(center, "NEW GAME",  _on_new_game)
-	_btn(center, "CONTINUE",  _on_continue, not GameManager.has_any_save())
-	_btn(center, "OPTIONS",   _on_options,  true)   # greyed — not yet built
+	_btn(center, "CONTINUE",  _on_continue,  not GameManager.has_any_save())
+	_btn(center, "LOAD GAME", _on_load_game, not GameManager.has_any_save())
+	_btn(center, "OPTIONS",   _on_options,   true)   # greyed — not yet built
 	_btn(center, "QUIT",      _on_quit)
 
 func _btn(parent: Control, label: String, cb: Callable, disabled: bool = false) -> void:
@@ -254,6 +255,13 @@ func _confirm_delete(slot: int, on_confirm: Callable) -> void:
 	btns.add_child(confirm_btn)
 
 	add_child(overlay)
+
+func _on_load_game() -> void:
+	if _load_overlay == null or not is_instance_valid(_load_overlay):
+		_load_overlay = _build_load_overlay()
+		add_child(_load_overlay)
+	else:
+		_load_overlay.visible = true
 
 func _on_options() -> void:
 	pass

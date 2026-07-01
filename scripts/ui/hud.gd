@@ -7072,7 +7072,7 @@ func _best_mod(skill: String, stats: Dictionary) -> int:
 		"intimidate":                   return max(s.call("strength"), s.call("willpower"))
 		"dodge":                         return s.call("dexterity")
 		"sneak","sleight_of_hand":        return s.call("dexterity")
-		"alchemy":                      return s.call("intelligence")
+		"alchemy","cooking":            return s.call("intelligence")
 		"occultism":                    return max(s.call("intelligence"), s.call("willpower"))
 		"smithing":                     return max(s.call("intelligence"), s.call("strength"))
 		"survival":                     return max(s.call("constitution"), s.call("willpower"), s.call("perception"))

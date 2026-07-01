@@ -27,6 +27,7 @@ var _object_primary_action: String = ""
 var _context_menu: Control = null
 var _save_panel: Control
 var _load_panel: Control
+var _overlay_open: bool = false   # true while pause/save/load panel is visible
 var _shop_panel: Control = null
 var _shop_merchant: Node = null
 var _shop_items: Array = []          # [{id, price}] the merchant sells to the player
@@ -497,6 +498,16 @@ func _toggle(name: String) -> void:
 			if _journal_notes_dot != null:
 				_journal_notes_dot.visible = false
 
+func _notify_overlay_state() -> void:
+	var open: bool = _pause_panel.visible or _save_panel.visible or _load_panel.visible
+	if open == _overlay_open:
+		return
+	_overlay_open = open
+	if open:
+		EventBus.overlay_panel_opened.emit()
+	else:
+		EventBus.overlay_panel_closed.emit()
+
 func _close_all() -> void:
 	var dialogue_was_open: bool = _dialogue_panel.visible
 	var crafting_was_open: bool = (_open == "crafting")
@@ -526,6 +537,7 @@ func _close_all() -> void:
 	_pickpocket_entity = null
 	_open = ""
 	mouse_filter = Control.MOUSE_FILTER_STOP if _pause_panel.visible else Control.MOUSE_FILTER_IGNORE
+	_notify_overlay_state()
 	# Emit deferred so listeners run after _close_all() fully completes
 	if dialogue_was_open:
 		call_deferred("_emit_dialogue_closed", _dialogue_entity)
@@ -545,21 +557,31 @@ func _on_escape() -> void:
 	if _pause_panel.visible:
 		_close_pause()
 		return
+	# Load/save panel open: close it and go back to normal (not back to pause menu).
+	if _load_panel.visible or _save_panel.visible:
+		_load_panel.visible = false
+		_save_panel.visible = false
+		mouse_filter = Control.MOUSE_FILTER_STOP if _open != "" else Control.MOUSE_FILTER_IGNORE
+		_notify_overlay_state()
+		return
 	if _open != "" or _dialogue_panel.visible or _object_panel.visible \
 			or (_pickpocket_panel != null and _pickpocket_panel.visible):
 		_close_all()
 	else:
 		_pause_panel.visible = true
 		mouse_filter = Control.MOUSE_FILTER_STOP
+		_notify_overlay_state()
 
 # Closes only the pause overlay, leaving whatever's open underneath (inventory,
 # stats, the combat hotbar, etc.) untouched.
 func _close_pause() -> void:
 	_pause_panel.visible = false
 	var anything_else_open: bool = _open != "" or _dialogue_panel.visible or _object_panel.visible \
-			or (_pickpocket_panel != null and _pickpocket_panel.visible)
+			or (_pickpocket_panel != null and _pickpocket_panel.visible) \
+			or _load_panel.visible or _save_panel.visible
 	if not anything_else_open:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_notify_overlay_state()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAUSE MENU
@@ -802,12 +824,14 @@ func _open_save_panel() -> void:
 	_refresh_save_panel()
 	_save_panel.visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_notify_overlay_state()
 
 func _open_load_panel() -> void:
 	_pause_panel.visible = false
 	_refresh_load_panel()
 	_load_panel.visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_notify_overlay_state()
 
 func _toggle_sneak() -> void:
 	GameManager.toggle_sneak()

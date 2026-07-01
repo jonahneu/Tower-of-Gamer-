@@ -1182,6 +1182,12 @@ func load_from_slot(slot: int) -> void:
 	# after the scene reload, pointing at participants from the zone that's
 	# about to be discarded — that silently swallows all input in the new zone.
 	CombatManager.reset_for_load()
+	# Smoke zones are runtime state on GameManager (not serialized) — clear them
+	# so phantom smoke from the abandoned session doesn't bleed into the new scene.
+	smoke_zones.clear()
+	# Sneak flag lives on GameManager (not in player_data) — reset it so the new
+	# scene always starts with the player visible.
+	is_sneaking = false
 	player_data = parsed.get("player_data", {})
 	world_layer = parsed.get("layer", 0)
 	var cell    = parsed.get("grid_cell", [40, 40])

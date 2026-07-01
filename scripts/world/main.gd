@@ -27,11 +27,17 @@ func _ready() -> void:
 		var old_player = default_zone.get_node_or_null("Player")
 		if old_player != null and "grid_cell" in old_player:
 			GameManager.player_data["_saved_grid_cell"] = [old_player.grid_cell.x, old_player.grid_cell.y]
-			# HP and spirit were consumed by old player's _ready() — rescue them back
+			# HP, spirit, status effects, and OC timer were consumed by old player's
+			# _ready() — rescue them back so the correct zone's player gets them.
 			if old_player.get("current_hp") != null:
 				GameManager.player_data["_saved_hp"] = old_player.current_hp
 			if old_player.get("current_spirit") != null:
 				GameManager.player_data["_saved_spirit"] = old_player.current_spirit
+			if old_player.get("status_effects") != null:
+				GameManager.player_data["_saved_status_effects"] = old_player.status_effects.duplicate(true)
+			var oc = old_player.get("_oc_status_timer")
+			if oc != null:
+				GameManager.player_data["_saved_oc_timer"] = oc
 		# Wrong zone — free the default and instantiate the correct one.
 		default_zone.visible      = false
 		default_zone.process_mode = Node.PROCESS_MODE_DISABLED

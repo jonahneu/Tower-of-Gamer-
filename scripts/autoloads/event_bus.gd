@@ -68,3 +68,5 @@ signal show_attack_range_overlay(center: Vector2i, r: int, inner_r: int)  # red 
 signal blast_tag_detonation(center: Vector2i, radius: int)               # orange flash visual when a blast tag detonates
 signal hide_attack_range_overlay()
 signal crime_witnessed(victim: Node)  # fired when an is_citizen NPC is first made hostile (i.e. attacked)
+signal overlay_panel_opened   # pause/save/load panel became visible — combat HUD panels yield input
+signal overlay_panel_closed   # all of the above hidden — combat HUD panels resume input

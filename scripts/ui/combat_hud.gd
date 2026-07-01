@@ -87,6 +87,8 @@ func _ready() -> void:
 	EventBus.combat_log.connect(_on_combat_log)
 	EventBus.dialogue_opened.connect(func(_e): _hotbar_panel.visible = false)
 	EventBus.dialogue_closed.connect(func(_e): _hotbar_panel.visible = true)
+	EventBus.overlay_panel_opened.connect(_on_overlay_opened)
+	EventBus.overlay_panel_closed.connect(_on_overlay_closed)
 	EventBus.inventory_changed.connect(_rebuild_hotbar)
 	# The examine/object panel occupies the same bottom band as the combat
 	# info panel (AP/MP bars + End Turn); hide it so its "Leave" button and
@@ -1089,6 +1091,16 @@ func _on_combat_log(entry: String) -> void:
 # ══════════════════════════════════════════════════════════════════════════════
 # SIGNAL HANDLERS
 # ══════════════════════════════════════════════════════════════════════════════
+
+func _on_overlay_opened() -> void:
+	for panel in [_hotbar_panel, _turn_order_bar, _log_panel, _combat_info_panel]:
+		if panel != null:
+			panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+func _on_overlay_closed() -> void:
+	for panel in [_hotbar_panel, _turn_order_bar, _log_panel, _combat_info_panel]:
+		if panel != null:
+			panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _on_combat_started(participants: Array) -> void:
 	_rebuild_turn_order(participants)

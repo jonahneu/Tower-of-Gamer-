@@ -111,6 +111,13 @@ func _ready() -> void:
 	EventBus.turn_started.connect(_on_turn_started)
 	EventBus.inventory_changed.connect(_sync_torch_from_equipment)
 	_tile_scene = get_parent() as TileScene
+	# If the entry position is inside a wall (can happen when the player's exit
+	# column doesn't align with this zone's walkable edge), BFS to the nearest
+	# open cell so pathfinding doesn't silently dead-end and lock movement.
+	if _tile_scene != null and not _tile_scene.is_walkable(grid_cell):
+		var snapped := _nearest_walkable_cell(grid_cell)
+		if snapped != Vector2i(-1, -1):
+			grid_cell = snapped
 	_visual_pos = TileScene.grid_to_screen(grid_cell)
 	_target_pos = _visual_pos
 	position = _visual_pos
@@ -644,6 +651,20 @@ func _is_in_reach_of(entity: Node) -> bool:
 	var reach: int = entity.get("interaction_reach") if entity.get("interaction_reach") != null else 1
 	var d = grid_cell - cell
 	return abs(d.x) + abs(d.y) <= reach
+
+func _nearest_walkable_cell(from: Vector2i) -> Vector2i:
+	var visited: Dictionary = {from: true}
+	var queue: Array[Vector2i] = [from]
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_front()
+		if _tile_scene.is_walkable(cell):
+			return cell
+		for d: Vector2i in [Vector2i(0,1), Vector2i(0,-1), Vector2i(1,0), Vector2i(-1,0)]:
+			var nb: Vector2i = cell + d
+			if _tile_scene.is_in_bounds(nb) and not visited.has(nb):
+				visited[nb] = true
+				queue.append(nb)
+	return Vector2i(-1, -1)
 
 func _find_approach_cell(entity: Node) -> Vector2i:
 	var cell: Vector2i = entity.get("grid_cell")

@@ -106,22 +106,38 @@ func _normal_turn(player_typed: Player) -> void:
 	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 
+	if manhattan <= 1:
+		_unreachable_turns = 0
 	if manhattan > 1 and _tile_scene != null:
-		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
 		var adj: Vector2i = _find_adjacent_to(p_cell)
-		if adj != Vector2i(-1, -1) and move_budget > 0:
-			var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene)
+		var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene) if adj != Vector2i(-1, -1) else []
+		if path.is_empty():
+			_unreachable_turns += 1
+			CombatManager.mark_unreachable(self)
+			if _unreachable_turns >= UNREACHABLE_GIVE_UP_TURNS:
+				_gave_up_chase = true
+				GameLogger.warn("MOVE", "%s has had no path to %s for %d turns (zone %s) — giving up the chase" % [
+					entity_name, str(p_cell), _unreachable_turns, str(GameManager.world_pos)])
+		else:
+			_unreachable_turns = 0
+		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
+		if move_budget > 0 and not path.is_empty():
 			var steps: int = mini(move_budget, path.size())
 			for i in range(steps):
 				if not is_instance_valid(self) or not _in_combat:
 					return
 				var next_cell: Vector2i = path[i]
+				if not _tile_scene.is_walkable(next_cell):
+					GameLogger.error("MOVE", "%s combat-move step blocked at %s (zone %s) — path went stale mid-turn" % [
+						entity_name, str(next_cell), str(GameManager.world_pos)])
+					break
 				var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 				var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 				_tile_scene.unregister_entity(grid_cell)
 				CombatManager.record_move(self, grid_cell, next_cell)
 				grid_cell = next_cell
 				_tile_scene.register_entity(grid_cell, self)
+				_tile_scene.update_entity_visibility()
 				CombatManager.spend_move()
 				var tween := create_tween()
 				tween.tween_property(self, "_visual_pos", target_screen, duration)

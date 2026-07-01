@@ -99,7 +99,7 @@ func _update_dialogue() -> void:
 # ── Recipe teaching ───────────────────────────────────────────────────────────
 func _build_recipe_options(pd: Dictionary, reopen: Callable, order: Array, prices: Dictionary) -> Array:
 	var known: Array = pd.get("known_cooking_recipes", [])
-	var your_cooking: int = int(pd.get("skills", {}).get("cooking", 0))
+	var your_cooking: int = _eff_cooking(pd)
 	var options: Array = []
 
 	for recipe_id in order:
@@ -139,6 +139,11 @@ func _build_recipe_options(pd: Dictionary, reopen: Callable, order: Array, price
 
 	options.append({"label": "Maybe another time.", "closes": true, "action": reopen})
 	return options
+
+func _eff_cooking(pd: Dictionary) -> int:
+	var invested: int = int(pd.get("skills", {}).get("cooking", 0))
+	var int_stat: int = pd.get("stats", {}).get("intelligence", 5)
+	return int(invested * (1.0 + float(int_stat - 5) * 0.1))
 
 func _spend_coins(amount: int) -> void:
 	var inv: Array = GameManager.player_data.get("inventory", [])

@@ -64,6 +64,11 @@ func _ready() -> void:
 	if saved != null:
 		grid_cell = Vector2i(int(saved[0]), int(saved[1]))
 		GameManager.player_data.erase("_saved_grid_cell")
+		GameLogger.info("SAVE", "Player._ready() applied _saved_grid_cell -> %s (zone %s)" % [
+			str(grid_cell), str(GameManager.world_pos)])
+	else:
+		GameLogger.warn("SAVE", "Player._ready() found no _saved_grid_cell — using scene default %s (zone %s)" % [
+			str(grid_cell), str(GameManager.world_pos)])
 	# Sync stats from player_data into entity fields so combat, AP/MP, and
 	# initiative all use the correct values from character creation.
 	level = GameManager.player_data.get("level", 1)
@@ -82,6 +87,9 @@ func _ready() -> void:
 	if saved_hp != null:
 		current_hp = float(saved_hp)
 		GameManager.player_data.erase("_saved_hp")
+		GameLogger.info("SAVE", "Player._ready() applied _saved_hp -> %.1f (max %.1f)" % [current_hp, max_hp])
+	else:
+		GameLogger.warn("SAVE", "Player._ready() found no _saved_hp — init_hp() left current_hp at %.1f (max %.1f)" % [current_hp, max_hp])
 	var saved_sp = GameManager.player_data.get("_saved_spirit", null)
 	if saved_sp != null:
 		current_spirit = int(saved_sp)
@@ -694,6 +702,9 @@ func _find_approach_cell(entity: Node) -> Vector2i:
 func _unstuck_check() -> void:
 	if not is_instance_valid(_tile_scene) or _tile_scene.is_walkable(grid_cell):
 		return
+	var _from_cell := grid_cell
+	GameLogger.warn("MOVE", "Player unstuck-check triggered at %s (zone %s) — cell not walkable, searching for open region" % [
+		str(_from_cell), str(GameManager.world_pos)])
 	# Search the whole grid, not just a small neighborhood — large structures
 	# (e.g. the city-wall perimeter, stacked boulder-mass clusters) can place
 	# the nearest walkable cell more than a few tiles away from a bad spawn.
@@ -714,6 +725,8 @@ func _unstuck_check() -> void:
 					_visual_pos = TileScene.grid_to_screen(c)
 					_target_pos = _visual_pos
 					position = _visual_pos
+					GameLogger.warn("MOVE", "Player unstuck-check relocated %s -> %s (zone %s)" % [
+						str(_from_cell), str(c), str(GameManager.world_pos)])
 					return
 
 # Bounded BFS flood-fill: counts walkable cells reachable from `start`, stopping

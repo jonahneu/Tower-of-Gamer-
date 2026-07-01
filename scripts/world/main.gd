@@ -21,12 +21,16 @@ func _ready() -> void:
 	var tile_data    = GameManager.get_tile_data(GameManager.world_layer, GameManager.world_pos)
 	var expected_scene: String = tile_data.get("scene", "")
 	var wrong_zone: bool = expected_scene != "" and default_zone != null and default_zone.scene_file_path != expected_scene
+	GameLogger.info("SAVE", "main.gd _ready() — expected_scene %s, default_zone path %s, wrong_zone %s" % [
+		expected_scene, str(default_zone.scene_file_path) if default_zone != null else "<null>", str(wrong_zone)])
 	if wrong_zone:
 		# Player._ready() (child) already ran and erased _saved_grid_cell — rescue it
 		# from the old Player's grid_cell before freeing the zone.
 		var old_player = default_zone.get_node_or_null("Player")
 		if old_player != null and "grid_cell" in old_player:
 			GameManager.player_data["_saved_grid_cell"] = [old_player.grid_cell.x, old_player.grid_cell.y]
+			GameLogger.info("SAVE", "main.gd rescued grid_cell %s, hp %s from transient default-zone player" % [
+				str(old_player.grid_cell), str(old_player.get("current_hp"))])
 			# HP, spirit, status effects, and OC timer were consumed by old player's
 			# _ready() — rescue them back so the correct zone's player gets them.
 			if old_player.get("current_hp") != null:

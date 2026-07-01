@@ -81,6 +81,7 @@ func _ready() -> void:
 					"west":  Vector2i(8, 12),
 					"east":  Vector2i(10, 12),
 					"north": Vector2i(9, 11),
+					"south": Vector2i(9, 13),
 				},
 			},
 			Vector2i(8, 12): {
@@ -329,6 +330,7 @@ func _ready() -> void:
 				"exits":                    {
 					"south": Vector2i(9, 14),
 					"west":  Vector2i(8, 13),
+					"north": Vector2i(9, 12),
 				},
 			},
 			Vector2i(7, 15): {
@@ -832,6 +834,10 @@ func spend_stat_point(stat: String) -> bool:
 # Lock in all spent allocation points, apply deferred HP gain, and clear the refund snapshot.
 func confirm_levelup_allocation() -> void:
 	if player_data.has("levelup_snapshot"):
+		if player_data.get("unspent_skill_points", 0) > 0 \
+				or player_data.get("unspent_stat_points", 0) > 0 \
+				or player_data.get("unspent_feat_points", 0) > 0:
+			return  # can't confirm until every point is spent
 		# Apply HP gain using the final stats after all allocation choices.
 		# If CON was spent during allocation, that already bumped max_hp retroactively
 		# for the new level, so hp_gain here may be 0 or close to it.
@@ -1137,6 +1143,8 @@ func _write_save(slot: int, slot_name: String) -> void:
 	var file = FileAccess.open(get_save_path(slot), FileAccess.WRITE)
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
+	GameLogger.info("SAVE", "Wrote slot %d (%s) — grid_cell %s, world_pos %s, hp %s" % [
+		slot, slot_name, str(grid_cell), str(world_pos), str(player_data.get("_saved_hp", "?"))])
 
 	for key in stashed_keys:
 		player_data.erase(key)
@@ -1195,6 +1203,8 @@ func load_from_slot(slot: int) -> void:
 	var wp = parsed.get("world_pos", [10, 14])
 	world_pos = Vector2i(int(wp[0]), int(wp[1]))
 	_deserialize_explored(parsed.get("explored_tiles", {}))
+	GameLogger.info("SAVE", "Loaded slot %d — grid_cell %s, world_pos %s, layer %d, hp %s" % [
+		slot, str(cell), str(world_pos), world_layer, str(player_data.get("_saved_hp", "?"))])
 
 # ── Info / existence ───────────────────────────────────────────────────────────
 func get_save_info(slot: int) -> Dictionary:

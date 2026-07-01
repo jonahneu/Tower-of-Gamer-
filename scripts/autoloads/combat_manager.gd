@@ -325,6 +325,16 @@ func add_participant(entity: Node) -> void:
 	turn_state[entity] = _make_turn_state(entity)
 	EventBus.combat_participant_added.emit(entity)
 
+# Called when an "engaged" entity's approach path to its target comes back
+# empty — it can see the target (LOS raycasting can leak through a diagonal
+# gap between two blocked cells) but cardinal-only pathfinding can't actually
+# cross that gap. Downgrades it to wandering so the normal disengage timer
+# can eventually end combat instead of it standing still forever.
+func mark_unreachable(entity: Node) -> void:
+	var ts: Dictionary = turn_state.get(entity, {})
+	if not ts.is_empty():
+		ts["ai_state"] = "wandering"
+
 func remove_participant(entity: Node) -> void:
 	var idx := participants.find(entity)
 	if idx < 0:
@@ -445,6 +455,11 @@ func record_move(entity: Node, from_cell: Vector2i, to_cell: Vector2i) -> void:
 func _entity_can_see_player(entity: Node, player: Node) -> bool:
 	var zone: TileScene = GameManager.current_zone as TileScene
 	if zone == null:
+		return false
+	# Entity has proven over several turns it has no cardinal-walkable path to
+	# the player at all (a LOS-but-unreachable stalemate) — stop counting its
+	# raw sightline so group awareness can settle and combat can disengage.
+	if entity.get("_gave_up_chase") == true:
 		return false
 	var entity_cell: Vector2i = entity.get("grid_cell")
 	var player_cell: Vector2i = player.get("grid_cell")

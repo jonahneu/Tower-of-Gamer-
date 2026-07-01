@@ -102,19 +102,33 @@ func _execute_ai_turn() -> void:
 		if cheby > SPIT_RANGE and _tile_scene != null:
 			var spit_cost: int = _spit_weapon.get("ap_cost", 2)
 			var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - spit_cost)
-			if move_budget > 0:
-				var path: Array[Vector2i] = _best_approach_path(p_cell)
+			var path: Array[Vector2i] = _best_approach_path(p_cell)
+			if path.is_empty():
+				_unreachable_turns += 1
+				CombatManager.mark_unreachable(self)
+				if _unreachable_turns >= UNREACHABLE_GIVE_UP_TURNS:
+					_gave_up_chase = true
+					GameLogger.warn("MOVE", "%s has had no path to %s for %d turns (zone %s) — giving up the chase" % [
+						entity_name, str(p_cell), _unreachable_turns, str(GameManager.world_pos)])
+			else:
+				_unreachable_turns = 0
+			if move_budget > 0 and not path.is_empty():
 				var steps: int = mini(move_budget, path.size())
 				for i in range(steps):
 					if not is_instance_valid(self) or not _in_combat:
 						return
 					var next_cell: Vector2i = path[i]
+					if not _tile_scene.is_walkable(next_cell):
+						GameLogger.error("MOVE", "%s combat-move step blocked at %s (zone %s) — path went stale mid-turn" % [
+							entity_name, str(next_cell), str(GameManager.world_pos)])
+						break
 					var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 					var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 					_tile_scene.unregister_entity(grid_cell)
 					CombatManager.record_move(self, grid_cell, next_cell)
 					grid_cell = next_cell
 					_tile_scene.register_entity(grid_cell, self)
+					_tile_scene.update_entity_visibility()
 					CombatManager.spend_move()
 					var tween := create_tween()
 					tween.tween_property(self, "_visual_pos", target_screen, duration)
@@ -144,12 +158,17 @@ func _execute_ai_turn() -> void:
 						if not is_instance_valid(self) or not _in_combat:
 							return
 						var next_cell: Vector2i = path[i]
+						if not _tile_scene.is_walkable(next_cell):
+							GameLogger.error("MOVE", "%s combat-move step blocked at %s (zone %s) — path went stale mid-turn" % [
+								entity_name, str(next_cell), str(GameManager.world_pos)])
+							break
 						var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 						var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 						_tile_scene.unregister_entity(grid_cell)
 						CombatManager.record_move(self, grid_cell, next_cell)
 						grid_cell = next_cell
 						_tile_scene.register_entity(grid_cell, self)
+						_tile_scene.update_entity_visibility()
 						CombatManager.spend_move()
 						var tween := create_tween()
 						tween.tween_property(self, "_visual_pos", target_screen, duration)
@@ -174,12 +193,17 @@ func _execute_ai_turn() -> void:
 						if not is_instance_valid(self) or not _in_combat:
 							return
 						var next_cell: Vector2i = path_fb[i]
+						if not _tile_scene.is_walkable(next_cell):
+							GameLogger.error("MOVE", "%s combat-move step blocked at %s (zone %s) — path went stale mid-turn" % [
+								entity_name, str(next_cell), str(GameManager.world_pos)])
+							break
 						var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 						var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 						_tile_scene.unregister_entity(grid_cell)
 						CombatManager.record_move(self, grid_cell, next_cell)
 						grid_cell = next_cell
 						_tile_scene.register_entity(grid_cell, self)
+						_tile_scene.update_entity_visibility()
 						CombatManager.spend_move()
 						var tween := create_tween()
 						tween.tween_property(self, "_visual_pos", target_screen, duration)
@@ -194,19 +218,33 @@ func _execute_ai_turn() -> void:
 		if cheby > 1 and _tile_scene != null:
 			var bite_cost_ne: int = _bite_weapon.get("ap_cost", 1)
 			var budget_ne: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - bite_cost_ne)
-			if budget_ne > 0:
-				var path_ne: Array[Vector2i] = _best_approach_path(p_cell)
+			var path_ne: Array[Vector2i] = _best_approach_path(p_cell)
+			if path_ne.is_empty():
+				_unreachable_turns += 1
+				CombatManager.mark_unreachable(self)
+				if _unreachable_turns >= UNREACHABLE_GIVE_UP_TURNS:
+					_gave_up_chase = true
+					GameLogger.warn("MOVE", "%s has had no path to %s for %d turns (zone %s) — giving up the chase" % [
+						entity_name, str(p_cell), _unreachable_turns, str(GameManager.world_pos)])
+			else:
+				_unreachable_turns = 0
+			if budget_ne > 0 and not path_ne.is_empty():
 				var steps_ne: int = mini(budget_ne, path_ne.size())
 				for i in range(steps_ne):
 					if not is_instance_valid(self) or not _in_combat:
 						return
 					var next_cell: Vector2i = path_ne[i]
+					if not _tile_scene.is_walkable(next_cell):
+						GameLogger.error("MOVE", "%s combat-move step blocked at %s (zone %s) — path went stale mid-turn" % [
+							entity_name, str(next_cell), str(GameManager.world_pos)])
+						break
 					var target_screen: Vector2 = TileScene.grid_to_screen(next_cell)
 					var duration: float = _visual_pos.distance_to(target_screen) / COMBAT_MOVE_SPEED
 					_tile_scene.unregister_entity(grid_cell)
 					CombatManager.record_move(self, grid_cell, next_cell)
 					grid_cell = next_cell
 					_tile_scene.register_entity(grid_cell, self)
+					_tile_scene.update_entity_visibility()
 					CombatManager.spend_move()
 					var tween := create_tween()
 					tween.tween_property(self, "_visual_pos", target_screen, duration)

@@ -4,6 +4,11 @@ extends NPC
 # Work quest: fetch flame accelerant from [fire cult member TBD] in the Lower Ditch.
 # Teaching sequence: sends player to desert ruins for bronze scrap, then teaches
 #   armband crafting → property choice (Blessed Weapon or Barrier Armor) → second item.
+# The armband path is a thread under the shared find_spiritual_protection quest,
+# same as the hunter, apothecary, and fire-cult paths — not its own top-level quest.
+
+const PARENT_QUEST := "find_spiritual_protection"
+const THREAD_ID     := "smith_armband_path"
 
 const SHOP_ITEMS: Array = [
 	{"id": "shortsword",             "price": 12},
@@ -139,7 +144,8 @@ func _update_dialogue() -> void:
 			"label":    "I found bronze scrap in the ruins.",
 			"action":   func():
 				pd["smith_armband_taught"] = true
-				GameManager.complete_quest_thread("smith_protection", "find_scrap")
+				GameManager.update_quest_thread(PARENT_QUEST, THREAD_ID,
+					"I brought the smith bronze scrap. He's teaching me to forge a spirit armband.")
 				var known: Array = pd.get("known_smithing_recipes", [])
 				if "bronze_spirit_armband" not in known:
 					known.append("bronze_spirit_armband")
@@ -191,14 +197,12 @@ func _update_dialogue() -> void:
 			"disabled": not smithing_ok,
 			"action":   func():
 				pd["smith_secrets_given"] = true
-				GameManager.add_quest({
-					"id":      "smith_protection",
-					"title":   "Spiritual Protection",
-					"summary": "The smith will teach you to forge your own protection. First, find bronze scrap in the ruins north of the western drainage exit in the Ditch.",
-				})
-				GameManager.add_quest_thread("smith_protection", {
-					"id":    "find_scrap",
-					"title": "Find bronze scrap in the desert ruins north of the drain exit.",
+				GameManager.add_quest_thread(PARENT_QUEST, {
+					"id":          THREAD_ID,
+					"title":       "The Smith",
+					"description": "The smith will teach you to forge your own protection. First, find bronze scrap in the ruins north of the western drainage exit in the Ditch.",
+					"updates":     [],
+					"completed":   false,
 				}),
 			"response": "I can guide you. The first thing you will have to do is find some metal. This whole city is built on the ruins of a much older city. Don't know what happened to em', but I do know we can dig up what they left behind and make it useful again.\n\nThe undercity is full of treasure for someone who knows what to do with it. For you — head into the desert. If you take the western drainage exit in the ditch, then head north into the desert, you can find pieces of ruins that stick out from the undercity through the desert. Be careful and don't head out too far.\n\nWhen you return I can teach you how to use what you found to fend off spirits, and more corporeal threats.",
 			"next_options": [{"label": "I'll go look.", "closes": true}],
@@ -274,7 +278,8 @@ func _on_crafting_ui_closed(entity: Node) -> void:
 		if _has_item("bronze_shortsword_blessed") or _has_item("bronze_helmet_barrier"):
 			pd["smith_second_crafted"] = true
 			pd["smith_teaching_done"]  = true
-			GameManager.complete_quest("smith_protection")
+			GameManager.complete_quest_thread(PARENT_QUEST, THREAD_ID)
+			GameManager.complete_quest(PARENT_QUEST)
 			call_deferred("_reopen_dialogue")
 
 func _on_smithing_pick_made(pick_id: String) -> void:
@@ -300,14 +305,12 @@ func _build_protection_options(open_shop: Callable) -> Array:
 	var smithing_ok: bool = pd.get("skills", {}).get("smithing", 0) >= 15
 	var teach_action := func():
 		pd["smith_secrets_given"] = true
-		GameManager.add_quest({
-			"id":      "smith_protection",
-			"title":   "Spiritual Protection",
-			"summary": "The smith will teach you to forge your own protection. First, find bronze scrap in the ruins north of the western drainage exit in the Ditch.",
-		})
-		GameManager.add_quest_thread("smith_protection", {
-			"id":    "find_scrap",
-			"title": "Find bronze scrap in the desert ruins north of the drain exit.",
+		GameManager.add_quest_thread(PARENT_QUEST, {
+			"id":          THREAD_ID,
+			"title":       "The Smith",
+			"description": "The smith will teach you to forge your own protection. First, find bronze scrap in the ruins north of the western drainage exit in the Ditch.",
+			"updates":     [],
+			"completed":   false,
 		})
 	var options: Array = [
 		{

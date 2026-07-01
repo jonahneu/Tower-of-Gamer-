@@ -648,13 +648,21 @@ func _refresh_death_panel() -> void:
 	for child in slots_box.get_children():
 		child.queue_free()
 
-	# Show auto saves first, then quick saves, then manual slots
+	# Most recently saved first; empty slots sink to the bottom (irrelevant here
+	# since we skip them below, but keeps this consistent with the title screen).
 	var display_slots: Array = [
 		GameManager.AUTO_SLOT, GameManager.PREV_AUTO_SLOT,
 		0, GameManager.PREV_QUICK_SLOT,
 	]
 	for i in range(1, GameManager.SLOT_COUNT + 1):
 		display_slots.append(i)
+	display_slots.sort_custom(func(a, b):
+		var ia: Dictionary = GameManager.get_save_info(a)
+		var ib: Dictionary = GameManager.get_save_info(b)
+		if ia["exists"] != ib["exists"]:
+			return ia["exists"]
+		return ia["timestamp"] > ib["timestamp"]
+	)
 
 	var any_shown: bool = false
 	for slot in display_slots:
@@ -6278,7 +6286,7 @@ func _refresh_stats() -> void:
 		if _cs_pending_lbl != null:
 			_cs_pending_lbl.text = ("Unspent: " + "  |  ".join(parts)) if parts.size() > 0 else ""
 		if _cs_confirm_btn != null:
-			_cs_confirm_btn.visible = has_snapshot
+			_cs_confirm_btn.visible = has_snapshot and not has_pending
 
 	var stats = d.get("stats", {})
 	for stat in STAT_NAMES:

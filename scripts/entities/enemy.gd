@@ -71,6 +71,8 @@ var _highlighted: bool = false
 # Subclass sets this before or in _ready(); used by the AI attack step.
 var _attack_weapon: Dictionary = {}
 
+const RESPAWN_RESTS: int = 2   # rests a killed respawnable enemy stays dead for
+
 func _respawn_id() -> String:
 	var tile_data: Dictionary = GameManager.get_tile_data(GameManager.world_layer, GameManager.world_pos)
 	return tile_data.get("scene", str(GameManager.world_pos)) + "::" + name
@@ -78,16 +80,17 @@ func _respawn_id() -> String:
 func _is_dead_in_save() -> bool:
 	var rid: String = _respawn_id()
 	if respawns:
-		return rid in GameManager.player_data.get("dead_respawnables", [])
+		return GameManager.player_data.get("dead_respawnables", {}).has(rid)
 	else:
 		return rid in GameManager.player_data.get("dead_permanent", [])
 
+# dead_respawnables maps respawn_id -> rests remaining until it comes back
+# (see hud.gd's _do_rest, which decrements every entry by one per rest).
 func _record_death() -> void:
 	var rid: String = _respawn_id()
 	if respawns:
-		var dead: Array = GameManager.player_data.get("dead_respawnables", [])
-		if rid not in dead:
-			dead.append(rid)
+		var dead: Dictionary = GameManager.player_data.get("dead_respawnables", {})
+		dead[rid] = RESPAWN_RESTS
 		GameManager.player_data["dead_respawnables"] = dead
 	else:
 		var dead: Array = GameManager.player_data.get("dead_permanent", [])

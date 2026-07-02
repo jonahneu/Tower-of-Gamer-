@@ -5849,8 +5849,16 @@ func _do_rest() -> void:
 		p.current_hp = p.max_hp
 		p.current_spirit = p.max_spirit
 
-	# Respawn enemies — clear kill list and saved positions so they appear fresh next load
-	GameManager.player_data.erase("dead_respawnables")
+	# Respawnable enemies come back after two rests, not immediately — decrement
+	# every dead entity's remaining-rest counter and only drop it from the list
+	# (letting it respawn) once the counter reaches zero.
+	var dead_resp: Dictionary = GameManager.player_data.get("dead_respawnables", {})
+	var still_dead: Dictionary = {}
+	for rid in dead_resp:
+		var rests_left: int = int(dead_resp[rid]) - 1
+		if rests_left > 0:
+			still_dead[rid] = rests_left
+	GameManager.player_data["dead_respawnables"] = still_dead
 	GameManager.player_data.erase("enemy_positions")
 
 	# Check protection BEFORE decrementing the vial counter — the player is

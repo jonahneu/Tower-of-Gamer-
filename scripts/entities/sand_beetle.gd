@@ -211,12 +211,23 @@ func _normal_turn(player_typed: Player) -> void:
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
 		var dest: Vector2i = Vector2i(-1, -1)
+		var path: Array[Vector2i] = []
 		if engaged:
-			var align_cell: Vector2i = _find_ram_setup_cell(player_typed, move_budget)
-			dest = align_cell if align_cell != Vector2i(-1, -1) else _find_adjacent_to(p_cell)
+			# Melee takes priority whenever it's actually reachable this turn —
+			# only spend the turn lining up a charge instead when melee isn't
+			# reachable this turn anyway (too far, or the direct route is blocked).
+			var melee_cell: Vector2i = _find_adjacent_to(p_cell)
+			var melee_path: Array[Vector2i] = Pathfinding.find_path(grid_cell, melee_cell, _tile_scene) if melee_cell != Vector2i(-1, -1) else []
+			if not melee_path.is_empty() and melee_path.size() <= move_budget:
+				dest = melee_cell
+				path = melee_path
+			else:
+				var align_cell: Vector2i = _find_ram_setup_cell(player_typed, move_budget)
+				dest = align_cell if align_cell != Vector2i(-1, -1) else melee_cell
+				path = Pathfinding.find_path(grid_cell, dest, _tile_scene) if dest != Vector2i(-1, -1) else []
 		else:
 			dest = _find_adjacent_to(p_cell)
-		var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, dest, _tile_scene) if dest != Vector2i(-1, -1) else []
+			path = Pathfinding.find_path(grid_cell, dest, _tile_scene) if dest != Vector2i(-1, -1) else []
 		if path.is_empty():
 			_unreachable_turns += 1
 			CombatManager.mark_unreachable(self)

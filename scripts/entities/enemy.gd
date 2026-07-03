@@ -395,11 +395,13 @@ func _snap_to_grid() -> void:
 	_visual_pos = TileScene.grid_to_screen(grid_cell)
 	_wander_target_pos = _visual_pos
 	position = _visual_pos
+	queue_redraw()
 
 func _on_combat_ended(_victor: String) -> void:
 	if not _in_combat:
 		return
 	_in_combat = false
+	queue_redraw()
 	if current_hp <= 0 and not _dead:
 		_dead = true
 		_spawn_corpse()
@@ -676,10 +678,10 @@ func _on_sneak_toggled(sneak_active: bool) -> void:
 	_trigger_combat()
 
 func _draw_aggro_ring() -> void:
+	var top_y: float = -sprite_h + TileScene.TILE_H / 4.0
 	if _highlighted:
 		var hw: float = sprite_w / 2.0 + 2.0
 		var hh: float = sprite_h + 2.0
-		var top_y: float = -sprite_h + TileScene.TILE_H / 4.0
 		draw_rect(Rect2(-hw, top_y - 2.0, hw * 2.0, hh), Color(1.0, 0.85, 0.0, 0.30))
 		draw_rect(Rect2(-hw, top_y - 2.0, hw * 2.0, hh), Color(1.0, 0.85, 0.0), false, 2.0)
 		var font := ThemeDB.fallback_font
@@ -690,8 +692,10 @@ func _draw_aggro_ring() -> void:
 		var ly: float = top_y - 6.0
 		draw_rect(Rect2(lx - 3, ly - fs - 1, tw + 6, fs + 4), Color(0, 0, 0, 0.65))
 		draw_string(font, Vector2(lx, ly), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1.0, 0.95, 0.7))
-		var bar_w: float = float(sprite_w)
-		_draw_health_bar(-bar_w / 2.0, top_y - 24.0, bar_w)
+	# Health bar shows on hover-highlight always, and by default (unhighlighted
+	# too) for any enemy actively in this combat.
+	if _highlighted or _in_combat:
+		_draw_health_bar(-float(sprite_w) / 2.0, top_y - 24.0, float(sprite_w))
 	if not GameManager.is_sneaking:
 		return
 	# Circular outline matching aggro_range's actual Euclidean check (and the

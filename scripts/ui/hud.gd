@@ -35,6 +35,7 @@ var _shop_buy_list: Array = []       # [{id or material_type, price, remaining}]
 var _shop_on_sale: Callable
 var _shop_coins_lbl: Label = null
 var _shop_title_lbl: Label = null
+var _shop_wanted_lbl: Label = null
 var _save_rows: Array = []   # [{char_lbl, time_lbl, btn}]
 var _load_rows: Array = []
 var _sneak_btn: Button = null
@@ -113,6 +114,7 @@ var _crafting_active_tab: String        = "way_of_beasts"  # "way_of_beasts" | "
 var _crafting_tab_row: HBoxContainer    = null
 var _item_info_panel: Control      = null
 var _item_hover_tooltip: Control   = null
+var _tooltip_pinned: bool          = false  # true while the item hover tooltip is "inspect"-locked open (Enter)
 var _item_info_drop_target: Dictionary = {}
 var _drop_btn: Button              = null
 var _affix_talisman_btn: Button    = null
@@ -216,6 +218,7 @@ const KEYWORD_DEFS: Dictionary = {
 	"clumsy":             "Clumsy −1\n──────────────────\nThis weapon is awkward to aim precisely. Your governing stat modifier for the attack skill is reduced by 1 when calculating hit chance.",
 	"armor_pierce":       "Armor Pierce\n──────────────────\nIgnores 10% of the target's flat and percentage armor.",
 	"armor_pierce_light": "Armor Pierce (Light)\n──────────────────\nIgnores 7% of the target's flat and percentage armor.",
+	"heavy_weapon":       "Heavy Weapon\n──────────────────\nStrength's contribution to this weapon's damage roll modifier is doubled.",
 }
 
 const STAT_NAMES  = ["strength","dexterity","agility","constitution","intelligence","willpower","perception"]
@@ -459,6 +462,8 @@ func _input(event: InputEvent) -> void:
 		KEY_SPACE:
 			if GameManager.combat_mode and CombatManager.is_player_turn():
 				CombatManager.end_turn()
+		KEY_ENTER, KEY_KP_ENTER:
+			_toggle_tooltip_pin()
 
 func _toggle(name: String) -> void:
 	if _open == name:
@@ -529,7 +534,9 @@ func _close_all() -> void:
 	if _map_tooltip != null:
 		_map_tooltip.visible = false
 	_hide_item_info()
-	_hide_item_hover_tooltip()
+	if _tooltip_pinned:
+		_unpin_item_hover_tooltip()
+	_hide_item_hover_tooltip(true)
 	if _pile_panel != null: _pile_panel.visible = false
 	if _container_panel != null: _container_panel.visible = false
 	_container_entity = null
@@ -2550,7 +2557,8 @@ func _build_item_info_panel() -> Control:
 	lbl.custom_minimum_size = Vector2(220, 0)
 	lbl.add_theme_font_size_override("normal_font_size", 12)
 	lbl.add_theme_color_override("default_color", Color(0.92, 0.88, 0.80))
-	lbl.meta_clicked.connect(_on_keyword_clicked)
+	lbl.meta_hover_started.connect(func(meta): _show_keyword_popup(str(meta), _item_info_panel))
+	lbl.meta_hover_ended.connect(_hide_keyword_popup)
 	vbox.add_child(lbl)
 	_drop_btn = Button.new()
 	_drop_btn.name = "DropBtn"
@@ -2609,12 +2617,18 @@ func _build_item_hover_tooltip() -> Control:
 	panel.add_theme_stylebox_override("panel", style)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var margin = MarginContainer.new()
+	margin.name = "Margin"
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_theme_constant_override("margin_left",   8)
 	margin.add_theme_constant_override("margin_right",  8)
 	margin.add_theme_constant_override("margin_top",     6)
 	margin.add_theme_constant_override("margin_bottom",  6)
 	panel.add_child(margin)
+	var vbox := VBoxContainer.new()
+	vbox.name = "VBox"
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_theme_constant_override("separation", 4)
+	margin.add_child(vbox)
 	var lbl := RichTextLabel.new()
 	lbl.name = "Label"
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2625,16 +2639,22 @@ func _build_item_hover_tooltip() -> Control:
 	lbl.custom_minimum_size = Vector2(200, 0)
 	lbl.add_theme_font_size_override("normal_font_size", 12)
 	lbl.add_theme_color_override("default_color", Color(0.92, 0.88, 0.80))
-	margin.add_child(lbl)
+	lbl.meta_hover_started.connect(func(meta): _show_keyword_popup(str(meta), _item_hover_tooltip))
+	lbl.meta_hover_ended.connect(_hide_keyword_popup)
+	vbox.add_child(lbl)
+	var hint := Label.new()
+	hint.name = "InspectHint"
+	hint.text = "Inspect: Enter"
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint.add_theme_font_size_override("font_size", 10)
+	hint.add_theme_color_override("font_color", Color(0.55, 0.55, 0.60))
+	vbox.add_child(hint)
 	return panel
 
 func _show_item_hover_tooltip(item: Dictionary, screen_pos: Vector2) -> void:
-	if _item_hover_tooltip == null or item.is_empty():
+	if _tooltip_pinned or _item_hover_tooltip == null or item.is_empty():
 		return
-	var margin := _item_hover_tooltip.get_child(0) as MarginContainer
-	if margin == null:
-		return
-	var lbl := margin.get_child(0) as RichTextLabel
+	var lbl := _item_hover_tooltip.get_node("Margin/VBox/Label") as RichTextLabel
 	if lbl == null:
 		return
 	lbl.text = _format_item_info(item)
@@ -2645,19 +2665,20 @@ func _show_item_hover_tooltip(item: Dictionary, screen_pos: Vector2) -> void:
 	_item_hover_tooltip.position = pos
 	_item_hover_tooltip.visible = true
 
-func _hide_item_hover_tooltip() -> void:
+# force=true bypasses the inspect-pin (used when the panel that owns this
+# tooltip is being torn down, e.g. _close_all()).
+func _hide_item_hover_tooltip(force: bool = false) -> void:
+	if _tooltip_pinned and not force:
+		return
 	if _item_hover_tooltip != null:
 		_item_hover_tooltip.visible = false
 
 # Plain-text variant of _show_item_hover_tooltip, for hover targets that
 # aren't items (e.g. feat buttons) but still want the same tooltip panel.
 func _show_text_tooltip(text: String, screen_pos: Vector2) -> void:
-	if _item_hover_tooltip == null or text == "":
+	if _tooltip_pinned or _item_hover_tooltip == null or text == "":
 		return
-	var margin := _item_hover_tooltip.get_child(0) as MarginContainer
-	if margin == null:
-		return
-	var lbl := margin.get_child(0) as RichTextLabel
+	var lbl := _item_hover_tooltip.get_node("Margin/VBox/Label") as RichTextLabel
 	if lbl == null:
 		return
 	lbl.text = text
@@ -2667,6 +2688,33 @@ func _show_text_tooltip(text: String, screen_pos: Vector2) -> void:
 	pos.y = clampf(pos.y, 4.0, vp_size.y - 120.0)
 	_item_hover_tooltip.position = pos
 	_item_hover_tooltip.visible = true
+
+# Enter toggles the item hover tooltip between "follows the mouse, closes on
+# mouse-exit" (normal) and "pinned in place" so the player can move the mouse
+# into the tooltip itself and hover a keyword link for its definition.
+func _toggle_tooltip_pin() -> void:
+	if _tooltip_pinned:
+		_unpin_item_hover_tooltip()
+	elif _item_hover_tooltip != null and _item_hover_tooltip.visible:
+		_pin_item_hover_tooltip()
+
+func _pin_item_hover_tooltip() -> void:
+	_tooltip_pinned = true
+	_item_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_STOP
+	_item_hover_tooltip.get_node("Margin").mouse_filter = Control.MOUSE_FILTER_STOP
+	_item_hover_tooltip.get_node("Margin/VBox").mouse_filter = Control.MOUSE_FILTER_STOP
+	_item_hover_tooltip.get_node("Margin/VBox/Label").mouse_filter = Control.MOUSE_FILTER_STOP
+
+func _unpin_item_hover_tooltip() -> void:
+	_tooltip_pinned = false
+	_hide_keyword_popup()
+	if _item_hover_tooltip == null:
+		return
+	_item_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_item_hover_tooltip.get_node("Margin").mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_item_hover_tooltip.get_node("Margin/VBox").mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_item_hover_tooltip.get_node("Margin/VBox/Label").mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hide_item_hover_tooltip(true)
 
 # Builds a sized ItemIcon for `item`. pass_through=true (default) ignores mouse
 # input so a surrounding Button keeps receiving clicks/hover; pass false for an
@@ -3060,8 +3108,10 @@ func _build_keyword_popup() -> Control:
 	margin.add_child(lbl)
 	return panel
 
-func _show_keyword_popup(keyword: String) -> void:
-	if _keyword_popup == null or _item_info_panel == null:
+# anchor is whichever tooltip/panel the keyword link lives in (_item_info_panel
+# or _item_hover_tooltip) — the popup opens just to its right.
+func _show_keyword_popup(keyword: String, anchor: Control) -> void:
+	if _keyword_popup == null or anchor == null:
 		return
 	var def: String = KEYWORD_DEFS.get(keyword, "")
 	if def == "":
@@ -3070,10 +3120,9 @@ func _show_keyword_popup(keyword: String) -> void:
 	if lbl == null:
 		return
 	lbl.text = def
-	# Anchor to the right of the item info panel (use 260 as safe width estimate)
 	var vp_size := get_viewport().get_visible_rect().size
-	var base := _item_info_panel.position
-	var panel_w: float = _item_info_panel.size.x if _item_info_panel.size.x > 10.0 else 260.0
+	var base := anchor.position
+	var panel_w: float = anchor.size.x if anchor.size.x > 10.0 else 260.0
 	var pos := base + Vector2(panel_w + 6.0, 0.0)
 	pos.x = clampf(pos.x, 4.0, vp_size.x - 220.0)
 	pos.y = clampf(pos.y, 4.0, vp_size.y - 200.0)
@@ -3083,16 +3132,6 @@ func _show_keyword_popup(keyword: String) -> void:
 func _hide_keyword_popup() -> void:
 	if _keyword_popup != null:
 		_keyword_popup.visible = false
-
-func _on_keyword_clicked(meta: Variant) -> void:
-	var keyword: String = str(meta)
-	if _keyword_popup != null and _keyword_popup.visible:
-		# Clicking same keyword again closes it
-		var lbl := _keyword_popup.get_child(0).get_child(0) as Label
-		if lbl != null and lbl.text.begins_with(keyword.capitalize()):
-			_hide_keyword_popup()
-			return
-	_show_keyword_popup(keyword)
 
 func _format_item_info(item: Dictionary) -> String:
 	var lines: Array[String] = []
@@ -4859,6 +4898,14 @@ func _build_shop_panel() -> Control:
 	_shop_coins_lbl.add_theme_font_size_override("font_size", 14)
 	vbox.add_child(_shop_coins_lbl)
 
+	# What the merchant is currently looking to buy off the player, if anything.
+	_shop_wanted_lbl = Label.new()
+	_shop_wanted_lbl.add_theme_font_size_override("font_size", 12)
+	_shop_wanted_lbl.add_theme_color_override("font_color", Color(0.75, 0.72, 0.60))
+	_shop_wanted_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_shop_wanted_lbl.visible = false
+	vbox.add_child(_shop_wanted_lbl)
+
 	vbox.add_child(HSeparator.new())
 
 	# Two simultaneous panes — your inventory (sell) and their wares (buy).
@@ -4890,6 +4937,7 @@ func _refresh_shop() -> void:
 	if _shop_merchant != null and _shop_title_lbl != null:
 		_shop_title_lbl.text = _shop_merchant.entity_name + "'s Wares"
 	_refresh_shop_coin_lbl()
+	_refresh_shop_wanted_lbl()
 
 	var player_vbox: VBoxContainer = _shop_panel.get_meta("player_vbox") as VBoxContainer
 	var vendor_vbox: VBoxContainer = _shop_panel.get_meta("vendor_vbox") as VBoxContainer
@@ -4939,7 +4987,7 @@ func _refresh_shop() -> void:
 			sell_btn.text = "Sold out today"
 			sell_btn.disabled = true
 		else:
-			sell_btn.text = "Sell — %d¢" % entry.get("price", 0)
+			sell_btn.text = "Sell — %d¢" % _effective_sell_price(entry, item)
 			var captured_item: Dictionary = item
 			var captured_entry: Dictionary = entry
 			sell_btn.pressed.connect(func(): _on_sell_item(captured_item, captured_entry))
@@ -4992,6 +5040,31 @@ func _refresh_shop_coin_lbl() -> void:
 	if _shop_coins_lbl != null:
 		_shop_coins_lbl.text = "You have: %d coin%s" % [coins, "s" if coins != 1 else ""]
 
+# Small summary line of what the merchant is still willing to buy off the
+# player today, e.g. "Buying: Coyote Pelt (2), Lizard Skin (3)". Hidden
+# entirely when the merchant doesn't buy anything.
+func _refresh_shop_wanted_lbl() -> void:
+	if _shop_wanted_lbl == null:
+		return
+	if _shop_buy_list.is_empty():
+		_shop_wanted_lbl.visible = false
+		return
+	var parts: Array = []
+	for entry in _shop_buy_list:
+		parts.append("%s (%d)" % [_buy_entry_display_name(entry), entry.get("remaining", 0)])
+	_shop_wanted_lbl.text = "Buying: " + ", ".join(parts)
+	_shop_wanted_lbl.visible = true
+
+func _buy_entry_display_name(entry: Dictionary) -> String:
+	if entry.has("id"):
+		var item_data: Dictionary = DataManager.get_item(entry["id"])
+		if not item_data.is_empty():
+			return item_data.get("name", entry["id"])
+		return String(entry["id"]).replace("_", " ").capitalize()
+	if entry.has("material_type"):
+		return String(entry["material_type"]).replace("_", " ").capitalize()
+	return "?"
+
 # Finds the buy_list entry (if any) the vendor would buy `item` under, matched
 # either by exact item id or by material_type (e.g. "meat" matches any cut).
 func _find_buy_entry(item: Dictionary) -> Dictionary:
@@ -5002,13 +5075,26 @@ func _find_buy_entry(item: Dictionary) -> Dictionary:
 			return entry
 	return {}
 
+# entry.price is the base offer; set entry["quality_scaled"] = true to have it
+# shift ±1 coin for materials carved at low (Ruined/Poor) or high (Fine/Pristine)
+# quality. Common/Good quality pays the base price.
+func _effective_sell_price(entry: Dictionary, item: Dictionary) -> int:
+	var price: int = entry.get("price", 0)
+	if entry.get("quality_scaled", false):
+		var quality: int = item.get("quality", 2)
+		if quality <= 1:
+			price -= 1
+		elif quality >= 4:
+			price += 1
+	return max(price, 0)
+
 func _on_sell_item(item: Dictionary, entry: Dictionary) -> void:
 	var inv: Array = GameManager.player_data.get("inventory", [])
 	var idx: int = inv.find(item)
 	if idx == -1:
 		return
 	inv.remove_at(idx)
-	for _c in range(entry.get("price", 0)):
+	for _c in range(_effective_sell_price(entry, item)):
 		inv.append(DataManager.get_item("coin"))
 	GameManager.player_data["inventory"] = inv
 	entry["remaining"] = entry.get("remaining", 0) - 1

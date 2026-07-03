@@ -162,17 +162,20 @@ func _on_npc_combat_started(participants: Array) -> void:
 		_in_combat = true
 		_visual_pos = TileScene.grid_to_screen(grid_cell)
 		position = _visual_pos
+		queue_redraw()
 
 func _on_npc_participant_added(entity: Node) -> void:
 	if entity == self:
 		_in_combat = true
 		_visual_pos = TileScene.grid_to_screen(grid_cell)
 		position = _visual_pos
+		queue_redraw()
 
 func _on_npc_combat_ended(_victor: String) -> void:
 	if not _in_combat:
 		return
 	_in_combat = false
+	queue_redraw()
 	if current_hp <= 0 and not _dead:
 		_dead = true
 		_record_npc_death()
@@ -391,6 +394,9 @@ func _draw() -> void:
 		draw_rect(rect, Color(1.0, 0.85, 0.0, 0.35))
 		draw_rect(rect, Color(1.0, 0.85, 0.0), false, 2.0)
 		_draw_name_label(rect.position.y - 4)
+	# Health bar shows on hover-highlight always, and by default (unhighlighted
+	# too) for any NPC actively in this combat (hostile NPCs, ally backup, etc.).
+	if _highlighted or _in_combat:
 		_draw_health_bar(-float(SPRITE_W) / 2.0, rect.position.y - 22.0, float(SPRITE_W))
 	# Show sight range ring when player is sneaking — circular outline matching
 	# the combat ranged-attack indicator's style rather than a diamond.

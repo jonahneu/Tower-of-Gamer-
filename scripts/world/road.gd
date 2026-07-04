@@ -12,4 +12,11 @@ func _ready() -> void:
 		return
 	for row in range(ROAD_Y1, ROAD_Y2 + 1):
 		for col in range(TileScene.GRID_COLS):
-			ts.cell_fill_colors[Vector2i(col, row)] = ROAD_COLOR
+			var cell := Vector2i(col, row)
+			# Don't paint road over cells already blocked by other terrain (e.g.
+			# river water in zone_docks) — a plain dirt road can't run through
+			# water. A dock/pier node placed later in the scene tree still
+			# paints its own walkway on top of this, same as before.
+			if ts.blocked_cells.has(cell):
+				continue
+			ts.cell_fill_colors[cell] = ROAD_COLOR

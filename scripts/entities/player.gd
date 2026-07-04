@@ -116,6 +116,8 @@ func _ready() -> void:
 	entity_name = GameManager.player_data.get("name", "Player")
 	EventBus.attack_started.connect(_on_attack_started)
 	EventBus.combat_started.connect(_on_combat_started)
+	EventBus.combat_ended.connect(func(_victor): queue_redraw())
+	EventBus.damage_floater.connect(func(e, _t, _c): if e == self: queue_redraw())
 	EventBus.turn_started.connect(_on_turn_started)
 	EventBus.inventory_changed.connect(_sync_torch_from_equipment)
 	_tile_scene = get_parent() as TileScene
@@ -521,6 +523,7 @@ func _on_combat_started(_participants: Array) -> void:
 	_oc_status_timer = 0.0
 	_last_hover_cell = Vector2i(-1, -1)
 	# _sneak_attack_weapon intentionally kept — still needed by _on_turn_started
+	queue_redraw()
 
 func _on_turn_started(entity: Node) -> void:
 	if entity != self or _sneak_attack_auto_target == null:
@@ -761,6 +764,8 @@ func _draw() -> void:
 	var body_color: Color = Color(0.45, 0.45, 0.45) if GameManager.is_sneaking else Color(0.75, 0.75, 0.75)
 	draw_rect(rect, body_color)
 	_draw_held_weapon(rect)
+	if GameManager.combat_mode:
+		_draw_health_bar(-float(SPRITE_W) / 2.0, rect.position.y - 22.0, float(SPRITE_W))
 
 # self.equipment is only synced from player_data at zone load (see _ready()),
 # so re-fetch hand_1 live from player_data — this stays correct immediately

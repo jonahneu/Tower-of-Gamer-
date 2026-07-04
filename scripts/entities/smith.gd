@@ -13,7 +13,7 @@ const THREAD_ID     := "smith_armband_path"
 const SHOP_ITEMS: Array = [
 	{"id": "shortsword",             "price": 12},
 	{"id": "sword",                  "price": 22},
-	{"id": "axe",                    "price": 20},
+	{"id": "greataxe",               "price": 32},
 	{"id": "bronze_spear",           "price": 16},
 	{"id": "bronze_scale_hauberk",   "price": 20},
 	{"id": "bronze_helm",            "price": 10},
@@ -25,7 +25,7 @@ const SHOP_ITEMS: Array = [
 const BUY_LIST: Array = [
 	{"id": "shortsword",             "price": 3, "remaining": 99},
 	{"id": "sword",                  "price": 6, "remaining": 99},
-	{"id": "axe",                    "price": 5, "remaining": 99},
+	{"id": "greataxe",               "price": 8, "remaining": 99},
 	{"id": "bronze_spear",           "price": 4, "remaining": 99},
 	{"id": "bronze_scale_hauberk",   "price": 5, "remaining": 99},
 	{"id": "bronze_helm",            "price": 3, "remaining": 99},
@@ -46,10 +46,10 @@ func _ready() -> void:
 	level                 = 4
 	skills["melee"]       = 35
 	skills["dodge"]       = 8
-	equipment["hand_1"]   = DataManager.get_item("axe")
+	equipment["hand_1"]   = DataManager.get_item("greataxe")
 	equipment["torso"]    = DataManager.get_item("bronze_scale_hauberk")
 	equipment["legs"]     = DataManager.get_item("work_trousers")
-	_attack_weapon        = DataManager.get_item("axe")
+	_attack_weapon        = DataManager.get_item("greataxe")
 	pocket_items          = [DataManager.get_item("coin"), DataManager.get_item("coin")]
 	drops_loot            = true
 	super._ready()

@@ -97,9 +97,10 @@ func get_skill_total(skill_name: String) -> float:
 	var invested = skills.get(skill_name, 0)
 	var mod = get_governing_modifier(skill_name) + get_equipment_governing_bonus(skill_name)
 	var equip_bonus: int = get_equipment_skill_bonus(skill_name)
-	# Bulky feat: carries an innate sneak/dodge penalty as if always wearing armor.
+	# Bulky feat: carries an innate Weight Penalty (as if always wearing armor).
 	if (skill_name == "sneak" or skill_name == "dodge") and self == GameManager.player and GameManager.has_feat("bulky"):
-		equip_bonus -= 10
+		var bulky_tier: int = DataManager.feats.get("bulky", {}).get("weight_penalty", 0)
+		equip_bonus -= DataManager.weight_penalty_skill(bulky_tier)
 	return maxf(0.0, invested * (1.0 + mod * 0.1) + equip_bonus)
 
 # ── Innate armor (set by subclasses for enemies with natural hide/fur) ────────
@@ -133,8 +134,10 @@ func calc_damage_received(raw_damage: int, attacker_weapon: Dictionary = {}) -> 
 
 	# Bulky feat: flat 10% resist to all damage types, applied multiplicatively
 	# on top of armor and any other resistances rather than folded into all_resist.
+	# Also adds 2 flat resistance to physical damage specifically (see below).
 	var feat_resist_mult: float = 1.0
-	if self == GameManager.player and GameManager.has_feat("bulky"):
+	var is_bulky: bool = self == GameManager.player and GameManager.has_feat("bulky")
+	if is_bulky:
 		feat_resist_mult = 0.9
 
 	if dtype == "fire":
@@ -145,6 +148,8 @@ func calc_damage_received(raw_damage: int, attacker_weapon: Dictionary = {}) -> 
 
 	var flat:    float = armor["flat"]
 	var pct_rem: float = armor["pct_remaining"]
+	if is_bulky:
+		flat += 2.0
 
 	# armor_ignore_pct (e.g. from blessed_weapon): directly reduces flat and pct armor
 	var ignore: float = attacker_weapon.get("armor_ignore_pct", 0.0)
@@ -172,7 +177,9 @@ func calc_damage_received(raw_damage: int, attacker_weapon: Dictionary = {}) -> 
 	var after_pct: float = after_flat * pct_rem
 	return after_pct * (1.0 - all_resist) * feat_resist_mult
 
-# Returns total bonus to a skill from all equipped items.
+# Returns total bonus to a skill from all equipped items, including the
+# Sneak/Dodge penalty derived from each item's Weight Penalty tier (see
+# DataManager.WEIGHT_PENALTY_TIERS).
 func get_equipment_skill_bonus(skill_name: String) -> int:
 	var total := 0
 	for slot in equipment:
@@ -180,6 +187,8 @@ func get_equipment_skill_bonus(skill_name: String) -> int:
 		if item == null:
 			continue
 		total += item.get("skill_bonus", {}).get(skill_name, 0)
+		if skill_name == "sneak" or skill_name == "dodge":
+			total -= DataManager.weight_penalty_skill(item.get("weight_penalty", 0))
 	return total
 
 # Returns total governing modifier bonus for a skill from all equipped items.
@@ -192,6 +201,23 @@ func get_equipment_governing_bonus(skill_name: String) -> int:
 		if item == null:
 			continue
 		total += item.get("governing_bonus", {}).get(skill_name, 0)
+	return total
+
+# Total AP/MP penalty from all equipped items (armor, shields, and unwieldy
+# weapons like the greataxe), derived from each item's Weight Penalty tier —
+# plus the Bulky feat's innate tier, same as get_equipment_skill_bonus() does
+# for Sneak/Dodge. Applied in CombatManager._begin_turn(), floored so it can
+# never cut a baseline (unspecialized) character's AP/MP below 4 / 8.
+func get_equipment_armor_penalty() -> int:
+	var total := 0
+	for slot in equipment:
+		var item = equipment[slot]
+		if item == null:
+			continue
+		total += DataManager.weight_penalty_ap_mp(item.get("weight_penalty", 0))
+	if self == GameManager.player and GameManager.has_feat("bulky"):
+		var bulky_tier: int = DataManager.feats.get("bulky", {}).get("weight_penalty", 0)
+		total += DataManager.weight_penalty_ap_mp(bulky_tier)
 	return total
 
 # ── Carry weight ──────────────────────────────────────────────────────────────

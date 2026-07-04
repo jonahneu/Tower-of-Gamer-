@@ -344,12 +344,21 @@ func _show_hotbar_tooltip(idx: int) -> void:
 	if lbl == null:
 		return
 	lbl.text = text
-	var vp_size := get_viewport().get_visible_rect().size
 	var pos := get_viewport().get_mouse_position() + Vector2(18, -16)
-	pos.x = clampf(pos.x, 4.0, vp_size.x - 200.0)
-	pos.y = clampf(pos.y, 4.0, vp_size.y - 100.0)
-	_hotbar_tooltip.position = pos
+	_hotbar_tooltip.position = _clamp_tooltip_pos(_hotbar_tooltip, pos)
 	_hotbar_tooltip.visible = true
+
+# Clamps a tooltip panel's top-left position so it always fits fully within
+# the viewport, using its actual (just-updated) content size rather than a
+# guessed height — see the matching helper in hud.gd for the full rationale.
+func _clamp_tooltip_pos(panel: Control, raw_pos: Vector2, margin: float = 4.0) -> Vector2:
+	panel.reset_size()
+	var vp_size: Vector2 = get_viewport().get_visible_rect().size
+	var sz: Vector2 = panel.size
+	var pos := raw_pos
+	pos.x = clampf(pos.x, margin, maxf(margin, vp_size.x - sz.x - margin))
+	pos.y = clampf(pos.y, margin, maxf(margin, vp_size.y - sz.y - margin))
+	return pos
 
 func _hide_hotbar_tooltip() -> void:
 	if _hotbar_tooltip != null:

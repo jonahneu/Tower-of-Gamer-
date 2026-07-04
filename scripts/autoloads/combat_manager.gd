@@ -296,10 +296,20 @@ func current_mp() -> int:
 	return ts.get("mp", 0)
 
 func max_ap_for(entity: Node) -> int:
-	return entity.stat_agility
+	var ap: int = entity.stat_agility
+	if entity.has_method("get_equipment_armor_penalty"):
+		var pen: int = entity.get_equipment_armor_penalty()
+		if pen > 0:
+			ap = maxi(mini(ap, 4), ap - pen)
+	return ap
 
 func max_mp_for(entity: Node) -> int:
-	return entity.stat_agility * 2
+	var mp: int = entity.stat_agility * 2
+	if entity.has_method("get_equipment_armor_penalty"):
+		var pen: int = entity.get_equipment_armor_penalty()
+		if pen > 0:
+			mp = maxi(mini(mp, 8), mp - pen)
+	return mp
 
 func current_entity() -> Node:
 	if participants.is_empty():
@@ -887,6 +897,14 @@ func _begin_turn() -> void:
 	var base_mp: int = maxi(0, e.stat_agility * 2 - ex * 2)
 	ts["ap"] = maxi(1, e.stat_agility - ex)
 	ts["mp"] = floori(base_mp * 0.2) if e.is_overburdened() else base_mp
+	# Armor penalty (heavy armor, shields, unwieldy weapons) eats into AP/MP too,
+	# but only the portion above the floor — a baseline character never drops
+	# below 4 AP / 8 MP from equipment alone, however much armor they stack.
+	if e.has_method("get_equipment_armor_penalty"):
+		var armor_pen: int = e.get_equipment_armor_penalty()
+		if armor_pen > 0:
+			ts["ap"] = maxi(mini(ts["ap"], 4), ts["ap"] - armor_pen)
+			ts["mp"] = maxi(mini(ts["mp"], 8), ts["mp"] - armor_pen)
 	ts["runner_bonus_mp"] = 0
 	ts["spells_cast"] = 0
 	e.current_ap = ts["ap"]

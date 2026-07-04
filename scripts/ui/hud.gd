@@ -115,6 +115,7 @@ var _crafting_tab_row: HBoxContainer    = null
 var _item_info_panel: Control      = null
 var _item_hover_tooltip: Control   = null
 var _tooltip_pinned: bool          = false  # true while the item hover tooltip is "inspect"-locked open (Enter)
+var _tooltip_has_keywords: bool    = false  # true only when the currently-shown tooltip has [url=] keyword links
 var _item_info_drop_target: Dictionary = {}
 var _drop_btn: Button              = null
 var _affix_talisman_btn: Button    = null
@@ -219,6 +220,12 @@ const KEYWORD_DEFS: Dictionary = {
 	"armor_pierce":       "Armor Pierce\n──────────────────\nIgnores 10% of the target's flat and percentage armor.",
 	"armor_pierce_light": "Armor Pierce (Light)\n──────────────────\nIgnores 7% of the target's flat and percentage armor.",
 	"heavy_weapon":       "Heavy Weapon\n──────────────────\nStrength's contribution to this weapon's damage roll modifier is doubled.",
+	"weight_penalty_1":   "Weight Penalty 1\n──────────────────\nSneak: −3   Dodge: −3\nAP: −1   MP: −1\n(AP/MP penalties never drop you below 4 AP / 8 MP.)",
+	"weight_penalty_2":   "Weight Penalty 2\n──────────────────\nSneak: −4   Dodge: −4\nAP: −1   MP: −1\n(AP/MP penalties never drop you below 4 AP / 8 MP.)",
+	"weight_penalty_3":   "Weight Penalty 3\n──────────────────\nSneak: −6   Dodge: −6\nAP: −2   MP: −2\n(AP/MP penalties never drop you below 4 AP / 8 MP.)",
+	"weight_penalty_4":   "Weight Penalty 4\n──────────────────\nSneak: −8   Dodge: −8\nAP: −2   MP: −2\n(AP/MP penalties never drop you below 4 AP / 8 MP.)",
+	"weight_penalty_5":   "Weight Penalty 5\n──────────────────\nSneak: −10   Dodge: −10\nAP: −3   MP: −3\n(AP/MP penalties never drop you below 4 AP / 8 MP.)",
+	"weight_penalty_6":   "Weight Penalty 6\n──────────────────\nSneak: −12   Dodge: −12\nAP: −3   MP: −3\n(AP/MP penalties never drop you below 4 AP / 8 MP.)",
 }
 
 const STAT_NAMES  = ["strength","dexterity","agility","constitution","intelligence","willpower","perception"]
@@ -315,7 +322,10 @@ func _ready() -> void:
 
 	_keyword_popup = _build_keyword_popup()
 	_keyword_popup.visible = false
-	_keyword_popup.z_index = 3
+	# Must render above _item_hover_tooltip (z_index 250) — it's the "tooltip
+	# within a tooltip" popup shown when hovering a keyword link (e.g. Weight
+	# Penalty) inside a pinned item/feat tooltip, and often overlaps it.
+	_keyword_popup.z_index = 260
 	add_child(_keyword_popup)
 
 	_shop_panel = _build_shop_panel()
@@ -473,6 +483,12 @@ func _toggle(name: String) -> void:
 	_open = name
 	_panels[name].visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	# HUD and CombatHUD are sibling nodes under the same UILayer; z_index alone
+	# doesn't win input hover priority across that boundary (only rendering
+	# order), so the always-present combat hotbar can silently swallow hover/
+	# click input meant for whatever HUD panel is open if it overlaps it.
+	# move_to_front() reorders HUD ahead of CombatHUD for both.
+	move_to_front()
 	if name == "stats":
 		_cs_switch_tab("stats")
 		_refresh_stats()
@@ -2540,12 +2556,14 @@ func _build_item_info_panel() -> Control:
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 			_hide_item_info())
 	var margin = MarginContainer.new()
+	margin.name = "Margin"
 	margin.add_theme_constant_override("margin_left",   10)
 	margin.add_theme_constant_override("margin_right",  10)
 	margin.add_theme_constant_override("margin_top",     8)
 	margin.add_theme_constant_override("margin_bottom",  8)
 	panel.add_child(margin)
 	var vbox := VBoxContainer.new()
+	vbox.name = "VBox"
 	vbox.add_theme_constant_override("separation", 6)
 	margin.add_child(vbox)
 	var lbl := RichTextLabel.new()
@@ -2560,6 +2578,17 @@ func _build_item_info_panel() -> Control:
 	lbl.meta_hover_started.connect(func(meta): _show_keyword_popup(str(meta), _item_info_panel))
 	lbl.meta_hover_ended.connect(_hide_keyword_popup)
 	vbox.add_child(lbl)
+	# Dedicated control for "Weight Penalty: N" — see the matching comment in
+	# _build_item_hover_tooltip() for why this isn't an inline BBCode link.
+	var wp_row := Label.new()
+	wp_row.name = "WeightPenaltyRow"
+	wp_row.visible = false
+	wp_row.mouse_filter = Control.MOUSE_FILTER_STOP
+	wp_row.add_theme_font_size_override("font_size", 12)
+	wp_row.add_theme_color_override("font_color", Color(0.94, 0.75, 0.38))
+	wp_row.mouse_entered.connect(func(): _show_keyword_popup("weight_penalty_%d" % int(wp_row.get_meta("tier", 0)), _item_info_panel))
+	wp_row.mouse_exited.connect(_hide_keyword_popup)
+	vbox.add_child(wp_row)
 	_drop_btn = Button.new()
 	_drop_btn.name = "DropBtn"
 	_drop_btn.text = "Drop"
@@ -2573,6 +2602,36 @@ func _build_item_info_panel() -> Control:
 	_affix_talisman_btn.pressed.connect(_on_affix_talisman_btn_pressed)
 	vbox.add_child(_affix_talisman_btn)
 	return panel
+
+# Clamps a tooltip/popup panel's top-left position so it always fits fully
+# within the viewport, using the panel's actual (just-updated) content size
+# rather than a guessed height — panels are variable height (item
+# descriptions, keyword breakdowns, etc.) so a fixed guess can run off the
+# bottom (or right edge) of the screen once content gets long enough.
+func _clamp_tooltip_pos(panel: Control, raw_pos: Vector2, margin: float = 4.0) -> Vector2:
+	panel.reset_size()
+	var vp_size: Vector2 = get_viewport().get_visible_rect().size
+	var sz: Vector2 = panel.size
+	var pos := raw_pos
+	pos.x = clampf(pos.x, margin, maxf(margin, vp_size.x - sz.x - margin))
+	pos.y = clampf(pos.y, margin, maxf(margin, vp_size.y - sz.y - margin))
+	return pos
+
+# Shows/hides `panel`'s dedicated "WeightPenaltyRow" control (built in
+# _build_item_hover_tooltip() / _build_item_info_panel()) for the given tier.
+# Returns true if a row was shown, so callers can also gate Enter-to-pin on
+# "is there anything worth inspecting here".
+func _set_weight_penalty_row(panel: Control, tier: int) -> bool:
+	var row := panel.get_node_or_null("Margin/VBox/WeightPenaltyRow") as Label
+	if row == null:
+		return false
+	if tier > 0:
+		row.text = "Weight Penalty: %d" % tier
+		row.set_meta("tier", tier)
+		row.visible = true
+		return true
+	row.visible = false
+	return false
 
 func _show_item_info(item: Dictionary, screen_pos: Vector2, show_drop: bool = false) -> void:
 	if _item_info_panel == null:
@@ -2588,17 +2647,14 @@ func _show_item_info(item: Dictionary, screen_pos: Vector2, show_drop: bool = fa
 	if lbl == null:
 		return
 	lbl.text = _format_item_info(item)
+	_set_weight_penalty_row(_item_info_panel, item.get("weight_penalty", 0))
 	_item_info_drop_target = item
 	if _drop_btn != null:
 		_drop_btn.visible = show_drop
 	if _affix_talisman_btn != null:
 		_affix_talisman_btn.visible = show_drop and item.get("type", "") == "talisman"
 	# Position first, then show — avoids one-frame flash at wrong position
-	var vp_size := get_viewport().get_visible_rect().size
-	var pos := screen_pos + Vector2(16, -8)
-	pos.x = clampf(pos.x, 4.0, vp_size.x - 260.0)
-	pos.y = clampf(pos.y, 4.0, vp_size.y - 120.0)
-	_item_info_panel.position = pos
+	_item_info_panel.position = _clamp_tooltip_pos(_item_info_panel, screen_pos + Vector2(16, -8))
 	_item_info_panel.visible = true
 
 func _hide_item_info() -> void:
@@ -2639,9 +2695,22 @@ func _build_item_hover_tooltip() -> Control:
 	lbl.custom_minimum_size = Vector2(200, 0)
 	lbl.add_theme_font_size_override("normal_font_size", 12)
 	lbl.add_theme_color_override("default_color", Color(0.92, 0.88, 0.80))
-	lbl.meta_hover_started.connect(func(meta): _show_keyword_popup(str(meta), _item_hover_tooltip))
-	lbl.meta_hover_ended.connect(_hide_keyword_popup)
 	vbox.add_child(lbl)
+	# Dedicated control for the "Weight Penalty: N" line — NOT an inline BBCode
+	# [url=] span in `lbl`, because RichTextLabel's meta_hover_started requires
+	# its fit_content size to already match the just-set text, which depends on
+	# a container sort that Godot can defer by a frame; that made the link
+	# unreliable to hover right after pinning. A separate Control gets ordinary
+	# mouse_entered/mouse_exited hover, sized independently, no such race.
+	var wp_row := Label.new()
+	wp_row.name = "WeightPenaltyRow"
+	wp_row.visible = false
+	wp_row.mouse_filter = Control.MOUSE_FILTER_IGNORE  # toggled to STOP only while pinned
+	wp_row.add_theme_font_size_override("font_size", 12)
+	wp_row.add_theme_color_override("font_color", Color(0.94, 0.75, 0.38))
+	wp_row.mouse_entered.connect(func(): _show_keyword_popup("weight_penalty_%d" % int(wp_row.get_meta("tier", 0)), _item_hover_tooltip))
+	wp_row.mouse_exited.connect(_hide_keyword_popup)
+	vbox.add_child(wp_row)
 	var hint := Label.new()
 	hint.name = "InspectHint"
 	hint.text = "Inspect: Enter"
@@ -2657,13 +2726,35 @@ func _show_item_hover_tooltip(item: Dictionary, screen_pos: Vector2) -> void:
 	var lbl := _item_hover_tooltip.get_node("Margin/VBox/Label") as RichTextLabel
 	if lbl == null:
 		return
-	lbl.text = _format_item_info(item)
-	var vp_size := get_viewport().get_visible_rect().size
-	var pos := screen_pos + Vector2(20, 16)
-	pos.x = clampf(pos.x, 4.0, vp_size.x - 220.0)
-	pos.y = clampf(pos.y, 4.0, vp_size.y - 120.0)
-	_item_hover_tooltip.position = pos
+	var info: String = _format_item_info(item)
+	lbl.text = info
+	var has_wp: bool = _set_weight_penalty_row(_item_hover_tooltip, item.get("weight_penalty", 0))
+	# Only item tooltips can contain hoverable [url=] keyword links (Properties)
+	# or the Weight Penalty row, so only these are worth pinning with Enter.
+	_tooltip_has_keywords = has_wp or "[url=" in info
+	_set_tooltip_hint_visible(_tooltip_has_keywords)
+	var raw_pos: Vector2 = screen_pos + Vector2(20, 16)
+	_item_hover_tooltip.position = _clamp_tooltip_pos(_item_hover_tooltip, raw_pos)
 	_item_hover_tooltip.visible = true
+	_item_hover_tooltip.move_to_front()  # ensure input hit-testing (not just z_index) puts this on top
+	# Containers apply a child's new minimum size on a deferred sort, so right
+	# after a big text change (long descriptions, the weight-penalty line)
+	# the panel can still measure short for one frame — which also shrinks
+	# its hit-test rect, making the trailing line unhoverable. Re-clamp once
+	# the deferred sort has actually run so the rect matches real content.
+	call_deferred("_reclamp_item_hover_tooltip", raw_pos)
+
+func _reclamp_item_hover_tooltip(raw_pos: Vector2) -> void:
+	if _item_hover_tooltip == null or not _item_hover_tooltip.visible:
+		return
+	_item_hover_tooltip.position = _clamp_tooltip_pos(_item_hover_tooltip, raw_pos)
+
+func _set_tooltip_hint_visible(shown: bool) -> void:
+	if _item_hover_tooltip == null:
+		return
+	var hint := _item_hover_tooltip.get_node_or_null("Margin/VBox/InspectHint") as Label
+	if hint != null:
+		hint.visible = shown
 
 # force=true bypasses the inspect-pin (used when the panel that owns this
 # tooltip is being torn down, e.g. _close_all()).
@@ -2675,19 +2766,27 @@ func _hide_item_hover_tooltip(force: bool = false) -> void:
 
 # Plain-text variant of _show_item_hover_tooltip, for hover targets that
 # aren't items (e.g. feat buttons) but still want the same tooltip panel.
-func _show_text_tooltip(text: String, screen_pos: Vector2) -> void:
+# weight_penalty_tier > 0 (e.g. Bulky) shows the dedicated Weight Penalty row
+# — that's the only thing worth pinning open with Enter for these buttons
+# (they're often dynamically rebuilt, e.g. the level-up feat picker, and a
+# stray pin otherwise would leave a click-blocking overlay on top of them).
+func _show_text_tooltip(text: String, screen_pos: Vector2, weight_penalty_tier: int = 0) -> void:
 	if _tooltip_pinned or _item_hover_tooltip == null or text == "":
 		return
 	var lbl := _item_hover_tooltip.get_node("Margin/VBox/Label") as RichTextLabel
 	if lbl == null:
 		return
 	lbl.text = text
-	var vp_size := get_viewport().get_visible_rect().size
-	var pos := screen_pos + Vector2(20, 16)
-	pos.x = clampf(pos.x, 4.0, vp_size.x - 220.0)
-	pos.y = clampf(pos.y, 4.0, vp_size.y - 120.0)
-	_item_hover_tooltip.position = pos
+	var has_wp: bool = _set_weight_penalty_row(_item_hover_tooltip, weight_penalty_tier)
+	_tooltip_has_keywords = has_wp
+	_set_tooltip_hint_visible(_tooltip_has_keywords)
+	var raw_pos: Vector2 = screen_pos + Vector2(20, 16)
+	_item_hover_tooltip.position = _clamp_tooltip_pos(_item_hover_tooltip, raw_pos)
 	_item_hover_tooltip.visible = true
+	_item_hover_tooltip.move_to_front()  # ensure input hit-testing (not just z_index) puts this on top
+	# See _show_item_hover_tooltip() — re-clamp after the deferred container
+	# sort so the panel's real (post-layout) size backs its hover hit-test.
+	call_deferred("_reclamp_item_hover_tooltip", raw_pos)
 
 # Enter toggles the item hover tooltip between "follows the mouse, closes on
 # mouse-exit" (normal) and "pinned in place" so the player can move the mouse
@@ -2695,15 +2794,18 @@ func _show_text_tooltip(text: String, screen_pos: Vector2) -> void:
 func _toggle_tooltip_pin() -> void:
 	if _tooltip_pinned:
 		_unpin_item_hover_tooltip()
-	elif _item_hover_tooltip != null and _item_hover_tooltip.visible:
+	elif _item_hover_tooltip != null and _item_hover_tooltip.visible and _tooltip_has_keywords:
 		_pin_item_hover_tooltip()
 
 func _pin_item_hover_tooltip() -> void:
 	_tooltip_pinned = true
+	move_to_front()  # HUD ahead of CombatHUD — see _toggle() for why
+	_item_hover_tooltip.move_to_front()
 	_item_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_STOP
 	_item_hover_tooltip.get_node("Margin").mouse_filter = Control.MOUSE_FILTER_STOP
 	_item_hover_tooltip.get_node("Margin/VBox").mouse_filter = Control.MOUSE_FILTER_STOP
 	_item_hover_tooltip.get_node("Margin/VBox/Label").mouse_filter = Control.MOUSE_FILTER_STOP
+	_item_hover_tooltip.get_node("Margin/VBox/WeightPenaltyRow").mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _unpin_item_hover_tooltip() -> void:
 	_tooltip_pinned = false
@@ -2714,6 +2816,7 @@ func _unpin_item_hover_tooltip() -> void:
 	_item_hover_tooltip.get_node("Margin").mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_item_hover_tooltip.get_node("Margin/VBox").mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_item_hover_tooltip.get_node("Margin/VBox/Label").mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_item_hover_tooltip.get_node("Margin/VBox/WeightPenaltyRow").mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hide_item_hover_tooltip(true)
 
 # Builds a sized ItemIcon for `item`. pass_through=true (default) ignores mouse
@@ -3085,7 +3188,6 @@ func _container_store_item(item: Dictionary) -> void:
 
 func _build_keyword_popup() -> Control:
 	var panel := PanelContainer.new()
-	panel.z_index = 210
 	panel.custom_minimum_size = Vector2(200, 0)
 	var style := StyleBoxFlat.new()
 	style.bg_color     = Color(0.08, 0.07, 0.04, 0.97)
@@ -3120,14 +3222,11 @@ func _show_keyword_popup(keyword: String, anchor: Control) -> void:
 	if lbl == null:
 		return
 	lbl.text = def
-	var vp_size := get_viewport().get_visible_rect().size
 	var base := anchor.position
 	var panel_w: float = anchor.size.x if anchor.size.x > 10.0 else 260.0
-	var pos := base + Vector2(panel_w + 6.0, 0.0)
-	pos.x = clampf(pos.x, 4.0, vp_size.x - 220.0)
-	pos.y = clampf(pos.y, 4.0, vp_size.y - 200.0)
-	_keyword_popup.position = pos
+	_keyword_popup.position = _clamp_tooltip_pos(_keyword_popup, base + Vector2(panel_w + 6.0, 0.0))
 	_keyword_popup.visible = true
+	_keyword_popup.move_to_front()
 
 func _hide_keyword_popup() -> void:
 	if _keyword_popup != null:
@@ -5150,12 +5249,9 @@ func _show_status_info_popup(status_name: String, near_pos: Vector2) -> void:
 	if lbl == null:
 		return
 	lbl.text = def
-	var vp_size := get_viewport().get_visible_rect().size
-	var pos := near_pos + Vector2(24, 0)
-	pos.x = clampf(pos.x, 4.0, vp_size.x - 220.0)
-	pos.y = clampf(pos.y, 4.0, vp_size.y - 200.0)
-	_keyword_popup.position = pos
+	_keyword_popup.position = _clamp_tooltip_pos(_keyword_popup, near_pos + Vector2(24, 0))
 	_keyword_popup.visible = true
+	_keyword_popup.move_to_front()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # REST PANEL
@@ -6460,7 +6556,8 @@ func _refresh_feats() -> void:
 				btn.custom_minimum_size = Vector2(0, 26)
 				btn.disabled = not meets
 				var fdesc: String = f.get("description", "")
-				btn.mouse_entered.connect(func(): _show_text_tooltip(fdesc, get_viewport().get_mouse_position()))
+				var f_weight_tier: int = f.get("weight_penalty", 0)
+				btn.mouse_entered.connect(func(): _show_text_tooltip(fdesc, get_viewport().get_mouse_position(), f_weight_tier))
 				btn.mouse_exited.connect(_hide_item_hover_tooltip)
 				var fid: String = feat_id
 				btn.pressed.connect(func():
@@ -6604,6 +6701,7 @@ func _refresh_bonuses() -> void:
 	if GameManager.has_feat("bulky"):
 		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Bulky (feat)", "−10% all dmg"))
 		_cs_bonuses_vbox.add_child(_bonuses_sub_row("  ↳ multiplicative, after armor", ""))
+		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Bulky (feat)", "+2 flat (physical)"))
 
 	if block_total > 0.0:
 		_cs_bonuses_vbox.add_child(_bonuses_kv_row("Shield block", "%.1f flat" % block_total))

@@ -73,9 +73,10 @@ func _load_feats() -> void:
 	}
 	feats["bulky"] = {
 		"id": "bulky", "name": "Bulky", "source": "level_up",
-		"description": "Thick of frame and built to take a beating. You gain 10% resistance to all damage types, applied multiplicatively on top of your armor and any other resistances. The bulk comes at a cost, though — you carry a permanent −10 penalty to Sneak and Dodge, as if always weighed down in armor.",
+		"description": "Thick of frame and built to take a beating. You gain 10% resistance to all damage types, applied multiplicatively on top of your armor and any other resistances, plus 2 flat resistance to physical damage. The bulk comes at a cost, though — you carry a permanent Weight Penalty, as if always weighed down in armor.",
 		"requirements": {"stats": {"constitution": 8}, "skills": {}},
 		"effect_tag": "bulky_resist_and_penalty",
+		"weight_penalty": 5,
 	}
 	feats["harvester"] = {
 		"id": "harvester", "name": "Hunter-Gatherer", "source": "level_up",
@@ -1045,6 +1046,26 @@ func _fish_desc(q: int) -> String:
 		"An excellent catch — plump and perfectly fresh.",
 		"A pristine specimen. Worth showing off before it's cooked."][q]
 
+# ── Weight Penalty ─────────────────────────────────────────────────────────────
+# Single authored number ("weight_penalty": tier) replaces separately-authored
+# sneak/dodge skill_bonus + armor_penalty on heavy armor, shields, and unwieldy
+# weapons (and the Bulky feat). Tier drives both the Sneak/Dodge skill penalty
+# and the AP/MP penalty (the latter floored at 4 AP / 8 MP — see CombatManager).
+const WEIGHT_PENALTY_TIERS: Dictionary = {
+	1: {"skill": 3,  "ap_mp": 1},
+	2: {"skill": 4,  "ap_mp": 1},
+	3: {"skill": 6,  "ap_mp": 2},
+	4: {"skill": 8,  "ap_mp": 2},
+	5: {"skill": 10, "ap_mp": 3},
+	6: {"skill": 12, "ap_mp": 3},
+}
+
+func weight_penalty_skill(tier: int) -> int:
+	return WEIGHT_PENALTY_TIERS.get(tier, {}).get("skill", 0)
+
+func weight_penalty_ap_mp(tier: int) -> int:
+	return WEIGHT_PENALTY_TIERS.get(tier, {}).get("ap_mp", 0)
+
 # ── Item helpers ──────────────────────────────────────────────────────────────
 
 # Returns a fresh copy of an item by ID (safe to store in equipment/inventory).
@@ -1167,14 +1188,16 @@ func _load_items() -> void:
 		"properties": ["bleed"], "abilities": [],
 	}
 
-	items["axe"] = {
-		"id": "axe", "weight": 6.0, "name": "Bronze Axe", "type": "weapon", "slot": "hand",
-		"description": "A heavy axe head cast in bronze, mounted on a hardwood haft. Punches through armor.",
-		"damage": "1d10", "ap_cost": 4, "range": 1,
+	items["greataxe"] = {
+		"id": "greataxe", "weight": 12.0, "name": "Bronze Greataxe", "type": "weapon", "slot": "hand",
+		"description": "A double-bitted axe head far too large for one-handed work, mounted on a full haft. Slow, but it cleaves through armor and flesh alike.",
+		"damage": "3d10", "ap_cost": 6, "range": 1,
 		"skill": "melee", "governing": ["strength"],
 		"damage_type": "physical",
 		# heavy_weapon: strength's contribution to this weapon's damage roll is doubled.
+		# weight_penalty: very heavy — same tier as a bronze shield.
 		"properties": ["armor_pierce", "heavy_weapon"], "abilities": [],
+		"weight_penalty": 5,
 	}
 
 	items["sling"] = {
@@ -1253,14 +1276,14 @@ func _load_items() -> void:
 		"id": "hide_shield", "weight": 2.0, "name": "Hide Shield", "type": "armor", "slot": "hand",
 		"description": "A frame of bent wood stretched with thick hide. Light, but takes the worst out of a blow — if you get it up in time.",
 		"block_flat": 4, "governing": ["strength", "dexterity"],
-		"skill_bonus": {"sneak": -3, "dodge": -3}, "carry_weight_bonus": 0,
+		"weight_penalty": 1, "carry_weight_bonus": 0,
 	}
 
 	items["wooden_shield"] = {
 		"id": "wooden_shield", "weight": 4.0, "name": "Wooden Shield", "type": "armor", "slot": "hand",
 		"description": "A sturdy wooden shield. Blocks a meaningful amount of damage but leaves only one hand free — if you get it up in time.",
 		"block_flat": 6, "governing": ["strength", "dexterity"],
-		"skill_bonus": {"sneak": -8, "dodge": -8}, "carry_weight_bonus": 0,
+		"weight_penalty": 4, "carry_weight_bonus": 0,
 	}
 
 	items["lockpicking_kit"] = {
@@ -1352,8 +1375,8 @@ func _load_items() -> void:
 	items["ancient_bronze_scrap"] = {
 		"id": "ancient_bronze_scrap", "name": "Ancient Bronze Scrap", "type": "material",
 		"material_type": "metal", "slot": null, "weight": 0.5,
-		"uses": 2, "max_uses": 2, "quality_value": 0.5, "quality_name": "Standard",
-		"description": "A lump of corroded bronze salvaged from the ruins of the old city below. Still workable if you know what you're doing.\n\nQuality: Standard (50%)\nUses: 2",
+		"uses": 1, "quality_value": 0.5, "quality_name": "Standard",
+		"description": "A lump of corroded bronze salvaged from the ruins of the old city below. Still workable if you know what you're doing.\n\nQuality: Standard (50%)",
 		"properties": [], "abilities": [],
 	}
 
@@ -1569,7 +1592,7 @@ func _load_items() -> void:
 		"id": "padded_cloth_armor", "weight": 2.0, "name": "Padded Cloth Armor", "type": "armor", "slot": "torso",
 		"description": "Layers of dense cloth, quilted thick enough to take the sting out of a blow.",
 		"defense_flat": 0, "defense_pct": 0.10,
-		"skill_bonus": {"sneak": -6, "dodge": -6}, "carry_weight_bonus": 0,
+		"weight_penalty": 3, "carry_weight_bonus": 0,
 	}
 
 	items["work_trousers"] = {
@@ -1592,22 +1615,22 @@ func _load_items() -> void:
 	items["bronze_helm"] = {
 		"id": "bronze_helm", "weight": 1.5, "name": "Bronze Helm", "type": "armor", "slot": "head",
 		"description": "A cast bronze helm covering the skull and cheeks. Heavy, but a blow to an unprotected head ends fights.",
-		"defense_flat": 2, "defense_pct": 0.03, "skill_bonus": {"sneak": -3, "dodge": -3}, "carry_weight_bonus": 0,
+		"defense_flat": 2, "defense_pct": 0.03, "weight_penalty": 1, "carry_weight_bonus": 0,
 	}
 	items["bronze_scale_hauberk"] = {
 		"id": "bronze_scale_hauberk", "weight": 6.0, "name": "Bronze Scale Hauberk", "type": "armor", "slot": "torso",
 		"description": "Overlapping bronze scales wired to a leather backing. Expensive, heavy, and highly effective.",
-		"defense_flat": 5, "defense_pct": 0.10, "skill_bonus": {"sneak": -12, "dodge": -12}, "carry_weight_bonus": 0,
+		"defense_flat": 5, "defense_pct": 0.10, "weight_penalty": 6, "carry_weight_bonus": 0,
 	}
 	items["bronze_greaves"] = {
 		"id": "bronze_greaves", "weight": 2.0, "name": "Bronze Greaves", "type": "armor", "slot": "legs",
 		"description": "Formed bronze plates strapped around the shins. Standard protection for infantry.",
-		"defense_flat": 1, "defense_pct": 0.04, "skill_bonus": {"sneak": -4, "dodge": -4}, "carry_weight_bonus": 0,
+		"defense_flat": 1, "defense_pct": 0.04, "weight_penalty": 2, "carry_weight_bonus": 0,
 	}
 	items["bronze_shield"] = {
 		"id": "bronze_shield", "weight": 6.0, "name": "Bronze Shield", "type": "armor", "slot": "hand",
 		"description": "A bronze-faced shield, heavy enough to stop a blade outright — for those nimble enough to swing it into place in time.",
-		"block_flat": 10, "governing": ["dexterity"], "skill_bonus": {"sneak": -10, "dodge": -10}, "carry_weight_bonus": 0,
+		"block_flat": 10, "governing": ["dexterity"], "weight_penalty": 5, "carry_weight_bonus": 0,
 	}
 
 	# Spirit armbands — bronze is the smith's basic offering; iron is a higher tier for later

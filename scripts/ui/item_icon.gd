@@ -71,7 +71,7 @@ func _draw() -> void:
 			_draw_sword(w, h, Color(0.78, 0.58, 0.18), 0.45)
 		"sword":
 			_draw_sword(w, h, Color(0.78, 0.58, 0.18), 0.75)
-		"axe":
+		"greataxe":
 			_draw_axe(w, h, Color(0.78, 0.58, 0.18), Color(0.55, 0.42, 0.28))
 		"bronze_spear":
 			_draw_spear(w, h, Color(0.78, 0.58, 0.18), Color(0.55, 0.42, 0.28))

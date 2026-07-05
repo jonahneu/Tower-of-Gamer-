@@ -1191,7 +1191,7 @@ func _load_items() -> void:
 	items["greataxe"] = {
 		"id": "greataxe", "weight": 12.0, "name": "Bronze Greataxe", "type": "weapon", "slot": "hand",
 		"description": "A double-bitted axe head far too large for one-handed work, mounted on a full haft. Slow, but it cleaves through armor and flesh alike.",
-		"damage": "3d10", "ap_cost": 6, "range": 1,
+		"damage": "3d10", "ap_cost": 4, "range": 1,
 		"skill": "melee", "governing": ["strength"],
 		"damage_type": "physical",
 		# heavy_weapon: strength's contribution to this weapon's damage roll is doubled.

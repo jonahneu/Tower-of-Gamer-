@@ -1093,7 +1093,9 @@ func _on_combat_log(entry: String) -> void:
 	_log_vbox.add_child(lbl)
 
 	while _log_vbox.get_child_count() > LOG_MAX_ENTRIES:
-		_log_vbox.get_child(0).queue_free()
+		var oldest: Node = _log_vbox.get_child(0)
+		_log_vbox.remove_child(oldest)
+		oldest.queue_free()
 
 	_log_scroll.call_deferred("set_v_scroll", 999999)
 
@@ -1201,6 +1203,8 @@ func _on_attack_pressed(weapon: Dictionary) -> void:
 	if CombatManager.current_ap() >= ap_cost:
 		CombatManager.set_pending_weapon(weapon)
 		_show_status("Select a target to attack with %s." % weapon.get("name", "weapon"))
+	else:
+		_show_status("Not enough AP to attack with %s (%d needed)." % [weapon.get("name", "weapon"), ap_cost])
 
 func _on_ability_pressed(weapon: Dictionary, ability: Dictionary) -> void:
 	if not CombatManager.spend_ap(ability.get("ap_cost", 0)):

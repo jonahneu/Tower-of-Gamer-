@@ -46,6 +46,16 @@ var is_human: bool = false          # true = corpse is searched, never carved
 # Unrelated to is_human's carve-vs-search branching above.
 var loot_item_ids: Array = []
 
+# Whatever this entity had equipped (weapon, shield, armor) when it died, so
+# Search finds their actual gear alongside any curated loot_item_ids above.
+func _equipped_item_ids() -> Array:
+	var ids: Array = []
+	for slot in equipment:
+		var item = equipment[slot]
+		if item != null and item.get("id", "") != "":
+			ids.append(item["id"])
+	return ids
+
 # ── XP (set by subclass before super._ready()) ────────────────────────────────
 var xp_value: int    = 0    # base XP awarded on death (scaled by level diff)
 var enemy_level: int = 1    # internal level; not shown to player
@@ -152,7 +162,7 @@ func _spawn_corpse() -> void:
 	corpse.beast_type        = beast_type
 	corpse.beast_quality_mod = beast_quality_mod
 	corpse.is_human          = is_human
-	corpse.loot_item_ids     = loot_item_ids
+	corpse.loot_item_ids     = loot_item_ids + _equipped_item_ids()
 	_record_death()
 	_tile_scene.unregister_entity(grid_cell)
 	_tile_scene.add_child(corpse)

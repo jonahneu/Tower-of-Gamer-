@@ -351,6 +351,13 @@ func remove_participant(entity: Node) -> void:
 		return
 	participants.remove_at(idx)
 	turn_state.erase(entity)
+	# Removing an entity ahead of the current turn owner shifts every later
+	# index down by one — without this, turn_index silently starts pointing
+	# at a different entity than whoever's turn it actually is (e.g. killing
+	# a mid-combat enemy on the player's own turn makes is_player_turn()
+	# incorrectly return false for the rest of that turn).
+	if idx < turn_index:
+		turn_index -= 1
 	if not participants.is_empty() and turn_index >= participants.size():
 		turn_index = participants.size() - 1
 
@@ -1493,6 +1500,8 @@ func _apply_on_hit_properties(attacker: Node, defender: Node, weapon: Dictionary
 func _check_shrug_off(entity: Node) -> bool:
 	return entity == GameManager.player and GameManager.has_feat("shrug_off") and randf() < 0.10
 
+const MAX_STATUS_STACKS: int = 10
+
 func _try_apply_bleed(defender: Node, attacker: Node = null, chance_mult: float = 1.0) -> PackedStringArray:
 	if not defender.has_method("get") or defender.get("status_effects") == null:
 		return PackedStringArray()
@@ -1517,7 +1526,8 @@ func _try_apply_bleed(defender: Node, attacker: Node = null, chance_mult: float 
 			return PackedStringArray(["  Bleed: roll %d%% vs %d%% — shrugged off" % [roll_pct, pct]])
 		if not defender.status_effects.has("bleed"):
 			defender.status_effects["bleed"] = []
-		defender.status_effects["bleed"].append(3)
+		if defender.status_effects["bleed"].size() < MAX_STATUS_STACKS:
+			defender.status_effects["bleed"].append(3)
 		EventBus.status_applied.emit(defender, "bleed")
 		EventBus.damage_floater.emit(defender, "bleed", Color(0.85, 0.12, 0.12))
 		return PackedStringArray(["  Bleed: roll %d%% vs %d%% — APPLIED" % [roll_pct, pct]])
@@ -1547,7 +1557,8 @@ func _try_apply_poison(defender: Node, chance_mult: float = 1.0) -> PackedString
 			return PackedStringArray(["  Poison: roll %d%% vs %d%% — shrugged off" % [roll_pct, pct]])
 		if not defender.status_effects.has("poison"):
 			defender.status_effects["poison"] = []
-		defender.status_effects["poison"].append(3)
+		if defender.status_effects["poison"].size() < MAX_STATUS_STACKS:
+			defender.status_effects["poison"].append(3)
 		EventBus.status_applied.emit(defender, "poison")
 		EventBus.damage_floater.emit(defender, "poisoned", Color(0.25, 0.82, 0.25))
 		return PackedStringArray(["  Poison: roll %d%% vs %d%% — APPLIED" % [roll_pct, pct]])

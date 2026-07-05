@@ -217,17 +217,23 @@ func _normal_turn(player_typed: Player) -> void:
 			# only spend the turn lining up a charge instead when melee isn't
 			# reachable this turn anyway (too far, or the direct route is blocked).
 			var melee_cell: Vector2i = _find_adjacent_to(p_cell)
-			var melee_path: Array[Vector2i] = Pathfinding.find_path(grid_cell, melee_cell, _tile_scene) if melee_cell != Vector2i(-1, -1) else []
+			var melee_path: Array[Vector2i] = []
+			if melee_cell != Vector2i(-1, -1):
+				melee_path = Pathfinding.find_path(grid_cell, melee_cell, _tile_scene)
 			if not melee_path.is_empty() and melee_path.size() <= move_budget:
 				dest = melee_cell
 				path = melee_path
 			else:
 				var align_cell: Vector2i = _find_ram_setup_cell(player_typed, move_budget)
 				dest = align_cell if align_cell != Vector2i(-1, -1) else melee_cell
-				path = Pathfinding.find_path(grid_cell, dest, _tile_scene) if dest != Vector2i(-1, -1) else []
+				path = []
+				if dest != Vector2i(-1, -1):
+					path = Pathfinding.find_path(grid_cell, dest, _tile_scene)
 		else:
 			dest = _find_adjacent_to(p_cell)
-			path = Pathfinding.find_path(grid_cell, dest, _tile_scene) if dest != Vector2i(-1, -1) else []
+			path = []
+			if dest != Vector2i(-1, -1):
+				path = Pathfinding.find_path(grid_cell, dest, _tile_scene)
 		if path.is_empty():
 			_unreachable_turns += 1
 			CombatManager.mark_unreachable(self)
@@ -261,6 +267,8 @@ func _normal_turn(player_typed: Player) -> void:
 				queue_redraw()
 				if not is_instance_valid(self) or not _in_combat:
 					return
+				if not engaged and _tile_scene.has_line_of_sight(grid_cell, player_typed.grid_cell):
+					break
 
 	if not _attack_weapon.is_empty() and attack_cost > 0:
 		while is_instance_valid(self) and _in_combat and CombatManager.active:

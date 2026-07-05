@@ -574,6 +574,7 @@ func _execute_ai_turn() -> void:
 
 	# ── Move phase: spend MP then spare AP to close distance ──────────────────
 	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
+	var engaged: bool = p_cell == player_typed.grid_cell
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 	if manhattan <= 1:
 		_unreachable_turns = 0
@@ -613,6 +614,11 @@ func _execute_ai_turn() -> void:
 				queue_redraw()
 				if not is_instance_valid(self) or not _in_combat:
 					return
+				# Chasing a stale cell (searching/alerted/wandering) — stop the
+				# instant we regain sight of the player instead of walking the
+				# rest of this turn's path toward where they used to be.
+				if not engaged and _tile_scene.has_line_of_sight(grid_cell, player_typed.grid_cell):
+					break
 
 	# ── Attack phase: spend all remaining AP on attacks ───────────────────────
 	if not _attack_weapon.is_empty() and attack_cost > 0:

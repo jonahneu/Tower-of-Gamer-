@@ -104,13 +104,16 @@ func _try_grapple(player_typed: Player) -> void:
 func _normal_turn(player_typed: Player) -> void:
 	var attack_cost: int = _attack_weapon.get("ap_cost", 1)
 	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
+	var engaged: bool = p_cell == player_typed.grid_cell
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 
 	if manhattan <= 1:
 		_unreachable_turns = 0
 	if manhattan > 1 and _tile_scene != null:
 		var adj: Vector2i = _find_adjacent_to(p_cell)
-		var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene) if adj != Vector2i(-1, -1) else []
+		var path: Array[Vector2i] = []
+		if adj != Vector2i(-1, -1):
+			path = Pathfinding.find_path(grid_cell, adj, _tile_scene)
 		if path.is_empty():
 			_unreachable_turns += 1
 			CombatManager.mark_unreachable(self)
@@ -145,6 +148,8 @@ func _normal_turn(player_typed: Player) -> void:
 				queue_redraw()
 				if not is_instance_valid(self) or not _in_combat:
 					return
+				if not engaged and _tile_scene.has_line_of_sight(grid_cell, player_typed.grid_cell):
+					break
 
 	if not _attack_weapon.is_empty() and attack_cost > 0:
 		while is_instance_valid(self) and _in_combat and CombatManager.active:

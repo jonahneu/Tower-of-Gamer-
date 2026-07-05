@@ -252,6 +252,8 @@ func _execute_ai_turn() -> void:
 					queue_redraw()
 					if not is_instance_valid(self) or not _in_combat:
 						return
+					if _tile_scene.has_line_of_sight(grid_cell, player_typed.grid_cell):
+						break
 
 	# ── Attack phase: bite if adjacent, spit if in range with LoS ───────────
 	while is_instance_valid(self) and _in_combat and CombatManager.active:

@@ -9,6 +9,22 @@ class_name CannibalScout
 
 const BOW_RANGE: int = 18
 
+# True if any living ally is currently adjacent to (i.e. presumably fighting)
+# the player, regardless of whether anyone has confirmed raycast LOS.
+func _ally_adjacent_to_player(player_typed: Player) -> bool:
+	var p_cell: Vector2i = player_typed.grid_cell
+	for e in CombatManager.participants:
+		if e == self or e == player_typed or not is_instance_valid(e):
+			continue
+		if e.get("current_hp") != null and e.current_hp <= 0:
+			continue
+		var e_cell = e.get("grid_cell")
+		if e_cell == null:
+			continue
+		if maxi(abs((e_cell as Vector2i).x - p_cell.x), abs((e_cell as Vector2i).y - p_cell.y)) <= 1:
+			return true
+	return false
+
 func _ready() -> void:
 	entity_name = "Cannibal Scout"
 	super._ready()
@@ -41,6 +57,13 @@ func _execute_ai_turn() -> void:
 	# (alert origin / last-known cell / wander direction).
 	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
 	var engaged: bool = p_cell == player_typed.grid_cell
+	# Melee attacks only need adjacency, not a raycast LOS, so an ally can be
+	# locked in melee with the player around a corner while group_has_sight
+	# is still false — without this the scout never learns the fight is
+	# right there and just keeps chasing stale alert/search/wander data.
+	if not engaged and _ally_adjacent_to_player(player_typed):
+		engaged = true
+		p_cell = player_typed.grid_cell
 
 	# ── Move phase: close to within bow range if currently farther away ──────
 	var cheby: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
@@ -48,7 +71,9 @@ func _execute_ai_turn() -> void:
 		_unreachable_turns = 0
 	if (engaged and cheby > BOW_RANGE or not engaged and cheby > 1) and _tile_scene != null:
 		var adj: Vector2i = _find_adjacent_to(p_cell)
-		var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene) if adj != Vector2i(-1, -1) else []
+		var path: Array[Vector2i] = []
+		if adj != Vector2i(-1, -1):
+			path = Pathfinding.find_path(grid_cell, adj, _tile_scene)
 		if path.is_empty():
 			_unreachable_turns += 1
 			CombatManager.mark_unreachable(self)
@@ -85,6 +110,8 @@ func _execute_ai_turn() -> void:
 					return
 				cheby = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
 				if engaged and cheby <= BOW_RANGE:
+					break
+				if not engaged and _tile_scene.has_line_of_sight(grid_cell, player_typed.grid_cell):
 					break
 
 	# ── Attack phase: fire while in range with line of sight ──────────────────

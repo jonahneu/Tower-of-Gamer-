@@ -44,6 +44,23 @@ func _effective_bow_range() -> int:
 	return BOW_RANGE * 2 if "long_ranged" in feats else BOW_RANGE
 
 
+# True if any living ally is currently adjacent to (i.e. presumably fighting)
+# the player, regardless of whether anyone has confirmed raycast LOS.
+func _ally_adjacent_to_player(player_typed: Player) -> bool:
+	var p_cell: Vector2i = player_typed.grid_cell
+	for e in CombatManager.participants:
+		if e == self or e == player_typed or not is_instance_valid(e):
+			continue
+		if e.get("current_hp") != null and e.current_hp <= 0:
+			continue
+		var e_cell = e.get("grid_cell")
+		if e_cell == null:
+			continue
+		if maxi(abs((e_cell as Vector2i).x - p_cell.x), abs((e_cell as Vector2i).y - p_cell.y)) <= 1:
+			return true
+	return false
+
+
 # ── AI turn ────────────────────────────────────────────────────────────────────
 # Priority: if already able to fire (even with a long-range penalty), spend
 # MP only — never AP — trying to shed the penalty by closing to BOW_RANGE,
@@ -70,6 +87,14 @@ func _execute_ai_turn() -> void:
 	# (alert origin / last-known cell / wander direction).
 	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player_typed)
 	var engaged: bool = p_cell == player_typed.grid_cell
+	# Melee attacks only need adjacency, not a raycast LOS (see Enemy's attack
+	# phase — pure Chebyshev/manhattan check), so an ally can be locked in
+	# melee with the player around a corner while group_has_sight is still
+	# false. Without this, the archer has no way to know the fight is right
+	# there and just keeps chasing stale alert/search/wander data forever.
+	if not engaged and _ally_adjacent_to_player(player_typed):
+		engaged = true
+		p_cell = player_typed.grid_cell
 	var cheby: int = maxi(abs(grid_cell.x - p_cell.x), abs(grid_cell.y - p_cell.y))
 
 	if (engaged and cheby > max_range or not engaged and cheby > 1) and _tile_scene != null:
@@ -77,7 +102,7 @@ func _execute_ai_turn() -> void:
 		# When engaged, stop as soon as max_range is reached rather than
 		# burning AP all the way down to BOW_RANGE; the no-penalty shave-down
 		# below handles the rest with MP only.
-		await _step_toward(p_cell, false, max_range if engaged else -1, bow_cost)
+		await _step_toward(p_cell, false, max_range if engaged else -1, bow_cost, not engaged)
 
 	if engaged and _tile_scene != null:
 		await _step_toward(p_cell, true, BOW_RANGE)
@@ -124,7 +149,7 @@ func _execute_ai_turn() -> void:
 func _find_los_position(p_cell: Vector2i, max_range: int) -> Vector2i:
 	if _tile_scene == null:
 		return Vector2i(-1, -1)
-	const SEARCH_RADIUS: int = 6
+	const SEARCH_RADIUS: int = 14
 	var visited: Dictionary = {grid_cell: 0}
 	var queue: Array[Vector2i] = [grid_cell]
 	var head: int = 0
@@ -195,8 +220,11 @@ func _step_to_cell(target: Vector2i, mp_only: bool, attack_cost: int = 0) -> voi
 # early once within `break_range` (skip the check entirely with -1). When
 # mp_only is true, only MP is spent (and the budget is capped to current MP)
 # so AP stays free for attacking; otherwise spends MP then spare AP, reserving
-# `attack_cost` AP for an attack this turn where possible.
-func _step_toward(target: Vector2i, mp_only: bool, break_range: int, attack_cost: int = 0) -> void:
+# `attack_cost` AP for an attack this turn where possible. When `stop_on_los`
+# is set, `target` is a stale (searching/alerted/wandering) cell rather than
+# the player's live position — abandon the walk toward it the instant we
+# regain line of sight, instead of finishing the trip to where they used to be.
+func _step_toward(target: Vector2i, mp_only: bool, break_range: int, attack_cost: int = 0, stop_on_los: bool = false) -> void:
 	if _tile_scene == null:
 		return
 	if break_range >= 0 and maxi(abs(grid_cell.x - target.x), abs(grid_cell.y - target.y)) <= break_range:
@@ -209,7 +237,9 @@ func _step_toward(target: Vector2i, mp_only: bool, break_range: int, attack_cost
 	if move_budget <= 0:
 		return
 	var adj: Vector2i = _find_adjacent_to(target)
-	var path: Array[Vector2i] = Pathfinding.find_path(grid_cell, adj, _tile_scene) if adj != Vector2i(-1, -1) else []
+	var path: Array[Vector2i] = []
+	if adj != Vector2i(-1, -1):
+		path = Pathfinding.find_path(grid_cell, adj, _tile_scene)
 	if path.is_empty():
 		_unreachable_turns += 1
 		CombatManager.mark_unreachable(self)
@@ -246,4 +276,6 @@ func _step_toward(target: Vector2i, mp_only: bool, break_range: int, attack_cost
 		if not is_instance_valid(self) or not _in_combat:
 			return
 		if break_range >= 0 and maxi(abs(grid_cell.x - target.x), abs(grid_cell.y - target.y)) <= break_range:
+			return
+		if stop_on_los and _tile_scene.has_line_of_sight(grid_cell, GameManager.player.grid_cell):
 			return

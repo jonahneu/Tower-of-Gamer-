@@ -217,6 +217,7 @@ func _execute_npc_ai_turn() -> void:
 
 	# Move toward player spending MP then spare AP
 	var p_cell: Vector2i = CombatManager.resolve_ai_target_cell(self, player)
+	var engaged: bool = p_cell == player.get("grid_cell")
 	var manhattan: int = abs(grid_cell.x - p_cell.x) + abs(grid_cell.y - p_cell.y)
 	if manhattan > 1 and _tile_scene != null:
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
@@ -240,6 +241,8 @@ func _execute_npc_ai_turn() -> void:
 				queue_redraw()
 				if not is_instance_valid(self) or not _in_combat:
 					return
+				if not engaged and _tile_scene.has_line_of_sight(grid_cell, player.get("grid_cell")):
+					break
 
 	# Attack phase
 	while is_instance_valid(self) and _in_combat and CombatManager.active:

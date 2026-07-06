@@ -4,8 +4,8 @@ class_name WallTorch
 # movement or interaction. Smaller light radius than a campfire/bonfire.
 
 @export var grid_cell: Vector2i = Vector2i(0, 0)
-@export var bright_radius: int = 4
-@export var dim_radius: int = 7
+@export var bright_radius: int = 6
+@export var dim_radius: int = 11
 
 var blocks_movement: bool = false
 var is_interactable: bool = false

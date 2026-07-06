@@ -5,8 +5,8 @@ class_name Torch
 # automatically along with the Player on zone transition). Re-registers its
 # position whenever the carrier moves.
 
-const BRIGHT_RADIUS: int = 4
-const DIM_RADIUS: int = 7
+const BRIGHT_RADIUS: int = 6
+const DIM_RADIUS: int = 11
 
 var _carrier: Node = null
 var _tile_scene: TileScene = null

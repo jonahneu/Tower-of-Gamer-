@@ -1326,9 +1326,6 @@ func _on_interaction_triggered(entity: Node, action_id: String) -> void:
 				entity.interact()
 			else:
 				_open_examine_panel(entity)
-		"pick_lock":
-			if entity.has_method("attempt_pick_lock"):
-				entity.attempt_pick_lock()
 		"force_open":
 			if entity.has_method("attempt_force_open"):
 				entity.attempt_force_open()

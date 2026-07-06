@@ -48,11 +48,12 @@ func get_click_polygon() -> PackedVector2Array:
 		position + LEFT,
 	])
 
+const FORCE_OPEN_STRENGTH: int = 8
+
 func get_interaction_options() -> Array:
 	if is_open:
 		return [{"label": "Examine", "id": "examine", "priority": 50}]
 	return [
-		{"label": "Pick Lock",  "id": "pick_lock",  "priority": 100},
 		{"label": "Force Open", "id": "force_open", "priority": 90},
 		{"label": "Examine",    "id": "examine",     "priority": 50},
 	]
@@ -60,35 +61,20 @@ func get_interaction_options() -> Array:
 func get_description() -> String:
 	if is_open:
 		return "A heavy iron door, frame bent outward where it was forced."
-	return "A heavy iron door, jammed shut in its frame. The lock is old but solid."
+	return "A heavy iron door, jammed shut in its frame."
 
 func get_action_label() -> String:
-	return "Pick Lock" if not is_open else "Examine"
+	return "Force Open" if not is_open else "Examine"
 
 func interact() -> void:
-	attempt_pick_lock()
-
-func attempt_pick_lock() -> void:
-	var skills: Dictionary = GameManager.player_data.get("skills", {})
-	var soh: int = skills.get("sleight_of_hand", 0)
-	var stats: Dictionary = GameManager.player_data.get("stats", {})
-	var dex_mod: int = stats.get("dexterity", 5) - 5
-	var chance: int = clampi(25 + soh * 10 + dex_mod * 3, 5, 90)
-	var roll: int = randi_range(1, 100)
-	if roll <= chance:
-		_succeed("You work the tumblers carefully. The lock gives way with a quiet click.")
-	else:
-		EventBus.combat_log.emit("Pick Lock: roll %d vs %d%% — the lock holds." % [roll, chance])
-
-const FORCE_OPEN_STRENGTH: int = 8
+	attempt_force_open()
 
 func attempt_force_open() -> void:
-	var stats: Dictionary = GameManager.player_data.get("stats", {})
-	var str_val: int = stats.get("strength", 5)
-	if str_val >= FORCE_OPEN_STRENGTH:
+	if StatChecks.meets("strength", FORCE_OPEN_STRENGTH):
 		_succeed("You throw your shoulder into the door. Metal screeches — the frame gives way.")
 	else:
-		EventBus.combat_log.emit("Force Open: requires %d Strength (you have %d)." % [FORCE_OPEN_STRENGTH, str_val])
+		EventBus.combat_log.emit("Force Open: requires %d Strength (you have %d)." % [
+			FORCE_OPEN_STRENGTH, StatChecks.player_stat("strength")])
 
 func _succeed(msg: String) -> void:
 	EventBus.combat_log.emit(msg)

@@ -34,6 +34,7 @@ func _ready() -> void:
 	sprite_h     = 42
 	sprite_color = Color(0.42, 0.38, 0.28)   # lighter hide — marks the bow-user
 
+	equipment["hand_1"] = DataManager.get_item("shortbow")
 	_attack_weapon = DataManager.get_item("shortbow")
 	feats.append("long_ranged")
 

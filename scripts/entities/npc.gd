@@ -96,9 +96,7 @@ func _process(_delta: float) -> void:
 	if current_hp <= 0 and not _dead:
 		_dead = true
 		_record_npc_death()
-		_drop_all_items()
-		if _tile_scene != null:
-			_tile_scene.unregister_entity(grid_cell)
+		_spawn_npc_corpse()
 		visible = false
 		is_interactable = false
 		queue_free()
@@ -179,9 +177,7 @@ func _on_npc_combat_ended(_victor: String) -> void:
 	if current_hp <= 0 and not _dead:
 		_dead = true
 		_record_npc_death()
-		_drop_all_items()
-		if _tile_scene != null:
-			_tile_scene.unregister_entity(grid_cell)
+		_spawn_npc_corpse()
 		visible = false
 		is_interactable = false
 		queue_free()
@@ -302,32 +298,35 @@ func _record_npc_death() -> void:
 	GameManager.player_data["dead_permanent"] = dead
 
 # ── Loot drop ─────────────────────────────────────────────────────────────────
+# Killed NPCs leave a searchable corpse using the same container-panel Search
+# interaction as humanoid enemies (see Corpse / Enemy._spawn_corpse), instead
+# of scattering individual ground-item pickups.
 
-func _drop_all_items() -> void:
-	if not drops_loot or _tile_scene == null:
-		return
-	var tile_data: Dictionary = GameManager.get_tile_data(GameManager.world_layer, GameManager.world_pos)
-	var scene_path: String = tile_data.get("scene", str(GameManager.world_pos))
-	var ground_items: Dictionary = GameManager.player_data.get("ground_items", {})
-	var arr: Array = ground_items.get(scene_path, [])
-	var items_to_drop: Array = []
+func _lootable_items() -> Array:
+	var items: Array = []
 	for item in inventory:
 		if item is Dictionary and not item.is_empty():
-			items_to_drop.append(item.duplicate())
+			items.append((item as Dictionary).duplicate())
 	for item in equipment.values():
 		if item is Dictionary and not item.is_empty():
-			items_to_drop.append(item.duplicate())
+			items.append((item as Dictionary).duplicate())
 	for item in pocket_items:
 		if item is Dictionary and not item.is_empty():
-			items_to_drop.append(item.duplicate())
-	for item in items_to_drop:
-		var gi := GroundItem.new()
-		gi.grid_cell = grid_cell
-		gi.item_data = item
-		_tile_scene.add_child(gi)
-		arr.append({"cell": [grid_cell.x, grid_cell.y], "item": item})
-	ground_items[scene_path] = arr
-	GameManager.player_data["ground_items"] = ground_items
+			items.append((item as Dictionary).duplicate())
+	return items
+
+func _spawn_npc_corpse() -> void:
+	if _tile_scene == null:
+		return
+	var corpse := Corpse.new()
+	corpse.grid_cell   = grid_cell
+	corpse.entity_name = entity_name + " Corpse"
+	corpse.beast_type  = "human"
+	corpse.is_human    = true
+	if drops_loot:
+		corpse.loot_items = _lootable_items()
+	_tile_scene.unregister_entity(grid_cell)
+	_tile_scene.add_child(corpse)
 
 # ── Standard interaction ───────────────────────────────────────────────────────
 

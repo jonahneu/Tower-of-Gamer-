@@ -1298,3 +1298,16 @@ func clear_weapon_poison() -> void:
 		var item = equip.get(slot)
 		if item != null and item.get("poisoned", false):
 			item.erase("poisoned")
+
+# Any torch that's been equipped (and thus activated) burns out at the next
+# rest, however long it was actually carried for.
+func burn_out_torches() -> void:
+	var equip: Dictionary = player_data.get("equipment", {})
+	var burned: bool = false
+	for slot in ["hand_1", "hand_2"]:
+		var item = equip.get(slot)
+		if item != null and item.get("light_source", false) and item.get("torch_activated", false):
+			equip[slot] = null
+			burned = true
+	if burned:
+		EventBus.inventory_changed.emit()

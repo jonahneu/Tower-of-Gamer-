@@ -31,6 +31,7 @@ func _ready() -> void:
 	sprite_h     = 44
 	sprite_color = Color(0.32, 0.24, 0.20)   # dark worn leather
 
+	equipment["hand_1"] = DataManager.get_item("shortsword")
 	_attack_weapon = DataManager.get_item("shortsword")
 	feats.append("brutal")
 

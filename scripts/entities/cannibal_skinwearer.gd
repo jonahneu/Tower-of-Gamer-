@@ -37,6 +37,7 @@ func _ready() -> void:
 	sprite_h     = 44
 	sprite_color = Color(0.58, 0.48, 0.36)   # mottled with skin trophies
 
+	equipment["hand_1"] = DataManager.get_item("knife")
 	_attack_weapon = DataManager.get_item("knife")
 	feats.append("runner")
 

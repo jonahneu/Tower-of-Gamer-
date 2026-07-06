@@ -36,6 +36,7 @@ func _ready() -> void:
 	sprite_h     = 42
 	sprite_color = Color(0.42, 0.36, 0.30)   # filthy rags
 
+	equipment["hand_1"] = DataManager.get_item("knife")
 	_attack_weapon = DataManager.get_item("knife")
 	feats.append("runner")
 

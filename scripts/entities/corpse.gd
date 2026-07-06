@@ -11,9 +11,34 @@ var grid_cell: Vector2i = Vector2i(0, 0)
 var beast_type: String = ""
 var beast_quality_mod: int = 0
 var is_human: bool = false
-var loot_item_ids: Array = []
+var loot_item_ids: Array = []   # curated drops (trophies, quest tokens) — resolved fresh by id
+var loot_items: Array = []     # actual equipped/carried item dicts — kept as-is so any
+                                # per-instance customization (e.g. a poisoned weapon) survives looting
 var _carved: bool = false
 var _tile_scene: TileScene = null
+var _inventory: Array = []
+var _inventory_seeded: bool = false
+
+# Human corpses are opened through the same container panel as chests/urns
+# (see LootContainer) — get_inventory()/set_inventory() is the duck-typed
+# interface hud.gd's container UI expects, seeded once from loot_item_ids
+# and loot_items (see Enemy._spawn_corpse / NPC._spawn_npc_corpse).
+func get_inventory() -> Array:
+	if not _inventory_seeded:
+		_inventory_seeded = true
+		for item in loot_items:
+			if item is Dictionary and not item.is_empty():
+				_inventory.append((item as Dictionary).duplicate())
+		for item_id in loot_item_ids:
+			var item_data: Dictionary = DataManager.get_item(item_id)
+			if not item_data.is_empty():
+				_inventory.append(item_data)
+	return _inventory
+
+func set_inventory(items: Array) -> void:
+	_inventory = items
+	if is_human and _inventory.is_empty():
+		mark_carved()
 
 func _ready() -> void:
 	_tile_scene = get_parent() as TileScene
@@ -32,8 +57,8 @@ func get_interaction_options() -> Array:
 		return [{"label": "Inspect", "id": "examine", "priority": 50}]
 	if is_human:
 		return [
-			{"label": "Search",  "id": "search",  "priority": 100},
-			{"label": "Inspect", "id": "examine", "priority": 50},
+			{"label": "Search",  "id": "open_container", "priority": 100},
+			{"label": "Inspect", "id": "examine",         "priority": 50},
 		]
 	return [
 		{"label": "Carve",   "id": "carve",   "priority": 100},

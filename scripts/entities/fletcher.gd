@@ -23,6 +23,7 @@ const SHOP_ITEMS: Array = [
 	{"id": "longbow",           "price": 35},
 	{"id": "quiver",            "price": 5},
 	{"id": "fishing_rod",       "price": 6},
+	{"id": "torch",             "price": 2},
 	{"id": "hide_shield",       "price": 4},
 	{"id": "wooden_shield",     "price": 8},
 	{"id": "leather_vest",      "price": 6},

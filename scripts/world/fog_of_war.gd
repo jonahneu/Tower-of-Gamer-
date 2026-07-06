@@ -12,8 +12,21 @@ var revealed_cells: Dictionary = {}  # Vector2i → true  (ever seen)
 
 var _tile_scene: TileScene = null
 var _origin: Vector2i = Vector2i(-1, -1)
-var _fov_offsets: Array[Vector2i] = []
+# Three offset lists, one per observer light tier, instead of a single RADIUS
+# disk: vision_cap() can never resolve past DARK_PEEK when the observer is in
+# DARK, or past RADIUS/2 when DIM, so a DARK/DIM observer's compute_fov only
+# needs to scan the much smaller matching disk instead of the full RADIUS one.
+var _fov_offsets_full: Array[Vector2i] = []
+var _fov_offsets_dim: Array[Vector2i] = []
+var _fov_offsets_dark: Array[Vector2i] = []
 var _chunks: Array = []   # flat array of _FogChunk nodes
+
+# Coalesces player-move / light-change / los-blocker signals that fire in the
+# same synchronous cascade (e.g. a carried torch moving fires both
+# player_moved and light_levels_changed) into a single compute_fov + redraw
+# at end of frame, instead of doing the (expensive) work once per signal.
+var _update_queued: bool = false
+var _light_changed_pending: bool = false
 
 # ── Inner chunk class ──────────────────────────────────────────────────────────
 # Each chunk owns a 10×10 tile region and only redraws when its cells change.
@@ -92,36 +105,62 @@ func _create_chunks() -> void:
 			_chunks.append(chunk)
 
 func _precompute_fov_offsets() -> void:
+	var dim_r: int = maxi(1, RADIUS / 2)
+	var dark_r: int = LightLevels.DARK_PEEK
+	var dim_r2: int = dim_r * dim_r
+	var dark_r2: int = dark_r * dark_r
 	var r2: int = RADIUS * RADIUS
 	for dx in range(-RADIUS, RADIUS + 1):
 		for dy in range(-RADIUS, RADIUS + 1):
-			if dx * dx + dy * dy <= r2:
-				_fov_offsets.append(Vector2i(dx, dy))
+			var d2: int = dx * dx + dy * dy
+			if d2 > r2:
+				continue
+			var off := Vector2i(dx, dy)
+			_fov_offsets_full.append(off)
+			if d2 <= dim_r2:
+				_fov_offsets_dim.append(off)
+			if d2 <= dark_r2:
+				_fov_offsets_dark.append(off)
 
 # ── Signal handlers ────────────────────────────────────────────────────────────
 func _on_player_moved(cell: Vector2i) -> void:
-	var old_visible := visible_cells.duplicate()
-	compute_fov(cell)
-	update_entity_visibility()
-	_redraw_dirty_chunks(old_visible)
+	_queue_update(cell)
 
 func _on_los_blockers_changed() -> void:
 	if _origin == Vector2i(-1, -1):
 		return
-	var old_visible := visible_cells.duplicate()
-	compute_fov(_origin)
-	update_entity_visibility()
-	_redraw_dirty_chunks(old_visible)
+	_queue_update(_origin)
 
 # Light changes can alter a cell's tint while it stays in visible_cells the
-# whole time (no enter/exit transition for _redraw_dirty_chunks to catch), so
-# this does a full redraw rather than relying on the visible-set diff.
+# whole time (no enter/exit transition for the visible-set diff to catch), so
+# the queued update does a light-aware redraw rather than relying on it.
 func _on_light_levels_changed() -> void:
 	if _origin == Vector2i(-1, -1):
 		return
+	_light_changed_pending = true
+	_queue_update(_origin)
+
+# A single player step can fire several of the signals above synchronously
+# (player_moved, then light_levels_changed if a carried torch just moved with
+# it) — each one used to trigger its own full compute_fov + redraw. Deferring
+# collapses all of them into exactly one compute_fov + redraw per frame.
+func _queue_update(origin: Vector2i) -> void:
+	_origin = origin
+	if _update_queued:
+		return
+	_update_queued = true
+	call_deferred("_apply_queued_update")
+
+func _apply_queued_update() -> void:
+	_update_queued = false
+	var old_visible := visible_cells.duplicate()
 	compute_fov(_origin)
 	update_entity_visibility()
-	redraw_all()
+	if _light_changed_pending:
+		_light_changed_pending = false
+		_redraw_visible_chunks(old_visible)
+	else:
+		_redraw_dirty_chunks(old_visible)
 
 # ── FOV computation ────────────────────────────────────────────────────────────
 func compute_fov(origin: Vector2i) -> void:
@@ -130,7 +169,12 @@ func compute_fov(origin: Vector2i) -> void:
 	if _tile_scene == null:
 		return
 	var observer_level: int = _tile_scene.get_light_level(origin)
-	for offset in _fov_offsets:
+	var offsets: Array[Vector2i] = _fov_offsets_full
+	if observer_level == LightLevels.DARK:
+		offsets = _fov_offsets_dark
+	elif observer_level == LightLevels.DIM:
+		offsets = _fov_offsets_dim
+	for offset in offsets:
 		var cell := Vector2i(origin.x + offset.x, origin.y + offset.y)
 		if not _tile_scene.is_in_bounds(cell):
 			continue
@@ -194,6 +238,23 @@ func _redraw_dirty_chunks(old_visible: Dictionary) -> void:
 func redraw_all() -> void:
 	for chunk in _chunks:
 		chunk.queue_redraw()
+
+# A light change can only visually matter for cells that are (or just stopped
+# being) in visible_cells — remembered/unexplored cells always render flat
+# regardless of light tier (see _FogChunk._draw()). So instead of redrawing
+# every chunk on the map, only redraw chunks touching the current or previous
+# visible set — a small, bounded region rather than the whole zone.
+func _redraw_visible_chunks(old_visible: Dictionary) -> void:
+	var dirty: Dictionary = {}
+	for cell in visible_cells:
+		dirty[Vector2i(cell.x / CHUNK_SIZE, cell.y / CHUNK_SIZE)] = true
+	for cell in old_visible:
+		dirty[Vector2i(cell.x / CHUNK_SIZE, cell.y / CHUNK_SIZE)] = true
+	if dirty.is_empty():
+		return
+	for chunk in _chunks:
+		if dirty.has(Vector2i(chunk.col_start / CHUNK_SIZE, chunk.row_start / CHUNK_SIZE)):
+			chunk.queue_redraw()
 
 # ── Serialization ──────────────────────────────────────────────────────────────
 func get_revealed_data() -> Array:

@@ -139,6 +139,7 @@ var _fog: FogOfWar = null
 var light_levels: Dictionary = {}        # Vector2i -> LightLevels.DARK/DIM/FULL (sparse; absent = default_light_level)
 var default_light_level: int = LightLevels.FULL
 var _light_sources: Dictionary = {}      # Node -> {cell: Vector2i, bright_radius: int, dim_radius: int}
+var _source_light_maps: Dictionary = {}  # Node -> Dictionary(Vector2i -> tier); cached per-source flood result
 var _ambient_overrides: Dictionary = {}  # Vector2i -> int; per-cell baseline used instead of default_light_level (e.g. dim building interiors)
 
 # Sets the baseline light level for a region of cells (before light sources are
@@ -155,39 +156,65 @@ func _cell_ambient(cell: Vector2i) -> int:
 # bright_radius = -1 means "no bright tier at all" (e.g. glowing fungi — DIM only).
 func register_light_source(owner: Node, cell: Vector2i, bright_radius: int, dim_radius: int) -> void:
 	_light_sources[owner] = {"cell": cell, "bright_radius": bright_radius, "dim_radius": dim_radius}
-	_recompute_light()
+	_source_light_maps[owner] = _flood_light_from(cell, bright_radius, dim_radius)
+	_merge_light_maps()
 
 func unregister_light_source(owner: Node) -> void:
 	if not _light_sources.has(owner):
 		return
 	_light_sources.erase(owner)
-	_recompute_light()
+	_source_light_maps.erase(owner)
+	_merge_light_maps()
 
+# A moving source (e.g. a carried torch) only needs its own flood-fill redone —
+# every other registered source's cached map is untouched, so the merge below
+# is just cheap dictionary max-writes instead of re-flooding the whole zone.
 func update_light_source_position(owner: Node, new_cell: Vector2i) -> void:
 	if not _light_sources.has(owner):
 		return
-	_light_sources[owner]["cell"] = new_cell
-	_recompute_light()
+	var src: Dictionary = _light_sources[owner]
+	src["cell"] = new_cell
+	_source_light_maps[owner] = _flood_light_from(new_cell, src["bright_radius"], src["dim_radius"])
+	_merge_light_maps()
 
 func get_light_level(cell: Vector2i) -> int:
 	return maxi(light_levels.get(cell, -1), _cell_ambient(cell))
 
-# Rebuilds light_levels from scratch via BFS flood-fill from every registered
-# source, bounded by dim_radius and blocked by los_blocked_cells (the same
-# wall data line-of-sight already uses) — light doesn't bleed through walls.
-# Event-driven (register/unregister/move only), never per-frame.
+# Rebuilds every source's cached flood-fill from scratch. Only needed when
+# something that affects ALL sources' shapes changes (e.g. structural
+# los_blocked_cells edits) or on initial load — per-source register/move/
+# unregister instead update just their own cached map via _merge_light_maps().
 func _recompute_light() -> void:
-	light_levels.clear()
+	_source_light_maps.clear()
 	for owner in _light_sources.keys():
 		if not is_instance_valid(owner):
 			continue
 		var src: Dictionary = _light_sources[owner]
-		_flood_light_from(src["cell"], src["bright_radius"], src["dim_radius"])
+		_source_light_maps[owner] = _flood_light_from(src["cell"], src["bright_radius"], src["dim_radius"])
+	_merge_light_maps()
+
+# Combines the cached per-source flood maps (ambient baselines are applied
+# lazily by get_light_level, so they don't need to be folded in here) into
+# light_levels and notifies listeners. Cheap relative to flooding: it's just
+# a max-reduce over already-computed per-source dictionaries.
+func _merge_light_maps() -> void:
+	light_levels.clear()
+	for owner in _source_light_maps.keys():
+		var map: Dictionary = _source_light_maps[owner]
+		for cell in map:
+			var tier: int = map[cell]
+			if tier > light_levels.get(cell, -1):
+				light_levels[cell] = tier
 	EventBus.light_levels_changed.emit()
 
-func _flood_light_from(source_cell: Vector2i, bright_radius: int, dim_radius: int) -> void:
+# BFS flood-fill from a single source, bounded by dim_radius and blocked by
+# los_blocked_cells (the same wall data line-of-sight already uses) — light
+# doesn't bleed through walls. Returns this source's own tier map; doesn't
+# touch shared state so callers can cache/merge it independently.
+func _flood_light_from(source_cell: Vector2i, bright_radius: int, dim_radius: int) -> Dictionary:
+	var result: Dictionary = {}
 	if not is_in_bounds(source_cell):
-		return
+		return result
 	var visited: Dictionary = {source_cell: 0}  # cell -> BFS depth
 	var queue: Array[Vector2i] = [source_cell]
 	var head: int = 0
@@ -196,9 +223,7 @@ func _flood_light_from(source_cell: Vector2i, bright_radius: int, dim_radius: in
 		head += 1
 		var depth: int = visited[cur]
 		var tier: int = LightLevels.FULL if depth <= bright_radius else LightLevels.DIM
-		var existing: int = maxi(light_levels.get(cur, -1), _cell_ambient(cur))
-		if tier > existing:
-			light_levels[cur] = tier
+		result[cur] = tier
 		if depth >= dim_radius:
 			continue
 		if los_blocked_cells.has(cur) and cur != source_cell:
@@ -209,6 +234,7 @@ func _flood_light_from(source_cell: Vector2i, bright_radius: int, dim_radius: in
 				continue
 			visited[nb] = depth + 1
 			queue.append(nb)
+	return result
 
 func register_entity(cell: Vector2i, entity: Node) -> void:
 	# A mover (enemy/NPC) can step onto a non-blocking entity's cell (e.g. a

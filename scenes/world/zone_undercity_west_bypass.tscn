@@ -78,7 +78,7 @@ DOOR_Y = -1
 
 [node name="JammedDoor" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(72, 38)
+grid_cell = Vector2i(71, 38)
 
 [node name="UndercityWater" type="Node2D" parent="."]
 script = ExtResource("4")

@@ -80,15 +80,15 @@ func attempt_pick_lock() -> void:
 	else:
 		EventBus.combat_log.emit("Pick Lock: roll %d vs %d%% — the lock holds." % [roll, chance])
 
+const FORCE_OPEN_STRENGTH: int = 8
+
 func attempt_force_open() -> void:
 	var stats: Dictionary = GameManager.player_data.get("stats", {})
 	var str_val: int = stats.get("strength", 5)
-	var chance: int = clampi(10 + (str_val - 5) * 8, 5, 90)
-	var roll: int = randi_range(1, 100)
-	if roll <= chance:
+	if str_val >= FORCE_OPEN_STRENGTH:
 		_succeed("You throw your shoulder into the door. Metal screeches — the frame gives way.")
 	else:
-		EventBus.combat_log.emit("Force Open: roll %d vs %d%% — not strong enough." % [roll, chance])
+		EventBus.combat_log.emit("Force Open: requires %d Strength (you have %d)." % [FORCE_OPEN_STRENGTH, str_val])
 
 func _succeed(msg: String) -> void:
 	EventBus.combat_log.emit(msg)

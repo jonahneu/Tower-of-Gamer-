@@ -493,7 +493,13 @@ func _toggle(name: String) -> void:
 		_cs_switch_tab("stats")
 		_refresh_stats()
 	if name == "inventory": _refresh_inventory()
-	if name == "map":       _refresh_map()
+	if name == "map":
+		# _map_layer is normally kept in sync by world_layer_changed, but that
+		# signal only fires on an in-session layer transition — after a fresh
+		# load/restart it's still its Surface default until the player moves
+		# between layers, so resync it from the actual current layer here.
+		_map_layer = GameManager.world_layer
+		_refresh_map()
 	if name == "journal":
 		_refresh_journal()
 		_refresh_notes()

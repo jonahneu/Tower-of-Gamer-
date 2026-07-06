@@ -58,7 +58,7 @@ grid_cell = Vector2i(8, 20)
 
 [node name="HallTorchWest2" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(8, 40)
+grid_cell = Vector2i(8, 37)
 
 [node name="HallTorchWest3" type="Node2D" parent="."]
 script = ExtResource("5")
@@ -70,7 +70,7 @@ grid_cell = Vector2i(71, 20)
 
 [node name="HallTorchEast2" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(71, 40)
+grid_cell = Vector2i(71, 37)
 
 [node name="HallTorchEast3" type="Node2D" parent="."]
 script = ExtResource("5")

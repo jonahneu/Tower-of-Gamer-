@@ -3868,10 +3868,44 @@ func _refresh_cooking_detail() -> void:
 			row.add_child(slot_lbl)
 		_crafting_detail_area.add_child(row)
 
+	# Optional ingredient rows (e.g. salt added to smoking for a longer cure)
+	var opt_mats: Array = recipe.get("optional_materials", [])
+	for slot in opt_mats:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		var type_lbl := Label.new()
+		type_lbl.text = slot.capitalize() + " (optional):"
+		type_lbl.custom_minimum_size = Vector2(110, 0)
+		row.add_child(type_lbl)
+		if _crafting_slotted.has(slot):
+			var slot_lbl := Label.new()
+			slot_lbl.text = _crafting_slotted[slot]["item"].get("name", "?") + "  ✓"
+			slot_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4))
+			slot_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(slot_lbl)
+			var clear_btn := Button.new()
+			clear_btn.text = "×"
+			clear_btn.custom_minimum_size = Vector2(28, 0)
+			var captured_slot: String = slot
+			clear_btn.pressed.connect(func():
+				_crafting_slotted.erase(captured_slot)
+				_refresh_crafting())
+			row.add_child(clear_btn)
+		else:
+			var slot_lbl := Label.new()
+			slot_lbl.text = "— select from inventory list"
+			slot_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65))
+			row.add_child(slot_lbl)
+		_crafting_detail_area.add_child(row)
+
 	# Preview result
 	var _primary_preview_slot: String = _get_primary_cooking_slot()
 	if not _primary_preview_slot.is_empty():
-		var preview: Dictionary = DataManager.craft_cooking(_crafting_selected_recipe, _crafting_slotted[_primary_preview_slot]["item"])
+		var preview_secondary: Array = []
+		for opt_slot in opt_mats:
+			if _crafting_slotted.has(opt_slot):
+				preview_secondary.append(_crafting_slotted[opt_slot]["item"])
+		var preview: Dictionary = DataManager.craft_cooking(_crafting_selected_recipe, _crafting_slotted[_primary_preview_slot]["item"], preview_secondary)
 		if not preview.is_empty():
 			var exp_r: int = preview.get("expires_in_rests", -1)
 			var buff: Dictionary = preview.get("passive_meal_buff", {})
@@ -3941,7 +3975,11 @@ func _on_cooking_craft_pressed() -> void:
 		return
 	var primary_item: Dictionary = primary_slot["item"]
 	var primary_idx: int         = primary_slot["inv_idx"]
-	var crafted: Dictionary      = DataManager.craft_cooking(_crafting_selected_recipe, primary_item)
+	var secondary_items: Array   = []
+	for opt_slot in recipe.get("optional_materials", []):
+		if _crafting_slotted.has(opt_slot):
+			secondary_items.append(_crafting_slotted[opt_slot]["item"])
+	var crafted: Dictionary      = DataManager.craft_cooking(_crafting_selected_recipe, primary_item, secondary_items)
 	if crafted.is_empty():
 		return
 	var inv: Array = GameManager.player_data.get("inventory", [])
@@ -4255,7 +4293,8 @@ func _on_crafting_mat_pressed(i: int) -> void:
 	var mat_type: String      = mat_entry["item"].get("material_type", "")
 	var required: Array       = []
 	if _crafting_active_tab == "cooking":
-		required = DataManager.get_cooking_recipe(_crafting_selected_recipe).get("required_materials", [])
+		var cooking_recipe: Dictionary = DataManager.get_cooking_recipe(_crafting_selected_recipe)
+		required = cooking_recipe.get("required_materials", []) + cooking_recipe.get("optional_materials", [])
 	else:
 		required = DataManager.get_recipe(_crafting_selected_recipe).get("required_materials", [])
 	var slot: String = DataManager.resolve_material_slot(mat_type, required)

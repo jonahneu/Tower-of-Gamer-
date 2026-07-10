@@ -8,16 +8,19 @@ const SHOP_ITEMS: Array = [
 	{"id": "sun_dried_coyote_meat",  "price": 2},
 	{"id": "salt_cured_coyote_meat", "price": 3},
 	{"id": "smoked_coyote_meat",     "price": 4},
+	{"id": "jerky_coyote",           "price": 5},
 
 	{"id": "lizard_meat",            "price": 1},
 	{"id": "sun_dried_lizard_meat",  "price": 2},
 	{"id": "salt_cured_lizard_meat", "price": 3},
 	{"id": "smoked_lizard_meat",     "price": 4},
+	{"id": "jerky_lizard",           "price": 5},
 
 	{"id": "sand_beetle_meat",            "price": 2},
 	{"id": "sun_dried_sand_beetle_meat",  "price": 3},
 	{"id": "salt_cured_sand_beetle_meat", "price": 4},
 	{"id": "smoked_sand_beetle_meat",     "price": 5},
+	{"id": "jerky_sand_beetle",           "price": 6},
 ]
 
 # Recipes for preserving meat to carry while travelling.

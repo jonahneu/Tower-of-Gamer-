@@ -29,6 +29,12 @@ func _draw() -> void:
 	if item_id.begins_with("salt_cured_"):
 		_draw_salt_cured_meat(w, h, Color(0.72, 0.62, 0.50))
 		return
+	if item_id.begins_with("smoked_"):
+		_draw_smoked_meat(w, h, Color(0.55, 0.40, 0.30))
+		return
+	if item_id.begins_with("jerky_"):
+		_draw_smoked_meat(w, h, Color(0.40, 0.28, 0.20))
+		return
 	if item_id.ends_with("_meat"):
 		_draw_meat(w, h, Color(0.74, 0.32, 0.30))
 		return

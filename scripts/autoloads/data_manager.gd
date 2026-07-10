@@ -626,19 +626,21 @@ const COOKING_RECIPES: Dictionary = {
 		"name":               "Cure Meat",
 		"lore":               "Pack the meat in salt. Draws out the water, holds the rest. Keeps longer than anything sun-dried.",
 		"required_materials": ["meat", "salt"],
-		"cooking_level":      15,
+		"cooking_level":      25,
 		"produces":           "salt_cured",
 		"expires_in_rests":   10,
 	},
 	"smoke_meat": {
 		"id":                  "smoke_meat",
 		"name":                "Smoke Meat",
-		"lore":                "Hang it over a low, smoky fire and let it sit. Keeps as long as salt-curing, and the smoke works its way into the meat — whatever you cook it into later turns out better for it.",
+		"lore":                "Hang it over a low, smoky fire and let it sit. Salt rubbed in first holds the cure far longer, but smoke alone still keeps — and the smoke works its way into the meat either way, so whatever you cook it into later turns out better for it.",
 		"required_materials":  ["meat"],
-		"cooking_level":       8,
+		"optional_materials":  ["salt"],
+		"cooking_level":       35,
 		"survival_level":      15,
 		"produces":            "smoked",
-		"expires_in_rests":    10,
+		"expires_in_rests":    6,
+		"expires_in_rests_salted": 12,
 		"cooking_potency_mult": 1.2,
 	},
 	"stick_roast": {
@@ -678,7 +680,7 @@ func get_cooking_recipe(id: String) -> Dictionary:
 	return COOKING_RECIPES.get(id, {})
 
 # Returns whether the player meets the skill gate for a cooking recipe.
-# smoke_meat accepts cooking >= 8 OR survival >= 15.
+# smoke_meat accepts cooking >= 35 OR survival >= 15.
 func check_cooking_skill(recipe_id: String, player_skills: Dictionary) -> Dictionary:
 	var recipe: Dictionary  = COOKING_RECIPES.get(recipe_id, {})
 	var req_cooking: int    = recipe.get("cooking_level", 0)
@@ -698,11 +700,17 @@ func check_cooking_skill(recipe_id: String, player_skills: Dictionary) -> Dictio
 		"player_survival": player_s,
 	}
 
-# Produces a preserved or cooked food item from a recipe and a primary ingredient.
-func craft_cooking(recipe_id: String, primary_item: Dictionary) -> Dictionary:
+# Produces a preserved or cooked food item from a recipe, a primary ingredient,
+# and any optional secondary ingredients (e.g. salt added to a smoking recipe).
+func craft_cooking(recipe_id: String, primary_item: Dictionary, secondary_items: Array = []) -> Dictionary:
 	var recipe: Dictionary = COOKING_RECIPES.get(recipe_id, {})
 	if recipe.is_empty() or recipe.get("is_rest_recipe", false):
 		return {}
+	var salted: bool = false
+	for si in secondary_items:
+		if si.get("material_type", "") == "salt":
+			salted = true
+			break
 
 	# ── Preservation recipe ───────────────────────────────────────────────────
 	var prefix: String = recipe.get("produces", "preserved")
@@ -710,26 +718,42 @@ func craft_cooking(recipe_id: String, primary_item: Dictionary) -> Dictionary:
 	var display: String = primary_item.get("name", "Meat")
 	var beast_table: Dictionary = CARVE_TABLES.get(beast, {})
 	var beast_display: String = beast_table.get("display_name", display)
-	var prefix_display: String
-	match prefix:
-		"sun_dried":  prefix_display = "Sun-Dried"
-		"salt_cured": prefix_display = "Salt-Cured"
-		_:            prefix_display = prefix.capitalize()
+	# Salted smoking produces jerky — a distinct item, not just "smoked meat + salt".
+	var is_jerky: bool = prefix == "smoked" and salted
+	var item_id: String
+	var item_name: String
+	var item_preservation: String
+	var item_description: String
+	if is_jerky:
+		item_id             = "jerky_%s" % beast
+		item_name           = "%s Jerky" % beast_display
+		item_preservation   = "jerky"
+		item_description    = "%s, smoked and salted into jerky." % primary_item.get("description", "Meat.")
+	else:
+		var prefix_display: String
+		match prefix:
+			"sun_dried":  prefix_display = "Sun-Dried"
+			"salt_cured": prefix_display = "Salt-Cured"
+			_:            prefix_display = prefix.capitalize()
+		item_id           = "%s_%s_meat" % [prefix, beast]
+		item_name         = "%s %s Meat" % [prefix_display, beast_display]
+		item_preservation = prefix
+		item_description  = "%s, preserved by %s." % [primary_item.get("description", "Meat."), prefix_display.to_lower()]
 	var result: Dictionary = {
-		"id":               "%s_%s_meat" % [prefix, beast],
-		"name":             "%s %s Meat" % [prefix_display, beast_display],
+		"id":               item_id,
+		"name":             item_name,
 		"type":             "material",
 		"material_type":    "meat",
-		"preservation":     prefix,
+		"preservation":     item_preservation,
 		"beast_source":     beast,
 		"quality":          primary_item.get("quality", 1),
 		"quality_name":     primary_item.get("quality_name", ""),
-		"description":      "%s, preserved by %s." % [primary_item.get("description", "Meat."), prefix_display.to_lower()],
+		"description":      item_description,
 		"slot":             null,
 		"weight":           primary_item.get("weight", 1.5),
 		"uses_remaining":   primary_item.get("uses_remaining", 1),
 		"max_uses":         primary_item.get("max_uses", 1),
-		"expires_in_rests": recipe.get("expires_in_rests", 5),
+		"expires_in_rests": recipe.get("expires_in_rests_salted", recipe.get("expires_in_rests", 5)) if salted else recipe.get("expires_in_rests", 5),
 		"player_made":      true,
 	}
 	# Salt-cured meat is a "higher level" preserved food — eating it plain at
@@ -1520,8 +1544,17 @@ func _load_items() -> void:
 			"id": "smoked_%s_meat" % beast, "name": "Smoked %s Meat" % beast_display, "type": "material",
 			"material_type": "meat", "beast_source": beast, "preservation": "smoked", "slot": null, "weight": 1.5,
 			"quality": 2, "quality_name": "Common",
-			"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 10,
+			"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 6,
 			"description": "%s meat, preserved by smoking over a slow fire." % beast_display,
+			"cooking_potency_mult": 1.2,
+			"properties": [], "abilities": [],
+		}
+		items["jerky_%s" % beast] = {
+			"id": "jerky_%s" % beast, "name": "%s Jerky" % beast_display, "type": "material",
+			"material_type": "meat", "beast_source": beast, "preservation": "jerky", "slot": null, "weight": 1.5,
+			"quality": 2, "quality_name": "Common",
+			"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 12,
+			"description": "%s meat, smoked and salted into jerky." % beast_display,
 			"cooking_potency_mult": 1.2,
 			"properties": [], "abilities": [],
 		}

@@ -1,6 +1,6 @@
 # Opening Hook Rewrite — Planning Doc
 
-> Status: pre-decision planning, not yet canon. Nothing here should be implemented until the open questions below are resolved and it gets folded into `DesignDoc_BronzeAge.md`. Implementation happens on its own branch once that's done.
+> Status: structural decisions made, Phase 0 (fold into `DesignDoc_BronzeAge.md`) complete as of 2026-07-13. Remaining content decisions (Phase 1) and all build work (Phase 2+) still ahead — see roadmap below. A snapshot of the pre-rewrite game state is preserved on the `pre-opening-rewrite-snapshot` branch (local + pushed to origin) in case this doesn't pan out.
 
 ## The problem with the current opening
 
@@ -18,7 +18,7 @@ This changes the throughline from "learn about a threat" to "you are already ins
 
 **Taskmaster NPC / opening scene (§13).** The whole scene as written — dismissive release, condescending dialogue about lost protection — no longer fits. Either this character is repurposed (the priest/handler prepping the player for the shrine, someone whose job is logistics not cruelty, an accomplice who looks away) or replaced outright. The godlessness/spirit exposition it currently delivers still needs to land somewhere — probably still works, just needs a new frame (why is a sacrifice victim being told this at all? Maybe it's *why* they were chosen — an unprotected, godless slave is a "clean" or low-cost sacrifice, nobody's asset).
 
-**Starting geography (§6, §11 zone plan).** Currently the player starts at the taskmaster's back door in the lower city, and the upper city (temple/castle/crafters districts) is sealed off by a class-based guard checkpoint for all of Act 1. Sacrificing at "the shrine, the highest point of the city" (§3) means the opening scene now has to *start* in the upper city — and the player's first playable action becomes escaping downward, through districts they're not normally allowed to see, ending up back in the Ditch where Act 1 was always designed to happen. That's a strong structural rhyme with the game's whole vertical-descent conceit (first thing you do is fall from the top of the city to the bottom of it) and it's basically free thematically.
+**Starting geography (§6, §16 zone plan).** Currently the player starts at the taskmaster's back door in the lower city, and the upper city (temple/castle/crafters districts) is sealed off by a class-based guard checkpoint for all of Act 1. Sacrificing at "the shrine, the highest point of the city" (§3) means the opening scene now has to *start* in the upper city — and the player's first playable action becomes escaping downward, through districts they're not normally allowed to see, ending up back in the Ditch where Act 1 was always designed to happen. That's a strong structural rhyme with the game's whole vertical-descent conceit (first thing you do is fall from the top of the city to the bottom of it) and it's basically free thematically.
 
 Practically, this needs some new zone geography that doesn't exist in the plan yet: the sacrifice site itself, and an escape route connecting it down to the Ditch / lower Ditch / undercity threshold. Doesn't need to be fully fleshed-out explorable districts — see recommendation below.
 
@@ -36,7 +36,7 @@ Decided: the escape route does *not* reuse the existing Node 1 (Taskmaster's man
 
 Decided: a secret room deep beneath/within the palace — not the public shrine at the top (§3 describes the shrine itself as "the highest point of the city"; this room is separate, hidden, lower down within the palace structure). Small, rectangular. A slab at the center for human sacrifice. A hearth. Torches around the walls.
 
-**Exit/route note:** Won't reuse the Taskmaster's building as the escape route's exit point — that door sits against the *outer* city wall in the lower city (§11, Node 1). The palace will sit somewhere in the **north-to-northeast** stretch of the city — exact placement not pinned down yet, just narrowed away from due-east, since that whole quadrant is still empty/unbuilt space to work with. So the escape route is new geography connecting that area down to the Ditch, rather than plugging into the existing Node 1 door as floated earlier.
+**Exit/route note:** Won't reuse the Taskmaster's building as the escape route's exit point — that door sits against the *outer* city wall in the lower city (§16, Node 1). The palace will sit somewhere in the **north-to-northeast** stretch of the city — exact placement not pinned down yet, just narrowed away from due-east, since that whole quadrant is still empty/unbuilt space to work with. So the escape route is new geography connecting that area down to the Ditch, rather than plugging into the existing Node 1 door as floated earlier.
 
 **Flag for later reconciliation:** §6's current "City Cardinal Orientation" already lists **North** as the castle/nobles/temple direction and **East** as "desert edge, residential, the less interesting direction" — so a north/northeast palace placement is actually consistent with north, and only edges into new (northeast) territory if it ends up leaning that way. Worth confirming exact placement once the route itself is worked out, but this is less of a conflict with the existing doc than a due-east placement would have been.
 
@@ -64,17 +64,21 @@ Decided (2026-07-13): the sacrifice is about to happen and gets **interrupted mi
 
 The escape sequence stays small: a short, mostly-linear string of stub zones (sacrifice room → a corridor or two → wall/gate → drop into the Lower Ditch near the Apothecary) rather than fully realized, explorable upper-city districts. Consistent with the small/contained ritual-scale decision above — the escape is a scripted bookend, not a new open area to fill with NPCs and quests, matching hobby-project scope.
 
+**Idea flagged (2026-07-13, not yet scoped):** the escape passage could double as a basic tutorial dungeon — its linear, scripted, low-population shape is naturally suited to introducing movement/combat/interaction mechanics before the player reaches the open Lower Ditch. Not decided how much tutorial content this implies (a single mechanic prompt vs. a small guided encounter or two) — worth deciding once Phase 2 geometry work starts.
+
 ## Roadmap to implementation
 
 All structural questions are now resolved; what's left before code work starts is folding this into canon and then building. Order matters — each phase below unblocks the next.
 
 **No dialogue gets written by Claude, at any phase.** Every phase below that touches a scene, trigger, or NPC beat gets structural/mechanical description only (what the beat needs to accomplish, what state it sets, what it's reacting to) — never sample lines or draft text. Dialogue slots stay blank or marked with an explicit placeholder for the user to fill in personally. See [[feedback_dont_decide_placement]].
 
-**Phase 0 — Fold into canon (`DesignDoc_BronzeAge.md`).** Claude can execute this without further input, working from the decisions above:
-- §13: remove the Taskmaster entry; write the new opening scene (sacrifice room, small/contained rite, interruption via apparatus shudder, one legible fragment, escape) as a scripted sequence, not an NPC-driven scene. Structural/staging description only — no dialogue.
-- §13: decide-by-folding where the godlessness/spirit exposition *slot* lands (default to the post-dream trainer dialogue per `TODO_Act1.md`, unless you want it flagged for your call instead — see open question above). This places *where* the exposition beat happens, not what it says.
-- §6/§11: add the palace (north/northeast, exact tile placement TBD) and the new escape-route geography as a stub node chain, ending at the existing `zone_ditch_lower.tscn` Apothecary location. Fix the stale "Apothecary is in the market district" and "no NPCs past the fork" lines while touching this section.
-- §3: note the mark (physical + spiritual/mechanical, forms TBD) and the suppressed/hushed-up aftermath as new player-state facts.
+**Phase 0 — Fold into canon (`DesignDoc_BronzeAge.md`). Done, 2026-07-13.**
+- §13: Taskmaster entry replaced with "The Interrupted Sacrifice" — structural/staging description of the new opening scene (sacrifice room, small/contained rite, apparatus-shudder interruption, one legible fragment, escape to the Apothecary), placeholders left everywhere dialogue would go.
+- §13: exposition-slot default recorded (post-dream trainer dialogue), flagged as still the user's call if they want it elsewhere.
+- §6: added the suppressed-manhunt reason to the Upper City Gate section, alongside the existing class-boundary reason.
+- §16 (was mislabeled §11 above — corrected): added the ritual room + escape route to the district-chain and Ditch-layout diagrams; flagged Node 1 as orphaned by the Taskmaster's removal (not reassigned); fixed the stale "no NPCs past the fork" line and flagged (didn't rewrite) the stale Apothecary "market district" characterization, since that's a pre-existing, unrelated drift.
+- §3: added the mark + suppressed-aftermath facts under "The King's God."
+- **Found during Phase 0, not just a doc issue:** the Taskmaster is a real implemented feature — `scripts/entities/taskmaster.gd`, present in `zone_ditch.tscn`, with state tracking in `game_manager.gd` (`taskmaster_left`). Cutting it is real Phase 3 code work, not only a text change.
 
 **Phase 1 — Remaining content decisions (yours).** Doesn't block Phase 0 or early geometry work, but blocks writing final scene dialogue/text:
 - The legible fragment's content.

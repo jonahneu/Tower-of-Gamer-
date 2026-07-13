@@ -118,6 +118,8 @@ He believes, with some justification, that another collapse is coming. His goal 
 
 **The secret:** Only members of the royal family who the king has chosen to share it with know the true history. The mass graves beneath the city, the true nature of the shrine, the lineage's connection to previous ruling classes — all of this is known only within that circle. The public theology is not false exactly. It is a surface that covers something older and stranger without contradicting it.
 
+**Escaped sacrifices:** The player's opening (§13, "The Interrupted Sacrifice") establishes that not every sacrifice completes — the ritual apparatus can malfunction. When one does and a victim escapes, the people running the ritual suppress it rather than publicize a manhunt: losing one victim quietly costs them less than the public admitting the shrine can fail. A survivor carries a mark from the escape — both physical (visible) and spiritual/mechanical — specific forms unwritten.
+
 ### The Pictographic Religion — [Name TBD]
 Widely respected. Second most practiced after idol worship. The symbols of their sacred script are conduits for magical energy — they direct it. Writing is worship, spiritual practice, and spellcasting simultaneously. Think Buddhist traditions around sutra copying: the act of correct inscription is itself transformative and magical.
 
@@ -347,7 +349,9 @@ Borders market, docks, a little of the temple district, and the desert edge. Whe
 
 A guarded checkpoint divides the city into two zones. The lower city — the Ditch, the market, the docks, and the rougher parts of the residential quarter — is where the player begins and where Act 1 takes place. The upper city — the temple district, the smiths and crafters quarter, the castle district, and the better residential neighborhoods — is physically reachable by foot but guarded at a gate.
 
-The guards' reason is the same one that kept the player in chains: class. A freed slave with no money, no patron, and no god has no business in the upper city. This is not a locked door — it is a social boundary enforced by people with spears. The player cannot bluff, bribe, or fight their way through on day one.
+The guards' reason is the same one that kept the player in chains: class. A slave with no money, no patron, and no god has no business in the upper city. This is not a locked door — it is a social boundary enforced by people with spears. The player cannot bluff, bribe, or fight their way through on day one.
+
+**A second, quieter reason layers on top:** the player is a fugitive from a botched sacrifice (§13, "The Interrupted Sacrifice"). Since the escape is suppressed rather than publicized (§3), this isn't an overt manhunt with "wanted" signage — it's a quiet risk, gate guards who might recognize the mark if they got a close look, rather than active pursuit. Specifics of how this manifests mechanically/in dialogue are unwritten.
 
 **What's behind it:** The Library-Temple, the Great Forge, the castle district and palace, and the wealthier residential neighborhoods.
 
@@ -361,7 +365,9 @@ The guards' reason is the same one that kept the player in chains: class. A free
 
 ## 7. Day One — Quest Structure
 
-The player exits the taskmaster's room with tunic, sandals, and nothing else — no coin, no weapon, no contacts. The following opportunities exist in the immediate area. They are not prescribed in order and not all required, but the player must do *something* before they can eat, sleep with protection, or arm themselves.
+The player emerges from the escape sequence (§13, "The Interrupted Sacrifice") into the Lower Ditch, at the Apothecary — with tunic, sandals, and nothing else — no coin, no weapon, no contacts. The following opportunities exist in the immediate area. They are not prescribed in order and not all required, but the player must do *something* before they can eat, sleep with protection, or arm themselves.
+
+**Flag:** this list below was written assuming an Upper Ditch/manor-wall starting point, where the Old Hunter, Scribe, Smith, and Urchin were the truly "immediate" options. Landing at the Apothecary instead (Lower Ditch, further south) puts her and the Fire Cult member/elder physically nearest on day one, with the rest requiring travel north through the Ditch. Not resolved here — whether to reorder this section, or whether the geography already reads fine as-is, is a call for whoever's next working on Day One pacing.
 
 **The core constraint:** Almost everything useful requires either coin or a faction relationship the player doesn't have yet. The first hour of the game is about finding the entry point that fits what the player brought out of character creation.
 
@@ -392,7 +398,9 @@ Works a smithing stall in the market with a small forge and a home attached to t
 **Note:** Foot-operated bellows are period-appropriate (attested Egypt and Mesopotamia ~1500 BCE). Pumping bellows available as an additional minor task if needed.
 **Natural entry point for:** Mason, Gladiator backgrounds. Anyone with STR.
 
-### [The Apothecary] *(market)*
+### [The Apothecary] *(market — but see drift flag below)*
+**Doc/implementation drift, unrelated to the opening rewrite:** she's actually built into `zone_ditch_lower.tscn` (`scripts/entities/apothecary.gd`), not the market. The "market vendor" characterization and "first encountered via the smith's fetch quest or wandering the market" framing below predate that and are unreconciled — not touched here since it's a separate content decision (her identity/backstory), not something today's opening-rewrite session decided. Flagging for whoever picks this up next.
+
 An ordinary-seeming market vendor who has clearly seen too much to be surprised by anything. Knowledgeable, pragmatic, not affiliated with any single religion but conversant in all of them professionally. First encountered either through the smith's fetch quest or by wandering the market. She is not a devotee of any path — she is a professional who knows things. That distinction matters.
 
 **After completing her courier errand** (delivers something to the market, similar to the scribe job), she becomes talkative. If the player asks about protective charms:
@@ -554,23 +562,27 @@ Each path gates deeper progression behind specific skills and stats. Players can
 
 ## 13. NPCs
 
-### [The Taskmaster] — Opening Scene NPC
-The man who releases the player from slavery. Not cruel — dismissive. The player is already beneath his notice before the conversation ends. He represents the household that owned the player: comfortable, protected by their god, indifferent to what happens to you now that the transaction is complete.
+### The Interrupted Sacrifice — Opening Scene
+*(Superseded the Taskmaster/release scene. Full decision history in `GettingStarted/OpeningRewrite_Plan.md`.)*
 
-**Role:** Delivers the opening scene. Exposition through condescension. Establishes the spirit threat and the player's divine vulnerability in the same breath, as an afterthought.
+The player begins as a sacrifice victim, not a freed slave. A scripted sequence, not an NPC-driven scene — the priests present are functional set dressing (a handful, no crowd), not characters with names or arcs.
 
-**Disposition:** Not hostile. Simply done with you. He doesn't watch you leave.
+**Setting:** A secret ritual room deep beneath/within the palace (Castle District, north/northeast of the city — exact placement TBD) — not the public shrine at the city's highest point. Small, rectangular. A slab at the center. A hearth. Torches around the walls. Scale/tone is a small, contained rite: a handful of priests, no crowd, no procession.
 
-**The room:** A small functional space — gatehouse, administrative corner, somewhere that is the least important room in a building that doesn't care you exist. The door to the street is visible.
+**Beat structure (structural only — no dialogue; all lines below are placeholders for the user to write):**
+1. Player is brought to the slab, about to be sacrificed. `[dialogue: priest/ritual framing — TBD]`
+2. **The interruption:** the ritual apparatus shudders mid-rite — a malfunction/backfire in the mechanism itself, felt as a citywide tremor/omen (not sabotage, not crowd chaos, not a fellow victim's intervention).
+3. **The legible fragment:** in the chaos, the player catches one concrete, specific detail about the machine/ritual — doesn't explain what it is, but gives the player something real to chase later. `[content TBD — user's to write]`
+4. **The escape:** the opening created by the malfunction lets the player get free. Route is new geography (palace → corridor(s)/wall/gate → down) — exact waypoints TBD, see §16.
+5. **The mark:** during/after the escape, the player is marked — both physically (visible, other NPCs can react to it) and spiritually/mechanically (a status effect or altered spirit exposure, could double as another explanation for the player's unfiltered dream signal alongside godlessness). `[specific forms TBD — user's to write]`
 
-**Opening dialogue:**
-> *"Well [Player Name], you're finally free. We've worked you long enough. Go make something of your life."*
-> *[Laughs condescendingly]*
-> *"Now that you're no longer our slave, you've lost your protection from our household deity. I guess you probably lost your own family's god sometime around when you became a slave. Did you even have a family? Don't actually answer that. Well, good luck getting to sleep tonight — the spirits are especially aggressive here around the ditch."*
+**Landing point:** The Lower Ditch, at the Apothecary (`zone_ditch_lower.tscn`). See §16.
 
-**Starting gear:** The player already has their tunic and sandals — worn, theirs, the one thing that has been theirs throughout. The taskmaster gives nothing. The transaction is simply over.
+**Aftermath is suppressed, not public.** The ritual's handlers hush up the escape rather than let word spread — worse for them publicly than losing one victim. Early NPCs don't already know or gossip about what happened to the player; the player has to actively hide who they are. This also gives the upper-city gate a second, quieter reason beyond class boundary — see §6.
 
-**After dialogue:** He waits for the player to leave. Does not watch them go. The player steps through the door onto the street.
+**Starting gear:** Unchanged — the player has their tunic and sandals, worn, theirs, the one thing that's been theirs throughout. Nothing else.
+
+**Godlessness/spirit exposition:** The Taskmaster used to deliver this in the release scene. Needs a new home — default candidate is folding it into the post-dream trainer dialogue (already partly implemented per `TODO_Act1.md`), unless the user decides otherwise.
 
 ---
 
@@ -827,10 +839,12 @@ The current starting zone is a placeholder — a flat outdoor area with no meani
          |
        [Fork]                   ← near the top of the Ditch; ancient stone junction
       /      \
-[Upper Ditch / Starting Area]   [Lower Ditch slope]
-← Manor back door (Taskmaster)       ↓
+[Upper Ditch]                   [Lower Ditch slope]
+← Manor back door (orphaned — see  ↓ ← new starting area; player lands
+  Node 1 flag below)                  here via the escape route (§13)
 ← City streets (only lateral exit)  [Undercity access]
-← Inn, Urchin, Missionary, NPCs          ↓
+← Inn, Urchin, Missionary, NPCs    ← Apothecary, Fire Cult member/elder
+                                         ↓
                                     [Undercity]
                                          ↓
                                   [Deep Undercity]
@@ -853,6 +867,15 @@ The rest of the surface city connects laterally from the Upper Ditch:
                                [Crafters District]     ← Senior smiths, sacred forges
                                         |
                                [Castle District]       ← Palace, king's god, nobles
+                                        |
+                          [Ritual room + escape route]  ← §13 opening scene; new
+                                        |                  geography, exits down
+                                        ↓                  into the Lower Ditch
+                             [Lower Ditch / Apothecary]     directly (bypasses the
+                                                             Upper City Gate/Ditch
+                                                             chain above — the
+                                                             player starts already
+                                                             past it, escaping)
 ```
 
 ### City Cardinal Orientation
@@ -892,10 +915,10 @@ These should be diegetic where possible — an old carved marker in the stone, a
      [↑ Outside / Old Hunter]  [↓ Undercity]
 ```
 
-For the initial build the Ditch only needs five connected nodes. Geometry is minimal; the goal is to establish the structure and transitions, not fill in every tile.
+For the initial build the Ditch only needs five connected nodes. Geometry is minimal; the goal is to establish the structure and transitions, not fill in every tile. **Drift flag:** this five-node stub predates a lot of what's actually built (`zone_ditch_lower.tscn` alone has the Apothecary and, per §13, the Fire Cult member/elder — well past the "no NPCs past the fork" line below). Not reconciling the whole section here, just flagging it and fixing the pieces this session's decisions directly touch.
 
 **Node 1 — Manor Back Wall**
-The taskmaster's door. A stone wall belonging to a building that doesn't care about the Ditch — it just happens to back onto it. The door is a servant's exit or drainage gate. Slightly elevated above the channel floor; a few steps down brings the player to the Ditch proper. No need to define the manor beyond its back face.
+**Orphaned by the opening rewrite:** this was "the taskmaster's door," and the Taskmaster is cut (§13). The wall/door itself can stay as unclaimed geography — a building that backs onto the Ditch for no narrative reason — or get reassigned, but that's a placement decision for later, not made here. A stone wall belonging to a building that doesn't care about the Ditch — it just happens to back onto it. The door is a servant's exit or drainage gate. Slightly elevated above the channel floor; a few steps down brings the player to the Ditch proper. No need to define the manor beyond its back face.
 
 **Node 2 — Upper Ditch**
 The inhabited stretch between the manor wall and the fork. Walls already tall but not yet oppressive — a sliver of sky still visible. The Inn is here. The Urchin hangs around the area. The Missionary approaches here or at the Inn. This is where the spirit problem is worst at night (the godless cluster here). Crowded, torchlit, cramped.
@@ -907,7 +930,9 @@ The channel visibly splits. Ancient stone, probably a collapsed arch or old chan
 The fork branch that slopes upward toward the southwest. Walls decrease in height; daylight becomes visible ahead. The original surface drainage exit — the pipe mouth opens onto a strip of dry land between the outer city wall and the river. Transitions to the outside-gate area. Zone edge marker: *"Outside ↑"*. The Old Hunter is just outside.
 
 **Node 5 — Descending Path (south)**
-The fork branch that continues directly south. Darker immediately — the wall height jumps noticeably past the fork. No NPCs past the fork on this path in the first build. Ends at the Undercity zone transition. The transition marker should feel like a threshold: older stone, different construction language, the channel becoming something not built for human habitation. Zone edge marker: *"Deeper ↓"*.
+The fork branch that continues directly south. Darker immediately — the wall height jumps noticeably past the fork. ~~No NPCs past the fork on this path in the first build.~~ **Stale as of this build** — the Lower Ditch past this point now has the Apothecary and the Fire Cult member/elder (§13). Ends at the Undercity zone transition. The transition marker should feel like a threshold: older stone, different construction language, the channel becoming something not built for human habitation. Zone edge marker: *"Deeper ↓"*.
+
+**New — the escape route (§13 opening scene):** connects the ritual room (Castle District, north/northeast, exact placement TBD) down to this stretch of the Lower Ditch, landing at the Apothecary. Kept as a short, mostly-linear stub chain (sacrifice room → a corridor or two → wall/gate → Lower Ditch), consistent with the small/contained ritual scale — not a fully explorable upper-city district. Exact waypoint geometry is unbuilt; this is a placeholder for where that work attaches. Also flagged as a possible home for basic tutorial-dungeon content, since its shape (linear, scripted, low-population) suits introducing core mechanics before the player reaches the open Ditch — not scoped yet.
 
 ### Zone design principles
 - **The Ditch** runs as a physical channel through the lower part of the city. It is both a geographic feature (the old drainage channel) and a social zone (where the unprotected live). Moving along the Ditch is how you go deeper.

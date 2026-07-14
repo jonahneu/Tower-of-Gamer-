@@ -1,0 +1,134 @@
+[gd_scene load_steps=11 format=3 uid="uid://zone_escape_route"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/roach.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/entities/rat.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/rock.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/entities/world_item.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/entities/locked_chest.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/entities/tutorial_trigger.gd" id="9"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(14, 27)
+
+[node name="WallNorth" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 10
+X2 = 79
+Y1 = 11
+Y2 = 12
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallSouth" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 10
+X2 = 79
+Y1 = 44
+Y2 = 45
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="WallWest" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 9
+X2 = 10
+Y1 = 11
+Y2 = 45
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="AutoSaveTrigger" type="Node2D" parent="."]
+script = ExtResource("9")
+grid_cell = Vector2i(14, 27)
+trigger_radius = 0
+auto_save_on_trigger = true
+message = ""
+
+[node name="SneakTutorialPopup" type="Node2D" parent="."]
+script = ExtResource("9")
+grid_cell = Vector2i(28, 30)
+trigger_radius = 1
+auto_save_on_trigger = false
+message = "[PLACEHOLDER: sneak-mode tutorial text — explain the sneak toggle (enter/exit sneak mode) and enemy aggro ranges (enemies detect you within a distance that shrinks to zero if a large rock breaks line of sight while sneaking)]"
+
+[node name="ExitTutorialMessage" type="Node2D" parent="."]
+script = ExtResource("9")
+grid_cell = Vector2i(75, 30)
+trigger_radius = 2
+auto_save_on_trigger = false
+message = "[PLACEHOLDER: exit tutorial message — tell the player to find spiritual protection and food/shelter for the night]"
+
+[node name="Roach1" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(18, 24)
+
+[node name="Roach2" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(20, 26)
+beast_type_id = "giant_roach"
+
+[node name="Roach3" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(18, 30)
+
+[node name="Roach4" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(21, 29)
+
+[node name="RatA" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(35, 26)
+
+[node name="RatB" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(35, 34)
+
+[node name="RatC" type="Node2D" parent="."]
+script = ExtResource("5")
+grid_cell = Vector2i(45, 22)
+
+[node name="RockA" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(35, 28)
+rock_size = "large"
+
+[node name="RockB" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(35, 32)
+rock_size = "large"
+
+[node name="RockC" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(43, 20)
+rock_size = "large"
+
+[node name="RockSmall1" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(25, 29)
+rock_size = "small"
+
+[node name="RockSmall2" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(60, 31)
+rock_size = "small"
+
+[node name="RustyKeyPickup" type="Node2D" parent="."]
+script = ExtResource("7")
+grid_cell = Vector2i(45, 14)
+item_id = "rusty_key"
+package_id = "escape_route_rusty_key"
+
+[node name="EscapeChest" type="Node2D" parent="."]
+script = ExtResource("8")
+grid_cell = Vector2i(55, 30)
+container_id = "escape_route_chest"
+loot_item_ids = PackedStringArray("coin", "coin", "coin", "coin")
+required_key_id = "rusty_key"
+sleight_of_hand_threshold = 5

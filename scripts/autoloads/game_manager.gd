@@ -113,6 +113,19 @@ func _ready() -> void:
 					"south": Vector2i(10, 16),
 				},
 			},
+			# Escape-route tutorial dungeon (opening-hook rewrite, see
+			# GettingStarted/OpeningRewrite_Plan.md). Not part of the normal
+			# explorable world — reachable only via the (not-yet-built) ritual
+			# chamber trigger. One-way: exits east into the Lower Ditch through a
+			# drainage pipe; deliberately has no return exit back west.
+			Vector2i(9, 15): {
+				"scene":          "res://scenes/world/zone_escape_route.tscn",
+				"label":          "Drainage Tunnel",
+				"thumbnail_type": "slums",
+				"exits":          {
+					"east": Vector2i(10, 15),
+				},
+			},
 			Vector2i(10, 16): {
 				"scene":          "res://scenes/world/zone_ditch_undercity.tscn",
 				"label":          "The Ditch — Undercity Entrance",

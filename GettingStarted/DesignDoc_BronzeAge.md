@@ -118,7 +118,7 @@ He believes, with some justification, that another collapse is coming. His goal 
 
 **The secret:** Only members of the royal family who the king has chosen to share it with know the true history. The mass graves beneath the city, the true nature of the shrine, the lineage's connection to previous ruling classes — all of this is known only within that circle. The public theology is not false exactly. It is a surface that covers something older and stranger without contradicting it.
 
-**Escaped sacrifices:** The player's opening (§13, "The Interrupted Sacrifice") establishes that not every sacrifice completes — the ritual apparatus can malfunction. When one does and a victim escapes, the people running the ritual suppress it rather than publicize a manhunt: losing one victim quietly costs them less than the public admitting the shrine can fail. A survivor carries a mark from the escape — both physical (visible) and spiritual/mechanical — specific forms unwritten.
+**Escaped sacrifices:** The player's opening (§13, "The Interrupted Sacrifice") establishes that not every sacrifice completes — the ritual apparatus can malfunction. When one does and a victim escapes, the people running the ritual suppress it rather than publicize a manhunt: losing one victim quietly costs them less than the public admitting the shrine can fail. A survivor carries a mark from the escape: a **brand** (physical, visible) that also **curses** them (spiritual/mechanical). Exact curse mechanics — what it does in systems terms — still unwritten.
 
 ### The Pictographic Religion — [Name TBD]
 Widely respected. Second most practiced after idol worship. The symbols of their sacred script are conduits for magical energy — they direct it. Writing is worship, spiritual practice, and spellcasting simultaneously. Think Buddhist traditions around sutra copying: the act of correct inscription is itself transformative and magical.
@@ -567,14 +567,20 @@ Each path gates deeper progression behind specific skills and stats. Players can
 
 The player begins as a sacrifice victim, not a freed slave. A scripted sequence, not an NPC-driven scene — the priests present are functional set dressing (a handful, no crowd), not characters with names or arcs.
 
-**Setting:** A secret ritual room deep beneath/within the palace (Castle District, north/northeast of the city — exact placement TBD) — not the public shrine at the city's highest point. Small, rectangular. A slab at the center. A hearth. Torches around the walls. Scale/tone is a small, contained rite: a handful of priests, no crowd, no procession.
+**Setting:** A secret ritual chamber, **underground**, northeast of the city — no surface palace structure needs to exist for this. Small, rectangular. A slab at the center. A hearth. Torches around the walls. Scale/tone is a small, contained rite: a handful of priests, no crowd, no procession.
 
 **Beat structure (structural only — no dialogue; all lines below are placeholders for the user to write):**
 1. Player is brought to the slab, about to be sacrificed. `[dialogue: priest/ritual framing — TBD]`
 2. **The interruption:** the ritual apparatus shudders mid-rite — a malfunction/backfire in the mechanism itself, felt as a citywide tremor/omen (not sabotage, not crowd chaos, not a fellow victim's intervention).
-3. **The legible fragment:** in the chaos, the player catches one concrete, specific detail about the machine/ritual — doesn't explain what it is, but gives the player something real to chase later. `[content TBD — user's to write]`
-4. **The escape:** the opening created by the malfunction lets the player get free. Route is new geography (palace → corridor(s)/wall/gate → down) — exact waypoints TBD, see §16.
-5. **The mark:** during/after the escape, the player is marked — both physically (visible, other NPCs can react to it) and spiritually/mechanically (a status effect or altered spirit exposure, could double as another explanation for the player's unfiltered dream signal alongside godlessness). `[specific forms TBD — user's to write]`
+3. **The legible fragment:** in the chaos, the player catches one concrete, specific detail about the machine/ritual. Confirmed content: the king is performing a ritual involving human sacrifice, and the player was **not the only victim** — there were others. `[exact framing/wording TBD — user's to write]`
+4. **The mark:** during/after the interruption, the player is marked with a **brand** (physical, visible — other NPCs can react to it) that also **curses** them (spiritual/mechanical — exact curse effect in systems terms still unwritten, could double as another explanation for the player's unfiltered dream signal alongside godlessness).
+5. **The escape:** the opening created by the malfunction lets the player flee through the tutorial-dungeon corridor below, out into the Lower Ditch.
+
+**The escape route (tutorial dungeon).** A narrow, winding corridor. Autosaves at the start (right after beat 4 above). Four beats, structural only. Built as `zone_escape_route.tscn`:
+1. **Combat tutorial** — 4× Roach (weak, oversized insects; any character can beat them unarmed). They drop nothing, except one (a "Giant Roach") with a guaranteed single meat drop. Roaches can be carved for meat (existing cooking/food system).
+2. **Stealth tutorial** — 3× Rat (larger/tougher than the roaches, but still a low threat), large rocks for cover/line-of-sight blocking, teaches the sneak toggle and enemy aggro ranges.
+3. **Optional side path** — a Rusty Key, reachable only by sneaking past an extra rat gating that path. A chest sits on the main path (not gated behind the extra enemies), openable with the key or a Sleight of Hand check of 5. Contains 4 coins (placeholder value).
+4. **Exit** — a tutorial message tells the player to find spiritual protection and food/shelter for the night (`[message text: placeholder]`), then out a smaller drainage pipe into the Lower Ditch.
 
 **Landing point:** The Lower Ditch, at the Apothecary (`zone_ditch_lower.tscn`). See §16.
 
@@ -582,7 +588,7 @@ The player begins as a sacrifice victim, not a freed slave. A scripted sequence,
 
 **Starting gear:** Unchanged — the player has their tunic and sandals, worn, theirs, the one thing that's been theirs throughout. Nothing else.
 
-**Godlessness/spirit exposition:** The Taskmaster used to deliver this in the release scene. Needs a new home — default candidate is folding it into the post-dream trainer dialogue (already partly implemented per `TODO_Act1.md`), unless the user decides otherwise.
+**Godlessness/spirit exposition:** The Taskmaster used to deliver this in the release scene. Confirmed home: the post-dream trainer dialogue (already partly implemented per `TODO_Act1.md`), carrying the "not the only victim" fact from beat 3 above.
 
 ---
 
@@ -932,7 +938,7 @@ The fork branch that slopes upward toward the southwest. Walls decrease in heigh
 **Node 5 — Descending Path (south)**
 The fork branch that continues directly south. Darker immediately — the wall height jumps noticeably past the fork. ~~No NPCs past the fork on this path in the first build.~~ **Stale as of this build** — the Lower Ditch past this point now has the Apothecary and the Fire Cult member/elder (§13). Ends at the Undercity zone transition. The transition marker should feel like a threshold: older stone, different construction language, the channel becoming something not built for human habitation. Zone edge marker: *"Deeper ↓"*.
 
-**New — the escape route (§13 opening scene):** connects the ritual room (Castle District, north/northeast, exact placement TBD) down to this stretch of the Lower Ditch, landing at the Apothecary. Kept as a short, mostly-linear stub chain (sacrifice room → a corridor or two → wall/gate → Lower Ditch), consistent with the small/contained ritual scale — not a fully explorable upper-city district. Exact waypoint geometry is unbuilt; this is a placeholder for where that work attaches. Also flagged as a possible home for basic tutorial-dungeon content, since its shape (linear, scripted, low-population) suits introducing core mechanics before the player reaches the open Ditch — not scoped yet.
+**New — the escape route (§13 opening scene):** connects the underground ritual chamber (northeast, no surface palace required) down to this stretch of the Lower Ditch, landing at the Apothecary via a smaller drainage pipe. A narrow, winding corridor, built as `zone_escape_route.tscn` — a 4-beat tutorial dungeon (combat, stealth, optional key/chest, exit) — see §13 for the beat-by-beat design. The ritual chamber itself (the other end of this route) is not yet built — exact tile placement within the northeast quadrant is still open.
 
 ### Zone design principles
 - **The Ditch** runs as a physical channel through the lower part of the city. It is both a geographic feature (the old drainage channel) and a social zone (where the unprotected live). Moving along the Ditch is how you go deeper.

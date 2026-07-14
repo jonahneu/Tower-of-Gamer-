@@ -53,18 +53,26 @@ Decided (2026-07-13): the sacrifice is about to happen and gets **interrupted mi
 - **What the player glimpses: one legible fragment.** Not full opacity, not a full reveal — one concrete, specific detail the player catches during the interruption that doesn't explain the machine but gives them something real to chase later. The fragment's actual content is unwritten.
 - **The Taskmaster: cut entirely.** The dismissive-release scene is gone. The godlessness/spirit exposition it used to carry needs a new home — see roadmap below.
 
-## Remaining open questions (yours to decide, unblocked from structural work)
+## Phase 1 decisions (2026-07-13 session)
 
-- **Content of the "legible fragment"** — what specifically the player sees/hears/glimpses of the machine.
-- **Specific form of the mark** — what the physical mark looks like, what the spiritual/mechanical component actually does in systems terms.
-- **New home for the godlessness/spirit exposition** now that the Taskmaster is cut — likely candidates: fold into the post-dream trainer dialogue (already partly implemented per `TODO_Act1.md`), fold into the ritual/escape scene itself, or a new brief NPC beat. Not urgent to resolve before zone/geography work starts.
-- **Escape route waypoints** between the palace (north/northeast, exact placement still TBD) and the Lower Ditch landing point, and exact palace placement itself.
+- **Palace placement:** doesn't need to be built — the ritual takes place in an **underground chamber**, northeast. No surface palace structure required for this content.
+- **The mark:** a **brand** (physical) that **also curses** the player (spiritual/mechanical — a curse, not just generic "spirit exposure"). Exact curse mechanics (what it does in systems terms) still TBD — see open items below.
+- **What the player learns / exposition content:** the king is performing a ritual involving human sacrifice, and the player was **not the only victim** — there were others. This is the fact the post-dream dialogue rewrite (Phase 4) needs to land, and/or the content behind the "legible fragment." Confirms the exposition-slot default (post-dream trainer dialogue) from Phase 0.
+- **Escape route:** fully designed as a tutorial dungeon — see "The escape route as tutorial dungeon" below.
 
-## Confirmed approach
+## Still open (small, not blocking)
 
-The escape sequence stays small: a short, mostly-linear string of stub zones (sacrifice room → a corridor or two → wall/gate → drop into the Lower Ditch near the Apothecary) rather than fully realized, explorable upper-city districts. Consistent with the small/contained ritual-scale decision above — the escape is a scripted bookend, not a new open area to fill with NPCs and quests, matching hobby-project scope.
+- Exact curse mechanics — what the spiritual/mechanical side of the mark actually does in game-system terms (status effect? interaction with the godless/dream mechanic? something else?).
+- Exact palace/chamber tile placement within the northeast quadrant.
 
-**Idea flagged (2026-07-13, not yet scoped):** the escape passage could double as a basic tutorial dungeon — its linear, scripted, low-population shape is naturally suited to introducing movement/combat/interaction mechanics before the player reaches the open Lower Ditch. Not decided how much tutorial content this implies (a single mechanic prompt vs. a small guided encounter or two) — worth deciding once Phase 2 geometry work starts.
+## The escape route as tutorial dungeon (decided, 2026-07-13; enemy specifics 2026-07-13)
+
+Confirms the tutorial-dungeon idea flagged earlier — now fully scoped. A narrow, winding corridor, four beats, ending at a smaller drainage pipe that opens into the Lower Ditch (near the Apothecary, per the existing decision). **Autosaves at the start** (i.e., at the top of the escape route, right after the interruption/mark beat).
+
+1. **Combat tutorial.** 4× **Roach** — HP 4, dodge skill 0, melee skill 8, damage 1d2, agility 4. Any character can beat them unarmed. They drop nothing except one roach with a guaranteed single meat drop. Player can carve roaches for meat (existing cooking/food system, via `corpse.gd`'s carve flow). Aggro range left at the engine default (26) — this beat is meant to be a forced/guaranteed fight, not avoidable.
+2. **Stealth tutorial.** 3× **Rat** — 2 on the main path, 1 gating the side path to the key. Combat stats (HP/dodge/melee/damage/agility) still TBD. Rocks placed for cover. A popup here teaches sneaking and explains enemy aggro ranges. **Mechanism (per codebase survey):** while the player is in sneak mode (existing `GameManager.is_sneaking` toggle), enemy detection requires line-of-sight — *large* rocks (2×2, via the existing `rock.gd`) block LOS entirely and guarantee no detection roll happens, while small rocks only give combat cover, not concealment. Plan is to use large rocks at chokepoints so a 0-sneak-skill player can reliably (not just by chance) get past by routing behind them, matching "walking around their ranges using the rocks." Rat aggro ranges will be tuned short enough for this to work once rat stats and corridor layout are set.
+3. **Optional side path.** A key, reachable only by sneaking past the 3rd rat. A chest ("**Rusty Key**" opens it) sits on the main path, not gated behind the extra rat — openable either with the key or a Sleight of Hand check of 5 (flat threshold, matching the existing `jammed_door.gd`/`stat_checks.gd` pattern). Contains 4 coins (placeholder value, may change later).
+4. **Exit.** A tutorial message tells the player to find spiritual protection and food/shelter for the night. `[message text: placeholder — yours to write]`. Leads out the smaller drainage pipe into the Lower Ditch.
 
 ## Roadmap to implementation
 
@@ -80,12 +88,11 @@ All structural questions are now resolved; what's left before code work starts i
 - §3: added the mark + suppressed-aftermath facts under "The King's God."
 - **Found during Phase 0, not just a doc issue:** the Taskmaster is a real implemented feature — `scripts/entities/taskmaster.gd`, present in `zone_ditch.tscn`, with state tracking in `game_manager.gd` (`taskmaster_left`). Cutting it is real Phase 3 code work, not only a text change.
 
-**Phase 1 — Remaining content decisions (yours).** Doesn't block Phase 0 or early geometry work, but blocks writing final scene dialogue/text:
-- The legible fragment's content.
-- The mark's specific physical form and spiritual/mechanical effect.
-- Exact escape-route waypoints and palace tile placement.
+**Phase 1 — Content decisions. Mostly done, 2026-07-13** — see "Phase 1 decisions" and "The escape route as tutorial dungeon" above. Remaining small items are listed under "Still open" above (curse mechanics, exact chamber placement, insect/enemy stats).
 
-**Phase 2 — Build geometry.** New scenes for the sacrifice room and escape corridor(s), connective tissue into `zone_ditch_lower.tscn`. Claude-executable once Phase 0/1 placement decisions land.
+**Phase 2 — Build geometry. Tutorial-dungeon corridor done, 2026-07-13; ritual chamber not started.**
+- Done: `zone_escape_route.tscn` — full 4-beat corridor (roach combat tutorial with a guaranteed `giant_roach` meat drop, rat/rock sneak tutorial, rusty-key/locked-chest side path, exit tutorial trigger), new `rat.gd`/`roach.gd`/`locked_chest.gd`/`tutorial_trigger.gd` entity scripts, new `data_manager.gd` entries (`giant_roach` carve table, `giant_roach_meat`, `rusty_key`), autosave trigger at the corridor start. Wired into `game_manager.gd`'s world map at `(9,15)` — reuses a pre-existing dangling exit slot on `zone_outside_gate`'s south side (that exit has no physical door in `zone_outside_gate.tscn`, so it isn't walkable by accident; the intended entry point is still the Phase 3 ritual trigger, not this map slot). East exit connects into `zone_ditch_lower.tscn` via a new door punched in its west wall at `(5,32)`, landing near the Apothecary per the decided endpoint.
+- Not started: the ritual chamber scene itself (underground, northeast quadrant — exact tile placement still open, see above).
 
 **Phase 3 — Scripted sequence logic.** The ritual-interrupted cutscene/trigger (apparatus shudder → opening → escape), replacing the old Taskmaster dismissal trigger. Godot scene/script work.
 

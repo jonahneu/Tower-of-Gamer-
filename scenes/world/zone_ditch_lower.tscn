@@ -24,8 +24,8 @@ X1 = 0
 X2 = 5
 Y1 = 0
 Y2 = 79
-DOOR_X = 999
-DOOR_Y = -1
+DOOR_X = 5
+DOOR_Y = 32
 
 [node name="WallEast" type="Node2D" parent="."]
 script = ExtResource("3")

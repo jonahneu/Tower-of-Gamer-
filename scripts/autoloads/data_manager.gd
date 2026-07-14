@@ -910,6 +910,17 @@ const CARVE_TABLES: Dictionary = {
 			{"material": "shell",     "min_roll": 90, "base_quality": 3, "quality_step": 15},
 		],
 	},
+	# "roach" (the other 3 in the escape-route tutorial fight) deliberately has no
+	# entry here — resolve_carve() returns [] (nothing) for a beast_type with no
+	# table, matching the "drop nothing" design intent.
+	"giant_roach": {
+		"display_name": "Giant Roach",
+		# min_roll=1: guaranteed on any roll (roll is always >= 1) — this is the one
+		# roach of the four with a guaranteed single meat drop.
+		"loot_pool": [
+			{"material": "meat", "min_roll": 1, "base_quality": 1, "quality_step": 15},
+		],
+	},
 }
 
 const _QUALITY_PREFIXES: Array = ["Ruined ", "Poor ", "", "Good ", "Fine ", "Pristine "]
@@ -1394,6 +1405,16 @@ func _load_items() -> void:
 		"properties": [], "abilities": [],
 	}
 
+	items["rusty_key"] = {
+		"id":          "rusty_key",
+		"name":        "Rusty Key",
+		"type":        "quest_item",
+		"slot":        null,
+		"weight":      0.1,
+		"description": "An old iron key, pitted with rust.",
+		"properties": [], "abilities": [],
+	}
+
 	# ── Smithing materials ───────────────────────────────────────────────────
 
 	items["ancient_bronze_scrap"] = {
@@ -1513,6 +1534,15 @@ func _load_items() -> void:
 		"description": "Standard cuts of lizard meat, butchered and ready to cook.",
 		"properties": [], "abilities": [],
 	}
+	items["giant_roach_meat"] = {
+		"id": "giant_roach_meat", "name": "Giant Roach Meat", "type": "material",
+		"material_type": "meat", "beast_source": "giant_roach", "slot": null, "weight": 1.5,
+		"quality": 2, "quality_name": "Common",
+		"uses_remaining": 1, "max_uses": 1, "expires_in_rests": 2,
+		"description": "Meat carved from a giant roach. Not appetizing to think about, but it's food.",
+		"properties": [], "abilities": [],
+	}
+
 	items["sand_beetle_meat"] = {
 		"id": "sand_beetle_meat", "name": "Sand Beetle Meat", "type": "material",
 		"material_type": "meat", "beast_source": "sand_beetle", "slot": null, "weight": 1.5,

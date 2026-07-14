@@ -23,7 +23,7 @@ const AUTO_SLOT: int = 7         # most-recent auto save
 const PREV_AUTO_SLOT: int = 8    # previous auto save (auto-shifted)
 
 # ── World map state ────────────────────────────────────────────────────────────
-var world_pos: Vector2i = Vector2i(10, 14)   # current tile on the 20×20 world map
+var world_pos: Vector2i = Vector2i(-1, 15)   # current tile on the 20×20 world map (default = the ritual chamber, the new-game start)
 var world_layer: int = 0
 
 # Tile definitions per layer. Populated in _ready because Vector2i keys can't
@@ -140,9 +140,10 @@ func _ready() -> void:
 			# out-of-range coordinate below (outside hud.gd's 20×20 MAP_COLS/
 			# MAP_ROWS grid), it can never surface on the world-map screen.
 			# One-way: the exit door leads to the escape route above; nothing
-			# points back here. Not yet wired as the actual game-start location —
-			# that's still Phase 3 (the ritual-interruption trigger + cutting the
-			# Taskmaster's start-of-game role).
+			# points back here. This is now the new-game start location (see
+			# character_creation.gd) and the Taskmaster is fully cut. The
+			# ritual-interruption/mark/escape cutscene itself is still unbuilt
+			# (Phase 3) — the player currently just begins here directly.
 			Vector2i(-1, 15): {
 				"scene":          "res://scenes/world/zone_ritual_chamber.tscn",
 				"label":          "The Ritual Chamber",
@@ -688,9 +689,6 @@ func _ready() -> void:
 # When an NPC IS loaded in the current zone it handles its own departure via its
 # own player_rested connection — game_manager only steps in when the NPC is absent.
 func _on_player_rested() -> void:
-	# Taskmaster always leaves after the first rest
-	player_data["taskmaster_left"] = true
-
 	# Old Hunter: two-rest sequence once the kill quest thread is completed.
 	# Skip if the hunter is present — his own _on_player_rested handles it.
 	var hunter_present: bool = false

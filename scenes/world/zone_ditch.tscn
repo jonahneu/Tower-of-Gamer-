@@ -1,9 +1,8 @@
-[gd_scene load_steps=17 format=3 uid="uid://zone_ditch"]
+[gd_scene load_steps=16 format=3 uid="uid://zone_ditch"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/entities/taskmaster.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/entities/missionary.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/entities/door.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/entities/innkeeper.gd" id="8"]
@@ -119,9 +118,6 @@ Y1 = 42
 Y2 = 49
 DOOR_X = 59
 DOOR_Y = 46
-
-[node name="Taskmaster" type="Node2D" parent="."]
-script = ExtResource("4")
 
 [node name="Missionary" type="Node2D" parent="."]
 script = ExtResource("5")

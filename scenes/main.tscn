@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://main"]
 
-[ext_resource type="PackedScene" path="res://scenes/world/zone_ditch.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/world/zone_ritual_chamber.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/world/camera.gd" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="3"]
 [ext_resource type="Script" path="res://scripts/world/main.gd" id="4"]

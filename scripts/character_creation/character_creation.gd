@@ -1022,11 +1022,16 @@ func _on_begin() -> void:
 		"unspent_stat_points":    0,
 		"feats":                  [{"id": _feats[selected_feat]["id"], "name": selected_feat, "description": _feats[selected_feat]["effect"]}] if selected_feat != "" else [],
 	}
-	GameManager.player_data["_saved_grid_cell"] = [20, 6]
+	# Opening-hook rewrite (GettingStarted/OpeningRewrite_Plan.md): the player
+	# starts having just gotten off the sacrifice slab, not released by the
+	# Taskmaster. [40, 36] is one cell off zone_ritual_chamber.tscn's slab
+	# (RitualSlab at (40, 37)). The scripted interruption/mark/escape sequence
+	# itself is still unbuilt (Phase 3) — for now the player simply begins here.
+	GameManager.player_data["_saved_grid_cell"] = [40, 36]
 
-	# Reset world/run state so a new game always starts fresh in The Ditch,
-	# regardless of where a previous playthrough ended.
-	GameManager.world_pos = Vector2i(10, 14)
+	# Reset world/run state so a new game always starts fresh in the ritual
+	# chamber, regardless of where a previous playthrough ended.
+	GameManager.world_pos = Vector2i(-1, 15)
 	GameManager.world_layer = 0
 	GameManager.current_layer = 0
 	GameManager.explored_tiles = {}

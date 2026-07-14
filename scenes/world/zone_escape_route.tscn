@@ -37,12 +37,12 @@ DOOR_Y = -1
 
 [node name="WallWest" type="Node2D" parent="."]
 script = ExtResource("3")
-X1 = 9
+X1 = 10
 X2 = 10
 Y1 = 11
 Y2 = 45
-DOOR_X = 999
-DOOR_Y = -1
+DOOR_X = 10
+DOOR_Y = 37
 
 [node name="AutoSaveTrigger" type="Node2D" parent="."]
 script = ExtResource("9")

@@ -115,15 +115,41 @@ func _ready() -> void:
 			},
 			# Escape-route tutorial dungeon (opening-hook rewrite, see
 			# GettingStarted/OpeningRewrite_Plan.md). Not part of the normal
-			# explorable world — reachable only via the (not-yet-built) ritual
-			# chamber trigger. One-way: exits east into the Lower Ditch through a
+			# explorable world — reachable only via the ritual chamber's exit
+			# door below. One-way: exits east into the Lower Ditch through a
 			# drainage pipe; deliberately has no return exit back west.
-			Vector2i(9, 15): {
+			# NOTE: this used to sit at Vector2i(9, 15), which turned out to
+			# collide with the pre-existing "zone_desert_south" tile further
+			# down this same dictionary (near Vector2i(7-9, 8-18), the desert/
+			# riverbank region) — a silent duplicate-key bug that would have
+			# broken GameManager's autoload entirely. Caught via a headless
+			# `godot --check-only` run; moved here instead.
+			Vector2i(9, 18): {
 				"scene":          "res://scenes/world/zone_escape_route.tscn",
 				"label":          "Drainage Tunnel",
 				"thumbnail_type": "slums",
 				"exits":          {
 					"east": Vector2i(10, 15),
+				},
+			},
+			# The ritual chamber (opening-hook rewrite, §13 "The Interrupted
+			# Sacrifice") — a Type-A interior per DesignDoc_BronzeAge.md's
+			# "Building Interiors — Two Tiers": its own small TileScene, entered/
+			# exited via a door (scripts/entities/interior_door.gd) rather than a
+			# walk-off zone edge. is_interior marks it as such; combined with the
+			# out-of-range coordinate below (outside hud.gd's 20×20 MAP_COLS/
+			# MAP_ROWS grid), it can never surface on the world-map screen.
+			# One-way: the exit door leads to the escape route above; nothing
+			# points back here. Not yet wired as the actual game-start location —
+			# that's still Phase 3 (the ritual-interruption trigger + cutting the
+			# Taskmaster's start-of-game role).
+			Vector2i(-1, 15): {
+				"scene":          "res://scenes/world/zone_ritual_chamber.tscn",
+				"label":          "The Ritual Chamber",
+				"thumbnail_type": "interior",
+				"is_interior":    true,
+				"exits":          {
+					"east": Vector2i(9, 18),
 				},
 			},
 			Vector2i(10, 16): {

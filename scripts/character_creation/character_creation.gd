@@ -1024,10 +1024,10 @@ func _on_begin() -> void:
 	}
 	# Opening-hook rewrite (GettingStarted/OpeningRewrite_Plan.md): the player
 	# starts having just gotten off the sacrifice slab, not released by the
-	# Taskmaster. [40, 36] is one cell off zone_ritual_chamber.tscn's slab
-	# (RitualSlab at (40, 37)). The scripted interruption/mark/escape sequence
+	# Taskmaster. [40, 29] is one cell off zone_ritual_chamber.tscn's slab
+	# (RitualSlab at (40, 30)). The scripted interruption/mark/escape sequence
 	# itself is still unbuilt (Phase 3) — for now the player simply begins here.
-	GameManager.player_data["_saved_grid_cell"] = [40, 36]
+	GameManager.player_data["_saved_grid_cell"] = [40, 29]
 
 	# Reset world/run state so a new game always starts fresh in the ritual
 	# chamber, regardless of where a previous playthrough ended.

@@ -13,45 +13,45 @@ script = ExtResource("1")
 
 [node name="Player" type="Node2D" parent="."]
 script = ExtResource("2")
-grid_cell = Vector2i(40, 36)
+grid_cell = Vector2i(40, 29)
 
 [node name="ChamberWalls" type="Node2D" parent="."]
 script = ExtResource("3")
-X1 = 35
-X2 = 45
-Y1 = 33
-Y2 = 41
-DOOR_X = 35
-DOOR_Y = 37
+X1 = 37
+X2 = 43
+Y1 = 27
+Y2 = 33
+DOOR_X = 43
+DOOR_Y = 30
 
 [node name="RitualSlab" type="Node2D" parent="."]
 script = ExtResource("4")
-grid_cell = Vector2i(40, 37)
+grid_cell = Vector2i(40, 30)
 
 [node name="Hearth" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(38, 39)
+grid_cell = Vector2i(39, 32)
 bright_radius = 4
 dim_radius = 7
 
 [node name="WallTorch1" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(37, 35)
+grid_cell = Vector2i(38, 28)
 
 [node name="WallTorch2" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(43, 35)
+grid_cell = Vector2i(42, 28)
 
 [node name="WallTorch3" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(37, 39)
+grid_cell = Vector2i(38, 32)
 
 [node name="WallTorch4" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(43, 39)
+grid_cell = Vector2i(42, 32)
 
 [node name="ExitDoor" type="Node2D" parent="."]
 script = ExtResource("7")
-grid_cell = Vector2i(35, 37)
+grid_cell = Vector2i(43, 30)
 direction = "east"
 door_label = "Passage"

@@ -116,18 +116,20 @@ func _ready() -> void:
 			# Escape-route tutorial dungeon (opening-hook rewrite, see
 			# GettingStarted/OpeningRewrite_Plan.md). Not part of the normal
 			# explorable world — reachable only via the ritual chamber's exit
-			# door below. One-way: exits east into the Lower Ditch through a
-			# drainage pipe; deliberately has no return exit back west.
-			# NOTE: this used to sit at Vector2i(9, 15), which turned out to
-			# collide with the pre-existing "zone_desert_south" tile further
-			# down this same dictionary (near Vector2i(7-9, 8-18), the desert/
-			# riverbank region) — a silent duplicate-key bug that would have
-			# broken GameManager's autoload entirely. Caught via a headless
-			# `godot --check-only` run; moved here instead.
-			Vector2i(9, 18): {
+			# door below. Off-grid coordinate (outside hud.gd's 20×20 MAP_COLS/
+			# MAP_ROWS grid) so, like the chamber, it can never surface on the
+			# world-map screen even after being visited — this was always the
+			# intent ("not part of the normal explorable world"), corrected
+			# 2026-07-14 after initially being placed on the addressable grid.
+			# One-way: its own east wall is open (no door), so walking off that
+			# edge exits east into the Lower Ditch through a drainage pipe —
+			# same walk-off mechanism used everywhere else; deliberately has no
+			# return exit back toward the chamber.
+			Vector2i(-1, 18): {
 				"scene":          "res://scenes/world/zone_escape_route.tscn",
 				"label":          "Drainage Tunnel",
 				"thumbnail_type": "slums",
+				"is_interior":    true,
 				"exits":          {
 					"east": Vector2i(10, 15),
 				},
@@ -150,7 +152,7 @@ func _ready() -> void:
 				"thumbnail_type": "interior",
 				"is_interior":    true,
 				"exits":          {
-					"east": Vector2i(9, 18),
+					"east": Vector2i(-1, 18),
 				},
 			},
 			Vector2i(10, 16): {

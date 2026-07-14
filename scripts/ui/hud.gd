@@ -143,6 +143,14 @@ var _journal_tab: String = "quests"
 var _journal_notes_vbox: VBoxContainer = null
 var _journal_search_edit: LineEdit = null
 var _journal_notes_search: String = ""
+var _journal_tutorials_vbox: VBoxContainer = null
+var _journal_tutorials_unread: int = 0
+var _journal_tutorials_dot: Panel = null
+
+# ── Tutorial popup ─────────────────────────────────────────────────────────────
+var _tutorial_popup_panel: Control = null
+var _tutorial_popup_title_lbl: Label = null
+var _tutorial_popup_body_lbl: Label = null
 
 # ── Pickpocket panel ──────────────────────────────────────────────────────────
 var _pickpocket_panel: Control = null
@@ -362,6 +370,12 @@ func _ready() -> void:
 	_smithing_pick_panel.visible = false
 	add_child(_smithing_pick_panel)
 
+	# Tutorial popup — added last so it renders over dialogue/dream panels too
+	_tutorial_popup_panel = _build_tutorial_popup_panel()
+	_tutorial_popup_panel.visible = false
+	add_child(_tutorial_popup_panel)
+
+	EventBus.tutorial_popup_requested.connect(_on_tutorial_popup_requested)
 	EventBus.interaction_triggered.connect(_on_interaction_triggered)
 	EventBus.show_context_menu.connect(_on_show_context_menu)
 	EventBus.entity_hovered.connect(_on_entity_hovered)
@@ -503,6 +517,7 @@ func _toggle(name: String) -> void:
 	if name == "journal":
 		_refresh_journal()
 		_refresh_notes()
+		_refresh_tutorials()
 	if name == "crafting":   _refresh_crafting()
 	if name == "abilities":  _refresh_abilities()
 	if name == "rest":       _refresh_rest()
@@ -515,15 +530,21 @@ func _toggle(name: String) -> void:
 			_journal_quest_dot.visible = _journal_quest_unread > 0
 		if _journal_notes_dot != null:
 			_journal_notes_dot.visible = _journal_notes_unread > 0
+		if _journal_tutorials_dot != null:
+			_journal_tutorials_dot.visible = _journal_tutorials_unread > 0
 		# Clear the currently visible tab immediately since the player sees it now
 		if _journal_tab == "quests":
 			_journal_quest_unread = 0
 			if _journal_quest_dot != null:
 				_journal_quest_dot.visible = false
-		else:
+		elif _journal_tab == "notes":
 			_journal_notes_unread = 0
 			if _journal_notes_dot != null:
 				_journal_notes_dot.visible = false
+		else:
+			_journal_tutorials_unread = 0
+			if _journal_tutorials_dot != null:
+				_journal_tutorials_dot.visible = false
 
 func _notify_overlay_state() -> void:
 	var open: bool = _pause_panel.visible or _save_panel.visible or _load_panel.visible
@@ -550,6 +571,7 @@ func _close_all() -> void:
 	_load_panel.visible = false
 	if _shop_panel != null: _shop_panel.visible = false
 	if _dream_panel != null: _dream_panel.visible = false
+	if _tutorial_popup_panel != null: _tutorial_popup_panel.visible = false
 	if _spell_pick_panel != null: _spell_pick_panel.visible = false
 	if _smithing_pick_panel != null: _smithing_pick_panel.visible = false
 	_close_context_menu()
@@ -6183,6 +6205,11 @@ func _build_journal_panel() -> Control:
 	notes_tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	notes_tab.clip_contents = false
 	tab_row.add_child(notes_tab)
+	var tutorials_tab := Button.new()
+	tutorials_tab.text = "Tutorials"
+	tutorials_tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tutorials_tab.clip_contents = false
+	tab_row.add_child(tutorials_tab)
 
 	# Small dot badges on each tab button (shown when that tab has unread items)
 	_journal_quest_dot = _make_dot_badge(8, Color(0.82, 0.15, 0.15))
@@ -6198,6 +6225,13 @@ func _build_journal_panel() -> Control:
 	_journal_notes_dot.set_anchor_and_offset(SIDE_TOP,    0.0,   2)
 	_journal_notes_dot.set_anchor_and_offset(SIDE_BOTTOM, 0.0,  10)
 	notes_tab.add_child(_journal_notes_dot)
+
+	_journal_tutorials_dot = _make_dot_badge(8, Color(0.82, 0.15, 0.15))
+	_journal_tutorials_dot.set_anchor_and_offset(SIDE_LEFT,   1.0, -10)
+	_journal_tutorials_dot.set_anchor_and_offset(SIDE_RIGHT,  1.0,  -2)
+	_journal_tutorials_dot.set_anchor_and_offset(SIDE_TOP,    0.0,   2)
+	_journal_tutorials_dot.set_anchor_and_offset(SIDE_BOTTOM, 0.0,  10)
+	tutorials_tab.add_child(_journal_tutorials_dot)
 
 	vbox.add_child(HSeparator.new())
 
@@ -6260,11 +6294,29 @@ func _build_journal_panel() -> Control:
 	_journal_notes_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	notes_scroll.add_child(_journal_notes_vbox)
 
+	# ── Tutorials section ──────────────────────────────────────────────────────
+	var tutorials_section := VBoxContainer.new()
+	tutorials_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tutorials_section.add_theme_constant_override("separation", 8)
+	tutorials_section.visible = false
+	vbox.add_child(tutorials_section)
+
+	var tutorials_scroll := ScrollContainer.new()
+	tutorials_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tutorials_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tutorials_section.add_child(tutorials_scroll)
+
+	_journal_tutorials_vbox = VBoxContainer.new()
+	_journal_tutorials_vbox.add_theme_constant_override("separation", 10)
+	_journal_tutorials_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tutorials_scroll.add_child(_journal_tutorials_vbox)
+
 	# Tab switching
 	quests_tab.pressed.connect(func():
 		_journal_tab = "quests"
 		quests_section.visible = true
 		notes_section.visible = false
+		tutorials_section.visible = false
 		_journal_quest_unread = 0
 		if _journal_quest_dot != null:
 			_journal_quest_dot.visible = false
@@ -6273,10 +6325,20 @@ func _build_journal_panel() -> Control:
 		_journal_tab = "notes"
 		quests_section.visible = false
 		notes_section.visible = true
+		tutorials_section.visible = false
 		_journal_notes_unread = 0
 		if _journal_notes_dot != null:
 			_journal_notes_dot.visible = false
 		_refresh_notes())
+	tutorials_tab.pressed.connect(func():
+		_journal_tab = "tutorials"
+		quests_section.visible = false
+		notes_section.visible = false
+		tutorials_section.visible = true
+		_journal_tutorials_unread = 0
+		if _journal_tutorials_dot != null:
+			_journal_tutorials_dot.visible = false
+		_refresh_tutorials())
 
 	return shell["root"]
 
@@ -6314,6 +6376,33 @@ func _refresh_notes() -> void:
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		_journal_notes_vbox.add_child(lbl)
+
+func _refresh_tutorials() -> void:
+	if _journal_tutorials_vbox == null:
+		return
+	for child in _journal_tutorials_vbox.get_children():
+		child.queue_free()
+	var tutorials: Array = GameManager.player_data.get("tutorials", [])
+	if tutorials.is_empty():
+		var lbl := Label.new()
+		lbl.text = "No tutorials seen yet.\n\nTutorial popups you've dismissed will stay here so you can look them up again."
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		_journal_tutorials_vbox.add_child(lbl)
+		return
+	for tut in tutorials:
+		var title_lbl := Label.new()
+		title_lbl.text = String(tut.get("title", "")).to_upper()
+		title_lbl.add_theme_font_size_override("font_size", 15)
+		title_lbl.add_theme_color_override("font_color", Color(0.88, 0.82, 0.65))
+		_journal_tutorials_vbox.add_child(title_lbl)
+		var body_lbl := Label.new()
+		body_lbl.text = tut.get("body", "")
+		body_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		body_lbl.add_theme_font_size_override("font_size", 12)
+		body_lbl.add_theme_color_override("font_color", Color(0.72, 0.72, 0.72))
+		_journal_tutorials_vbox.add_child(body_lbl)
+		_journal_tutorials_vbox.add_child(HSeparator.new())
 
 func _refresh_journal() -> void:
 	for child in _journal_vbox.get_children():
@@ -7535,6 +7624,63 @@ func _dream_finish() -> void:
 	GameManager.auto_save()
 
 # ══════════════════════════════════════════════════════════════════════════════
+# TUTORIAL POPUP
+# Dismissible, full-screen modal for tutorial_trigger.gd — mirrors the dream
+# panel's shape (dim background, centered text, single Continue button) but is
+# a single beat, not a multi-page sequence. The tutorial is already recorded
+# into the journal's Tutorials tab by GameManager.add_tutorial() before this
+# signal fires, so Continue only needs to dismiss the popup.
+# ══════════════════════════════════════════════════════════════════════════════
+func _build_tutorial_popup_panel() -> Control:
+	var bg := ColorRect.new()
+	bg.color = Color(0.02, 0.01, 0.03, 0.85)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(480, 0)
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 20)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	margin.add_child(vbox)
+
+	_tutorial_popup_title_lbl = Label.new()
+	_tutorial_popup_title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_tutorial_popup_title_lbl.add_theme_font_size_override("font_size", 18)
+	_tutorial_popup_title_lbl.add_theme_color_override("font_color", Color(0.88, 0.82, 0.65))
+	vbox.add_child(_tutorial_popup_title_lbl)
+
+	vbox.add_child(HSeparator.new())
+
+	_tutorial_popup_body_lbl = Label.new()
+	_tutorial_popup_body_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_tutorial_popup_body_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tutorial_popup_body_lbl.add_theme_font_size_override("font_size", 14)
+	vbox.add_child(_tutorial_popup_body_lbl)
+
+	var continue_btn := Button.new()
+	continue_btn.text = "Continue"
+	continue_btn.pressed.connect(func(): _tutorial_popup_panel.visible = false)
+	vbox.add_child(continue_btn)
+
+	return bg
+
+func _on_tutorial_popup_requested(_tutorial_id: String, title: String, body: String) -> void:
+	_tutorial_popup_title_lbl.text = title
+	_tutorial_popup_body_lbl.text = body
+	_tutorial_popup_panel.visible = true
+
+# ══════════════════════════════════════════════════════════════════════════════
 # ABILITIES PANEL
 # ══════════════════════════════════════════════════════════════════════════════
 func _build_abilities_panel() -> Control:
@@ -7670,8 +7816,10 @@ func _attach_journal_badge(btn: Button) -> void:
 func _on_journal_updated(kind: String) -> void:
 	if kind == "quest":
 		_journal_quest_unread += 1
-	else:
+	elif kind == "note":
 		_journal_notes_unread += 1
+	else:
+		_journal_tutorials_unread += 1
 
 	if _open == "journal":
 		# Journal is open — show the tab dot for the tab that isn't currently active
@@ -7679,6 +7827,8 @@ func _on_journal_updated(kind: String) -> void:
 			_journal_quest_dot.visible = true
 		elif kind == "note" and _journal_tab != "notes" and _journal_notes_dot != null:
 			_journal_notes_dot.visible = true
+		elif kind == "tutorial" and _journal_tab != "tutorials" and _journal_tutorials_dot != null:
+			_journal_tutorials_dot.visible = true
 		return
 
 	_journal_unread += 1

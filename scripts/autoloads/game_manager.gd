@@ -760,6 +760,24 @@ func add_note(note: Dictionary, xp: int = 5) -> void:
 	EventBus.note_added.emit(note.get("id", ""), note.get("title", ""))
 	EventBus.journal_updated.emit("note")
 
+# Records a tutorial into the journal's Tutorials tab so the player can
+# revisit it later. No XP — unlike add_note(), this is systemic instruction,
+# not a lore/exploration reward. Dedupes by id (a player who somehow re-enters
+# a trigger's radius won't get a duplicate journal entry).
+func has_tutorial(tutorial_id: String) -> bool:
+	for t in player_data.get("tutorials", []):
+		if t.get("id") == tutorial_id:
+			return true
+	return false
+
+func add_tutorial(tutorial: Dictionary) -> void:
+	if has_tutorial(tutorial.get("id", "")):
+		return
+	var tutorials: Array = player_data.get("tutorials", [])
+	tutorials.append(tutorial)
+	player_data["tutorials"] = tutorials
+	EventBus.journal_updated.emit("tutorial")
+
 func xp_for_next_level() -> int:
 	var lvl: int = player_data.get("level", 1)
 	if lvl >= XP_THRESHOLDS.size() - 1:

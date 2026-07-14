@@ -1,16 +1,19 @@
 extends Entity
 class_name TutorialTrigger
 # Invisible one-shot trigger: fires once when the player's grid_cell enters
-# trigger_radius of grid_cell, optionally auto-saving and/or logging a message
-# via the existing EventBus.combat_log channel (the established precedent for
-# one-off narrative/system text outside combat — see jammed_door.gd).
-# New minimal utility added for the escape-route tutorial dungeon; no equivalent
-# "tutorial popup" system existed in the codebase to reuse.
+# trigger_radius of grid_cell. Can auto-save on trigger, and/or show a
+# dismissible tutorial popup (title/body) that's also recorded into the
+# journal's Tutorials tab via GameManager.add_tutorial() so the player can
+# revisit it later. The popup only fires when tutorial_id is set — the
+# AutoSaveTrigger instance in zone_escape_route.tscn uses this same script
+# purely for the autosave-on-entry beat, with tutorial_id left blank.
 
 @export var grid_cell: Vector2i = Vector2i(0, 0)
 @export var trigger_radius: int = 0
-@export var message: String = ""
 @export var auto_save_on_trigger: bool = false
+@export var tutorial_id: String = ""
+@export var tutorial_title: String = ""
+@export var tutorial_body: String = ""
 
 var _fired: bool = false
 
@@ -33,5 +36,6 @@ func _process(_delta: float) -> void:
 	_fired = true
 	if auto_save_on_trigger:
 		GameManager.auto_save()
-	if message != "":
-		EventBus.combat_log.emit(message)
+	if tutorial_id != "" and not GameManager.has_tutorial(tutorial_id):
+		GameManager.add_tutorial({"id": tutorial_id, "title": tutorial_title, "body": tutorial_body})
+		EventBus.tutorial_popup_requested.emit(tutorial_id, tutorial_title, tutorial_body)

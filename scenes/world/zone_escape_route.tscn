@@ -49,21 +49,24 @@ script = ExtResource("9")
 grid_cell = Vector2i(14, 27)
 trigger_radius = 0
 auto_save_on_trigger = true
-message = ""
 
 [node name="SneakTutorialPopup" type="Node2D" parent="."]
 script = ExtResource("9")
 grid_cell = Vector2i(28, 30)
 trigger_radius = 1
 auto_save_on_trigger = false
-message = "[PLACEHOLDER: sneak-mode tutorial text — explain the sneak toggle (enter/exit sneak mode) and enemy aggro ranges (enemies detect you within a distance that shrinks to zero if a large rock breaks line of sight while sneaking)]"
+tutorial_id = "sneak_mechanic"
+tutorial_title = "Sneaking"
+tutorial_body = "[PLACEHOLDER: sneak-mode tutorial text — explain the sneak toggle (enter/exit sneak mode) and enemy aggro ranges (enemies detect you within a distance that shrinks to zero if a large rock breaks line of sight while sneaking)]"
 
 [node name="ExitTutorialMessage" type="Node2D" parent="."]
 script = ExtResource("9")
 grid_cell = Vector2i(75, 30)
 trigger_radius = 2
 auto_save_on_trigger = false
-message = "[PLACEHOLDER: exit tutorial message — tell the player to find spiritual protection and food/shelter for the night]"
+tutorial_id = "escape_route_exit"
+tutorial_title = "What Now"
+tutorial_body = "[PLACEHOLDER: exit tutorial message — tell the player to find spiritual protection and food/shelter for the night]"
 
 [node name="Roach1" type="Node2D" parent="."]
 script = ExtResource("4")

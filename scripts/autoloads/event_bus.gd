@@ -54,7 +54,8 @@ signal show_range_ring(center_cell: Vector2i, range: int)  # fired by CombatHUD 
 signal hide_range_ring()                                   # fired to clear the range diamond
 signal smoke_zones_changed                                 # fired when smoke zones are added or expire
 signal note_added(note_id: String, note_title: String)     # fired when a new journal note is discovered
-signal journal_updated(kind: String)                         # "quest" | "note" — fired on any quest or note change
+signal journal_updated(kind: String)                         # "quest" | "note" | "tutorial" — fired on any quest, note, or tutorial change
+signal tutorial_popup_requested(tutorial_id: String, title: String, body: String)   # fired by tutorial_trigger.gd; HUD shows a dismissible popup
 signal inventory_changed                                    # fired when player inventory is modified outside the shop/craft UI
 signal player_moved(cell: Vector2i)                         # fired each time the player steps to a new grid cell
 signal los_blockers_changed                                  # fired when a door/gate opens or closes

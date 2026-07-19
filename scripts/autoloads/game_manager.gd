@@ -1141,6 +1141,26 @@ func get_save_path(slot: int) -> String:
 		PREV_AUTO_SLOT:  return "user://save_auto_prev.json"
 		_:               return "user://save_%d.json" % slot
 
+# ── Metadata sidecar ─────────────────────────────────────────────────────────
+# A save file can be several MB (fog-of-war revealed-cell data dwarfs everything
+# else in player_data once a few zones are explored). get_save_info() used to
+# JSON.parse_string() the *entire* save just to read slot_name/character_name/
+# timestamp — done for every slot, every time the Save or Load panel opened,
+# which hung the whole engine for several seconds once saves got large enough.
+# This tiny sidecar carries just those three fields so listing slots never
+# touches the heavy file.
+func _meta_path(slot: int) -> String:
+	return get_save_path(slot).replace(".json", ".meta.json")
+
+func _write_meta(slot: int, slot_name: String, character_name: String, timestamp: String) -> void:
+	var file = FileAccess.open(_meta_path(slot), FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify({
+		"slot_name": slot_name, "character_name": character_name, "timestamp": timestamp,
+	}))
+	file.close()
+
 # ── Serialization helpers for explored_tiles (Vector2i keys → strings) ────────
 func _serialize_explored() -> Dictionary:
 	var result: Dictionary = {}
@@ -1207,6 +1227,7 @@ func _write_save(slot: int, slot_name: String) -> void:
 	var file = FileAccess.open(get_save_path(slot), FileAccess.WRITE)
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
+	_write_meta(slot, slot_name, data["character_name"], data["timestamp"])
 	GameLogger.info("SAVE", "Wrote slot %d (%s) — grid_cell %s, world_pos %s, hp %s" % [
 		slot, slot_name, str(grid_cell), str(world_pos), str(player_data.get("_saved_hp", "?"))])
 
@@ -1214,30 +1235,23 @@ func _write_save(slot: int, slot_name: String) -> void:
 		player_data.erase(key)
 
 func save_to_slot(slot: int) -> void:
-	# Before overwriting the quick save, shift it to the previous-quick-save slot
+	# Before overwriting the quick save, shift it to the previous-quick-save slot.
+	# Copies the raw file instead of parsing/re-stringifying it — the save can be
+	# several MB of fog-of-war data, and re-parsing it on every quicksave was a
+	# needless hitch (same underlying cost as the get_save_info() freeze above).
 	if slot == 0 and FileAccess.file_exists(get_save_path(0)):
-		var src = FileAccess.open(get_save_path(0), FileAccess.READ)
-		var prev = JSON.parse_string(src.get_as_text())
-		src.close()
-		if prev != null:
-			prev["slot_name"] = "Prev. Quick Save"
-			var dst = FileAccess.open(get_save_path(PREV_QUICK_SLOT), FileAccess.WRITE)
-			dst.store_string(JSON.stringify(prev, "\t"))
-			dst.close()
+		DirAccess.copy_absolute(get_save_path(0), get_save_path(PREV_QUICK_SLOT))
+		var info: Dictionary = get_save_info(0)
+		_write_meta(PREV_QUICK_SLOT, "Prev. Quick Save", info["character_name"], info["timestamp"])
 	var name: String = "Quick Save" if slot == 0 else "Save %d" % slot
 	_write_save(slot, name)
 
 func auto_save() -> void:
 	# Shift current auto save → previous auto save slot before writing new one
 	if FileAccess.file_exists(get_save_path(AUTO_SLOT)):
-		var src = FileAccess.open(get_save_path(AUTO_SLOT), FileAccess.READ)
-		var prev = JSON.parse_string(src.get_as_text())
-		src.close()
-		if prev != null:
-			prev["slot_name"] = "Prev. Auto Save"
-			var dst = FileAccess.open(get_save_path(PREV_AUTO_SLOT), FileAccess.WRITE)
-			dst.store_string(JSON.stringify(prev, "\t"))
-			dst.close()
+		DirAccess.copy_absolute(get_save_path(AUTO_SLOT), get_save_path(PREV_AUTO_SLOT))
+		var info: Dictionary = get_save_info(AUTO_SLOT)
+		_write_meta(PREV_AUTO_SLOT, "Prev. Auto Save", info["character_name"], info["timestamp"])
 	_write_save(AUTO_SLOT, "Auto Save")
 
 # ── Load ───────────────────────────────────────────────────────────────────────
@@ -1285,23 +1299,44 @@ func get_save_info(slot: int) -> Dictionary:
 	var path = get_save_path(slot)
 	if not FileAccess.file_exists(path):
 		return base
+	# Fast path: the metadata sidecar (see _write_meta) is tiny regardless of how
+	# big the actual save is.
+	var meta_file = FileAccess.open(_meta_path(slot), FileAccess.READ)
+	if meta_file != null:
+		var meta = JSON.parse_string(meta_file.get_as_text())
+		meta_file.close()
+		if meta != null:
+			return {
+				"exists":         true,
+				"slot":           slot,
+				"slot_name":      meta.get("slot_name",      base["slot_name"]),
+				"character_name": meta.get("character_name", "Unknown"),
+				"timestamp":      meta.get("timestamp",      ""),
+			}
+	# No sidecar (save predates this fix, or it was deleted) — fall back to a full
+	# parse just this once, then write the sidecar so every call after this is fast.
 	var file = FileAccess.open(path, FileAccess.READ)
 	var parsed = JSON.parse_string(file.get_as_text())
 	file.close()
 	if parsed == null:
 		return base
-	return {
+	var info: Dictionary = {
 		"exists":         true,
 		"slot":           slot,
 		"slot_name":      parsed.get("slot_name",      base["slot_name"]),
 		"character_name": parsed.get("character_name", "Unknown"),
 		"timestamp":      parsed.get("timestamp",      ""),
 	}
+	_write_meta(slot, info["slot_name"], info["character_name"], info["timestamp"])
+	return info
 
 func delete_save(slot: int) -> void:
 	var path = get_save_path(slot)
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
+	var meta = _meta_path(slot)
+	if FileAccess.file_exists(meta):
+		DirAccess.remove_absolute(meta)
 
 func has_any_save() -> bool:
 	for i in range(SLOT_COUNT + 1):   # slots 0–5

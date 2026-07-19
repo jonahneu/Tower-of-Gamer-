@@ -6,10 +6,11 @@
 [ext_resource type="Script" path="res://scripts/entities/ritual_slab.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/entities/campfire.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/entities/wall_torch.gd" id="6"]
-[ext_resource type="Script" path="res://scripts/entities/interior_door.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/entities/trash_chute.gd" id="7"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
+bounds = Rect2i(35, 23, 12, 16)
 
 [node name="Player" type="Node2D" parent="."]
 script = ExtResource("2")
@@ -21,8 +22,8 @@ X1 = 35
 X2 = 46
 Y1 = 23
 Y2 = 38
-DOOR_X = 46
-DOOR_Y = 30
+DOOR_X = 999
+DOOR_Y = -1
 
 [node name="RitualSlab" type="Node2D" parent="."]
 script = ExtResource("4")
@@ -50,8 +51,7 @@ grid_cell = Vector2i(36, 37)
 script = ExtResource("6")
 grid_cell = Vector2i(45, 37)
 
-[node name="ExitDoor" type="Node2D" parent="."]
+[node name="TrashChute" type="Node2D" parent="."]
 script = ExtResource("7")
-grid_cell = Vector2i(46, 30)
+grid_cell = Vector2i(40, 33)
 direction = "east"
-door_label = "Passage"

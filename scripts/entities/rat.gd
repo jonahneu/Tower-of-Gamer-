@@ -13,7 +13,9 @@ class_name Rat
 #   dodge:       20 * 0.6 = 12
 #   damage:      1d3 (avg 2) * 0.6 = avg 1.2 → closest simple die is 1d2 (avg 1.5, an
 #                approximation — flagged, exact 60% isn't expressible as a clean die)
-#   aggro_range: 16 * 0.6 = 9.6       → rounded to 10
+#   aggro_range: cut well below the 60%-of-Coyote formula (9.6→10) — a rat is
+#                supposed to be a tight, sneakable-around tutorial encounter,
+#                not something that spots the player from across the room
 #   xp_value:    40 * 0.6 = 24
 #   innate_defense_flat/pct: dropped to 0 (default) rather than carrying a fractional
 #                armor value — a "weaker, unarmored" tutorial mob reads cleaner than
@@ -24,7 +26,7 @@ class_name Rat
 func _ready() -> void:
 	entity_name       = "Rat"
 	beast_type        = "rat"
-	aggro_range       = 10
+	aggro_range       = 5
 	respawns          = false
 	xp_value          = 24
 	enemy_level       = 1

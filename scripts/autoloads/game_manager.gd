@@ -4,6 +4,13 @@ extends Node
 var current_layer: int = 0
 var combat_mode: bool = false
 var tactical_mode: bool = false
+# True while a tutorial popup (hud.gd) is on screen. Enemy._process() checks
+# this and freezes entirely (no wander, no aggro/detection) — a full engine
+# pause would also need every relevant UI node re-flagged PROCESS_MODE_ALWAYS
+# to keep responding, which is riskier than just freezing enemies for what's
+# actually being asked: don't let a popup you can't react to cost you a
+# sneaking attempt.
+var tutorial_popup_open: bool = false
 var is_sneaking: bool = false
 var _player: Node = null
 var player: Node:

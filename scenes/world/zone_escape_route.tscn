@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://zone_escape_route"]
+[gd_scene load_steps=12 format=3 uid="uid://zone_escape_route"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -9,55 +9,129 @@
 [ext_resource type="Script" path="res://scripts/entities/world_item.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/entities/locked_chest.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/entities/tutorial_trigger.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/entities/door.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/entities/corpse_pile.gd" id="11"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
+bounds = Rect2i(1, 14, 79, 26)
 
 [node name="Player" type="Node2D" parent="."]
 script = ExtResource("2")
 grid_cell = Vector2i(14, 30)
 
-[node name="WallNorth" type="Node2D" parent="."]
+[node name="CorpsePile" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(2, 29)
+
+[node name="WestWall" type="Node2D" parent="."]
 script = ExtResource("3")
 X1 = 10
+X2 = 10
+Y1 = 24
+Y2 = 35
+DOOR_X = 10
+DOOR_Y = 30
+
+[node name="NorthWall_Room1" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 1
+X2 = 29
+Y1 = 24
+Y2 = 24
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="SouthWall_Room1" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 1
+X2 = 29
+Y1 = 35
+Y2 = 35
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="DoorWall" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 29
+X2 = 29
+Y1 = 14
+Y2 = 39
+DOOR_X = 29
+DOOR_Y = 30
+
+[node name="RoachRatDoor" type="Node2D" parent="."]
+script = ExtResource("10")
+grid_cell = Vector2i(29, 30)
+
+[node name="NorthWall_Room2" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 30
+X2 = 63
+Y1 = 20
+Y2 = 20
+DOOR_X = 46
+DOOR_Y = -1
+
+[node name="SouthWall_Room2" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 30
+X2 = 63
+Y1 = 39
+Y2 = 39
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="EastWall_Room2" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 64
+X2 = 64
+Y1 = 14
+Y2 = 39
+DOOR_X = 64
+DOOR_Y = 33
+
+[node name="AlcoveWestWall" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 43
+X2 = 43
+Y1 = 14
+Y2 = 20
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="AlcoveEastWall" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 49
+X2 = 49
+Y1 = 14
+Y2 = 20
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="AlcoveNorthWall" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 44
+X2 = 48
+Y1 = 14
+Y2 = 14
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="NorthWall_Room3" type="Node2D" parent="."]
+script = ExtResource("3")
+X1 = 65
 X2 = 79
 Y1 = 24
 Y2 = 24
 DOOR_X = 999
 DOOR_Y = -1
 
-[node name="WallSouth" type="Node2D" parent="."]
+[node name="SouthWall_Room3" type="Node2D" parent="."]
 script = ExtResource("3")
-X1 = 10
+X1 = 65
 X2 = 79
 Y1 = 35
-Y2 = 35
-DOOR_X = 999
-DOOR_Y = -1
-
-[node name="WallWest" type="Node2D" parent="."]
-script = ExtResource("3")
-X1 = 10
-X2 = 10
-Y1 = 0
-Y2 = 79
-DOOR_X = 10
-DOOR_Y = 30
-
-[node name="Baffle1" type="Node2D" parent="."]
-script = ExtResource("3")
-X1 = 28
-X2 = 29
-Y1 = 24
-Y2 = 31
-DOOR_X = 999
-DOOR_Y = -1
-
-[node name="Baffle2" type="Node2D" parent="."]
-script = ExtResource("3")
-X1 = 48
-X2 = 49
-Y1 = 28
 Y2 = 35
 DOOR_X = 999
 DOOR_Y = -1
@@ -79,12 +153,19 @@ auto_save_on_trigger = true
 
 [node name="SneakTutorialPopup" type="Node2D" parent="."]
 script = ExtResource("9")
-grid_cell = Vector2i(27, 33)
+grid_cell = Vector2i(32, 30)
 trigger_radius = 1
 auto_save_on_trigger = false
 tutorial_id = "sneak_mechanic"
 tutorial_title = "Sneaking"
-tutorial_body = "[PLACEHOLDER: sneak-mode tutorial text — explain the sneak toggle (enter/exit sneak mode) and enemy aggro ranges (enemies detect you within a distance that shrinks to zero if a large rock breaks line of sight while sneaking)]"
+tutorial_body = "Press Z (or click the Sneak button) to enter sneak mode. While sneaking, enemies don't spot you automatically — each has a chance to notice you as you move, based on your Sneak skill against their Perception, and that chance gets worse the closer you are and in brighter light. Watchful enemies show a ring around them: red where they can actually see you, blue where a rock or wall blocks their line of sight — step through the blue and their detection there drops to nothing. Use cover to slip past unseen, or get close enough for a sneak attack.\n\nIf that's hard to track in real time, press T to enter tactical mode — everyone, including enemies, moves turn by turn instead of all at once, making it much easier to time your steps around a patrol."
+
+[node name="AltHighlightTutorialPopup" type="Node2D" parent="."]
+script = ExtResource("9")
+trigger_on_visible_cell = Vector2i(46, 16)
+tutorial_id = "alt_highlight"
+tutorial_title = "Spotting Interactables"
+tutorial_body = "Hold Alt to highlight everything nearby you can interact with — items, containers, doors, and levers — even ones easy to miss at a glance."
 
 [node name="ExitTutorialMessage" type="Node2D" parent="."]
 script = ExtResource("9")
@@ -98,66 +179,93 @@ tutorial_body = "[PLACEHOLDER: exit tutorial message — tell the player to find
 [node name="Roach1" type="Node2D" parent="."]
 script = ExtResource("4")
 grid_cell = Vector2i(16, 28)
+tutorial_gate_id = "combat_basics"
+tutorial_gate_title = "Combat"
+tutorial_gate_body = "Combat is turn-based — the order everyone acts in is shown along the top of the screen. On your turn you have MP (movement points) to move and AP (action points) to act; the grey circle around you shows how far MP can take you, and the yellow circle beyond it shows how much further you can move by spending AP instead once MP runs out. Spend AP from the hotbar along the bottom of the screen to attack or use an ability. Life totals show as health bars above everyone in the fight — right-click an enemy to inspect their status effects. The combat log on the right side of the screen records every roll and hit, so you can follow exactly what happened. Close to continue."
 
 [node name="Roach2" type="Node2D" parent="."]
 script = ExtResource("4")
 grid_cell = Vector2i(18, 31)
 beast_type_id = "giant_roach"
+tutorial_gate_id = "combat_basics"
+tutorial_gate_title = "Combat"
+tutorial_gate_body = "Combat is turn-based — the order everyone acts in is shown along the top of the screen. On your turn you have MP (movement points) to move and AP (action points) to act; the grey circle around you shows how far MP can take you, and the yellow circle beyond it shows how much further you can move by spending AP instead once MP runs out. Spend AP from the hotbar along the bottom of the screen to attack or use an ability. Life totals show as health bars above everyone in the fight — right-click an enemy to inspect their status effects. The combat log on the right side of the screen records every roll and hit, so you can follow exactly what happened. Close to continue."
 
 [node name="Roach3" type="Node2D" parent="."]
 script = ExtResource("4")
 grid_cell = Vector2i(20, 27)
+tutorial_gate_id = "combat_basics"
+tutorial_gate_title = "Combat"
+tutorial_gate_body = "Combat is turn-based — the order everyone acts in is shown along the top of the screen. On your turn you have MP (movement points) to move and AP (action points) to act; the grey circle around you shows how far MP can take you, and the yellow circle beyond it shows how much further you can move by spending AP instead once MP runs out. Spend AP from the hotbar along the bottom of the screen to attack or use an ability. Life totals show as health bars above everyone in the fight — right-click an enemy to inspect their status effects. The combat log on the right side of the screen records every roll and hit, so you can follow exactly what happened. Close to continue."
 
 [node name="Roach4" type="Node2D" parent="."]
 script = ExtResource("4")
 grid_cell = Vector2i(22, 32)
+tutorial_gate_id = "combat_basics"
+tutorial_gate_title = "Combat"
+tutorial_gate_body = "Combat is turn-based — the order everyone acts in is shown along the top of the screen. On your turn you have MP (movement points) to move and AP (action points) to act; the grey circle around you shows how far MP can take you, and the yellow circle beyond it shows how much further you can move by spending AP instead once MP runs out. Spend AP from the hotbar along the bottom of the screen to attack or use an ability. Life totals show as health bars above everyone in the fight — right-click an enemy to inspect their status effects. The combat log on the right side of the screen records every roll and hit, so you can follow exactly what happened. Close to continue."
 
 [node name="RatA" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(34, 27)
+grid_cell = Vector2i(41, 25)
 
 [node name="RatB" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(38, 32)
+grid_cell = Vector2i(42, 33)
 
 [node name="RatC" type="Node2D" parent="."]
 script = ExtResource("5")
-grid_cell = Vector2i(53, 28)
+grid_cell = Vector2i(57, 27)
 
 [node name="RockA" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(29, 33)
+grid_cell = Vector2i(33, 30)
 rock_size = "large"
 
 [node name="RockB" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(48, 26)
+grid_cell = Vector2i(40, 23)
 rock_size = "large"
 
 [node name="RockC" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(66, 33)
+grid_cell = Vector2i(48, 35)
+rock_size = "large"
+
+[node name="RockD" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(55, 24)
+rock_size = "large"
+
+[node name="RockE" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(60, 33)
 rock_size = "large"
 
 [node name="RockSmall1" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(36, 30)
+grid_cell = Vector2i(38, 29)
 rock_size = "small"
 
 [node name="RockSmall2" type="Node2D" parent="."]
 script = ExtResource("6")
-grid_cell = Vector2i(60, 29)
+grid_cell = Vector2i(50, 30)
+rock_size = "small"
+
+[node name="RockSmall3" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(58, 28)
 rock_size = "small"
 
 [node name="RustyKeyPickup" type="Node2D" parent="."]
 script = ExtResource("7")
-grid_cell = Vector2i(54, 25)
+grid_cell = Vector2i(46, 16)
 item_id = "rusty_key"
 package_id = "escape_route_rusty_key"
 
 [node name="EscapeChest" type="Node2D" parent="."]
 script = ExtResource("8")
-grid_cell = Vector2i(58, 31)
+grid_cell = Vector2i(46, 18)
 container_id = "escape_route_chest"
 loot_item_ids = PackedStringArray("coin", "coin", "coin", "coin")
 required_key_id = "rusty_key"

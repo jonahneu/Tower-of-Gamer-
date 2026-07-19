@@ -7,6 +7,14 @@ const GRID_ROWS: int = 80
 const TILE_W: int = 64
 const TILE_H: int = 32
 
+# Restricts the drawn/walkable area to a sub-rect of the 80×80 grid. Defaults
+# to the full grid (every existing outdoor zone is unaffected). Small interior
+# rooms (Type A per DesignDoc_BronzeAge.md) override this to their actual wall
+# footprint so they don't render as a tiny room floating in a mostly-empty
+# grid — without this, is_in_bounds/the tile-outline draw loop covered the
+# full 80×80 regardless of how small the room's walls actually were.
+@export var bounds: Rect2i = Rect2i(0, 0, GRID_COLS, GRID_ROWS)
+
 var _range_ring_r: int = 0
 var _move_grey: Array = []
 var _move_yellow: Array = []
@@ -50,6 +58,11 @@ func _ready() -> void:
 func update_entity_visibility() -> void:
 	if _fog != null:
 		_fog.update_entity_visibility()
+
+# True if cell is in the player's FOV *this frame* (not just ever-revealed) —
+# used by tutorial_trigger.gd's visible-cell trigger mode.
+func is_cell_currently_visible(cell: Vector2i) -> bool:
+	return _fog != null and _fog.visible_cells.has(cell)
 
 func save_fov_data(scene_path: String) -> void:
 	if _fog == null:
@@ -304,7 +317,8 @@ static func screen_to_grid(pos: Vector2) -> Vector2i:
 	return Vector2i(col, row)
 
 func is_in_bounds(cell: Vector2i) -> bool:
-	return cell.x >= 0 and cell.x < GRID_COLS and cell.y >= 0 and cell.y < GRID_ROWS
+	return cell.x >= bounds.position.x and cell.x < bounds.position.x + bounds.size.x \
+		and cell.y >= bounds.position.y and cell.y < bounds.position.y + bounds.size.y
 
 func is_walkable(cell: Vector2i) -> bool:
 	return is_in_bounds(cell) and not blocked_cells.has(cell)
@@ -392,8 +406,8 @@ func _iso_diamond(cell: Vector2i) -> PackedVector2Array:
 	])
 
 func _draw() -> void:
-	for col in range(GRID_COLS):
-		for row in range(GRID_ROWS):
+	for col in range(bounds.position.x, bounds.position.x + bounds.size.x):
+		for row in range(bounds.position.y, bounds.position.y + bounds.size.y):
 			_draw_iso_tile(Vector2i(col, row))
 	# Draw active smoke zones
 	for zone in GameManager.smoke_zones:

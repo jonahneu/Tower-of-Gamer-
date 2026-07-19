@@ -151,6 +151,7 @@ var _journal_tutorials_dot: Panel = null
 var _tutorial_popup_panel: Control = null
 var _tutorial_popup_title_lbl: Label = null
 var _tutorial_popup_body_lbl: Label = null
+var _pending_tutorial: Dictionary = {}  # {id, title, body} for the currently-shown popup
 
 # ── Pickpocket panel ──────────────────────────────────────────────────────────
 var _pickpocket_panel: Control = null
@@ -7627,9 +7628,11 @@ func _dream_finish() -> void:
 # TUTORIAL POPUP
 # Dismissible, full-screen modal for tutorial_trigger.gd — mirrors the dream
 # panel's shape (dim background, centered text, single Continue button) but is
-# a single beat, not a multi-page sequence. The tutorial is already recorded
-# into the journal's Tutorials tab by GameManager.add_tutorial() before this
-# signal fires, so Continue only needs to dismiss the popup.
+# a single beat, not a multi-page sequence. Continue records the tutorial into
+# the journal's Tutorials tab (GameManager.add_tutorial) and fires
+# EventBus.tutorial_popup_dismissed — recording/unlocking happens on dismissal,
+# not on request, so anything gated on this tutorial (e.g. Enemy.tutorial_gate_id)
+# stays frozen for as long as the popup is actually on screen.
 # ══════════════════════════════════════════════════════════════════════════════
 func _build_tutorial_popup_panel() -> Control:
 	var bg := ColorRect.new()
@@ -7670,15 +7673,23 @@ func _build_tutorial_popup_panel() -> Control:
 
 	var continue_btn := Button.new()
 	continue_btn.text = "Continue"
-	continue_btn.pressed.connect(func(): _tutorial_popup_panel.visible = false)
+	continue_btn.pressed.connect(func():
+		_tutorial_popup_panel.visible = false
+		GameManager.tutorial_popup_open = false
+		var id: String = _pending_tutorial.get("id", "")
+		if id != "" and not GameManager.has_tutorial(id):
+			GameManager.add_tutorial(_pending_tutorial.duplicate())
+		EventBus.tutorial_popup_dismissed.emit(id))
 	vbox.add_child(continue_btn)
 
 	return bg
 
-func _on_tutorial_popup_requested(_tutorial_id: String, title: String, body: String) -> void:
+func _on_tutorial_popup_requested(tutorial_id: String, title: String, body: String) -> void:
+	_pending_tutorial = {"id": tutorial_id, "title": title, "body": body}
 	_tutorial_popup_title_lbl.text = title
 	_tutorial_popup_body_lbl.text = body
 	_tutorial_popup_panel.visible = true
+	GameManager.tutorial_popup_open = true
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ABILITIES PANEL

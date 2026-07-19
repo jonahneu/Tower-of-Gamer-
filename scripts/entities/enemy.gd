@@ -36,6 +36,18 @@ var aggro_range: int = 26
 var _aggro_entered: bool = false
 var _bump_entered: bool  = false
 
+# Optional tutorial gate: while set and not yet unlocked, this enemy never
+# aggros no matter how close the player gets — instead, the first time the
+# player would have entered aggro range, it requests the named tutorial popup
+# once. The gate opens (aggro starts working normally) only once that popup is
+# actually dismissed (EventBus.tutorial_popup_dismissed), not merely shown —
+# so the enemy stays frozen for as long as the popup is on screen.
+@export var tutorial_gate_id: String = ""
+@export var tutorial_gate_title: String = ""
+@export var tutorial_gate_body: String = ""
+var _tutorial_gate_open: bool = true
+var _tutorial_gate_requested: bool = false
+
 # ── Beast identity (set by subclass before super._ready()) ────────────────────
 var beast_type: String = ""         # e.g. "coyote" — keys DataManager carve table
 var beast_quality_mod: int = 0      # quality offset applied to carving results
@@ -146,6 +158,9 @@ func _ready() -> void:
 	GameManager.add_encounter(GameManager.world_layer, GameManager.world_pos, entity_name)
 	_wander_timer = randf_range(WANDER_INTERVAL_MIN, WANDER_INTERVAL_MAX)
 	init_hp()
+	if tutorial_gate_id != "":
+		_tutorial_gate_open = GameManager.has_tutorial(tutorial_gate_id)
+		EventBus.tutorial_popup_dismissed.connect(_on_tutorial_popup_dismissed)
 	EventBus.combat_started.connect(_on_combat_started)
 	EventBus.combat_participant_added.connect(_on_combat_participant_added)
 	EventBus.combat_ended.connect(_on_combat_ended)
@@ -187,6 +202,11 @@ func _process(delta: float) -> void:
 	# Animate burning aura each frame
 	if not status_effects.get("burning", []).is_empty():
 		queue_redraw()
+	# Freeze everything (wander, aggro/detection) while a tutorial popup is on
+	# screen — otherwise an enemy can close the distance or spot the player
+	# while they're stuck reading text they can't react to yet.
+	if GameManager.tutorial_popup_open:
+		return
 	# Freeze wander animation/movement during tactical and combat turns
 	if _in_combat or CombatManager.tactical_mode:
 		position = _visual_pos + _lunge_offset
@@ -212,6 +232,9 @@ func _process(delta: float) -> void:
 			var dy: int   = grid_cell.y - player_typed.grid_cell.y
 			var dist: float = sqrt(float(dx * dx + dy * dy))
 			if dist <= float(effective_aggro_range()):
+				if tutorial_gate_id != "" and not _tutorial_gate_open:
+					_request_tutorial_gate()
+					return
 				if not _aggro_entered:
 					_aggro_entered = true
 					if dist <= 1:
@@ -295,6 +318,12 @@ func _check_join_active_combat() -> bool:
 		var dx: int = grid_cell.x - cell.x
 		var dy: int = grid_cell.y - cell.y
 		if sqrt(float(dx * dx + dy * dy)) <= float(effective_aggro_range()):
+			# A solid wall (e.g. a closed door between two separate encounters)
+			# should stop an uninvolved enemy from joining a fight purely by
+			# distance — without this, enemies on the far side of a wall could
+			# still "hear" a fight through it and pile on.
+			if _tile_scene != null and not _tile_scene.has_line_of_sight(grid_cell, cell):
+				continue
 			CombatManager.add_participant(self)
 			return true
 	return false
@@ -311,6 +340,19 @@ func effective_aggro_range() -> int:
 	var my_light: int = _tile_scene.get_light_level(grid_cell)
 	var player_light: int = _tile_scene.get_light_level(player_typed.grid_cell)
 	return LightLevels.vision_cap(my_light, player_light, aggro_range)
+
+func _request_tutorial_gate() -> void:
+	if _tutorial_gate_requested:
+		return
+	_tutorial_gate_requested = true
+	if not GameManager.has_tutorial(tutorial_gate_id):
+		EventBus.tutorial_popup_requested.emit(tutorial_gate_id, tutorial_gate_title, tutorial_gate_body)
+	else:
+		_tutorial_gate_open = true  # already seen in a prior visit — nothing to wait for
+
+func _on_tutorial_popup_dismissed(dismissed_id: String) -> void:
+	if dismissed_id == tutorial_gate_id:
+		_tutorial_gate_open = true
 
 func _trigger_combat() -> void:
 	if _in_combat or GameManager.combat_mode:
@@ -722,6 +764,10 @@ func _draw_aggro_ring() -> void:
 		return
 	# Circular outline matching aggro_range's actual Euclidean check (and the
 	# combat ranged-attack indicator's style) rather than a Chebyshev diamond.
+	# Red = this enemy can actually see that far; blue = a rock/wall blocks
+	# line of sight there, so detection effectively drops to nothing on that
+	# stretch of the ring — made high-contrast (not just a dim grey) so cover
+	# reads clearly at a glance instead of looking like a rendering gap.
 	for seg in TileScene.euclidean_ring_segments(grid_cell, aggro_range):
 		var a: Vector2 = seg["a"] - _visual_pos
 		var b: Vector2 = seg["b"] - _visual_pos
@@ -729,7 +775,7 @@ func _draw_aggro_ring() -> void:
 		if has_los:
 			draw_line(a, b, Color(0.85, 0.10, 0.10, 0.55), 1.5)
 		else:
-			draw_line(a, b, Color(0.55, 0.55, 0.55, 0.18), 1.0)
+			draw_line(a, b, Color(0.25, 0.55, 0.95, 0.60), 1.5)
 
 # Returns base_color tinted orange in proportion to Heated stack count — used
 # by subclasses with a custom _draw() so the tint applies to their sprite too.

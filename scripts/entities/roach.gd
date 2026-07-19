@@ -6,7 +6,10 @@ class_name Roach
 # AGI 4  → max_ap = 4, max_mp = 4
 # STR 5 (default, modifier 0) → Bite damage is exactly the stated "1d2", no bonus
 # Melee 8, Dodge 0 (skills, not modifiers)
-# aggro_range left at the Enemy base default (26) — this beat is a forced, guaranteed fight.
+# aggro_range cut down from the Enemy base default (26) — still a forced,
+# guaranteed fight once the combat tutorial gate opens (tutorial_gate_id in
+# the scene file), but the player should have to walk up into the room a
+# little first rather than triggering it from clear across the corridor.
 
 # Per-instance override: 3 of the 4 spawned roaches keep beast_type "roach" (no
 # CARVE_TABLES entry → carving always yields nothing). The one roach meant to
@@ -26,6 +29,7 @@ func _ready() -> void:
 	stat_constitution = 5
 	hp_flat_bonus     = -46  # → max_hp = 4
 	stat_intelligence = 3
+	aggro_range       = 10
 
 	skills["melee"] = 8
 	skills["dodge"] = 0

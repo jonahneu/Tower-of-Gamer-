@@ -230,7 +230,16 @@ func _entry_cell_for(exit_direction: String) -> Vector2i:
 	match exit_direction:
 		"north": return Vector2i(px, TileScene.GRID_ROWS - 2)
 		"south": return Vector2i(px, 1)
-		"east":  return Vector2i(1,  py)
+		"east":
+			# Dropping through the ritual chamber's trash chute lands the player
+			# 3 tiles further north than the raw interaction row, so they don't
+			# arrive standing right on top of the corpse pile just inside the
+			# tunnel. GameManager.world_pos still names the zone being LEFT here
+			# (updated further down in _on_zone_exit), so this only matches that
+			# one transition — every other "east" exit is untouched.
+			if GameManager.world_pos == Vector2i(-1, 15):
+				return Vector2i(1, py - 3)
+			return Vector2i(1, py)
 		"west":  return Vector2i(TileScene.GRID_COLS - 2, py)
 		"down":  return Vector2i(40, 16)
 		"up":    return Vector2i(40, 16)

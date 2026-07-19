@@ -91,15 +91,19 @@ func _ready() -> void:
 	_create_chunks()
 
 func _create_chunks() -> void:
-	var chunk_cols: int = int(ceil(float(TileScene.GRID_COLS) / CHUNK_SIZE))
-	var chunk_rows: int = int(ceil(float(TileScene.GRID_ROWS) / CHUNK_SIZE))
+	# Confined to the zone's bounds (defaults to the full grid) so the
+	# unexplored/remembered overlay — and so, indirectly, the entire drawn
+	# area — never extends past a small interior room's actual footprint.
+	var b: Rect2i = _tile_scene.bounds if _tile_scene != null else Rect2i(0, 0, TileScene.GRID_COLS, TileScene.GRID_ROWS)
+	var chunk_cols: int = int(ceil(float(b.size.x) / CHUNK_SIZE))
+	var chunk_rows: int = int(ceil(float(b.size.y) / CHUNK_SIZE))
 	for cy in range(chunk_rows):
 		for cx in range(chunk_cols):
 			var chunk := _FogChunk.new()
-			chunk.col_start = cx * CHUNK_SIZE
-			chunk.row_start = cy * CHUNK_SIZE
-			chunk.col_end   = mini(chunk.col_start + CHUNK_SIZE, TileScene.GRID_COLS)
-			chunk.row_end   = mini(chunk.row_start + CHUNK_SIZE, TileScene.GRID_ROWS)
+			chunk.col_start = b.position.x + cx * CHUNK_SIZE
+			chunk.row_start = b.position.y + cy * CHUNK_SIZE
+			chunk.col_end   = mini(chunk.col_start + CHUNK_SIZE, b.position.x + b.size.x)
+			chunk.row_end   = mini(chunk.row_start + CHUNK_SIZE, b.position.y + b.size.y)
 			chunk.fow = self
 			add_child(chunk)
 			_chunks.append(chunk)

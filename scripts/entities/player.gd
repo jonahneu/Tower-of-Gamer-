@@ -553,11 +553,23 @@ func _on_attack_started(attacker: Node, defender: Node) -> void:
 # ── Interaction helpers ───────────────────────────────────────────────────────
 func _trigger_primary_action(entity: Node) -> void:
 	var options = entity.get_interaction_options()
+	# Same "buried entity" fold-in as _show_context_menu_for (e.g. two corpses
+	# stacked on one cell) — without this, once the top entity's own options
+	# are all used up (a carved corpse only offers "Inspect"), left-click would
+	# keep hitting it forever with no way to reach whatever's underneath.
+	var cell = entity.get("grid_cell")
+	if cell != null and entity.is_interactable:
+		var buried: Node = _tile_scene.get_displaced_entity_at(cell)
+		if buried != null and buried != entity and buried.is_interactable:
+			for opt in buried.get_interaction_options():
+				var tagged: Dictionary = opt.duplicate()
+				tagged["_entity"] = buried
+				options.append(tagged)
 	if options.is_empty():
 		EventBus.interaction_triggered.emit(entity, "interact")
 		return
 	options.sort_custom(func(a, b): return a["priority"] > b["priority"])
-	EventBus.interaction_triggered.emit(entity, options[0]["id"])
+	EventBus.interaction_triggered.emit(options[0].get("_entity", entity), options[0]["id"])
 
 func _default_attack_weapon() -> Dictionary:
 	var equip: Dictionary = GameManager.player_data.get("equipment", {})

@@ -62,14 +62,10 @@ func _ready() -> void:
 	GameManager.current_zone = _current_zone
 	# Mark the starting tile as visited when the game loads
 	GameManager.mark_tile_visited(GameManager.world_layer, GameManager.world_pos)
-	# Give the player their first quest if they don't already have it
-	GameManager.add_quest({
-		"id":          "find_spiritual_protection",
-		"title":       "Try to find spiritual protection",
-		"description": "The city is dangerous at night without the help of a god or at least a protective talisman. Find a way to protect yourself before you sleep.",
-		"threads":     [],
-		"completed":   false,
-	})
+	# The player's first quest (find_spiritual_protection) is no longer granted
+	# here — the tutorial now starts the player with an empty quest log and
+	# GameManager grants it once the escape-route exit tutorial popup is
+	# dismissed, after the player has more context (see game_manager.gd).
 
 func _on_zone_exit(direction: String) -> void:
 	# Look up next position in the CURRENT layer before any layer change

@@ -691,6 +691,22 @@ func _ready() -> void:
 		},
 	}
 	EventBus.player_rested.connect(_on_player_rested)
+	EventBus.tutorial_popup_dismissed.connect(_on_tutorial_popup_dismissed)
+
+# The player starts the escape-route tutorial with an empty quest log —
+# find_spiritual_protection is granted once they've been given more context,
+# on dismissal of the escape-route exit tutorial popup (see
+# zone_escape_route.tscn's ExitTutorialMessage), not at game start.
+func _on_tutorial_popup_dismissed(tutorial_id: String) -> void:
+	if tutorial_id != "escape_route_exit":
+		return
+	add_quest({
+		"id":          "find_spiritual_protection",
+		"title":       "Try to find spiritual protection",
+		"description": "The city is dangerous at night without the help of a god or at least a protective talisman. Find a way to protect yourself before you sleep.",
+		"threads":     [],
+		"completed":   false,
+	})
 
 # ── NPC departure tracking ─────────────────────────────────────────────────────
 # Called on every rest regardless of which zone is loaded.

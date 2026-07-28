@@ -1005,63 +1005,24 @@ func _on_begin() -> void:
 	for s in SKILL_NAMES:
 		final_skills[s] = skills[s] + _bg_skill_bonus.get(s, 0)
 
-	var max_hp = _calc_max_hp()
-	GameManager.player_data = {
-		"name":                   _name_input.text.strip_edges(),
-		"stats":                  final_stats,
-		"skills":                 final_skills,
-		"background":             background,
-		"max_hp":                 max_hp,
-		"current_hp":             max_hp,
-		"equipment":              _build_starting_equipment(),
-		"inventory":              [],
-		"known_cooking_recipes":  ["simple_meal"],
-		"level":                  1,
-		"xp":                     0,
-		"unspent_skill_points":   0,
-		"unspent_stat_points":    0,
-		"feats":                  [{"id": _feats[selected_feat]["id"], "name": selected_feat, "description": _feats[selected_feat]["effect"]}] if selected_feat != "" else [],
-	}
-	# Opening-hook rewrite (GettingStarted/OpeningRewrite_Plan.md): the player
-	# starts having just gotten off the sacrifice slab, not released by the
-	# Taskmaster. [40, 29] is one cell off zone_ritual_chamber.tscn's slab
-	# (RitualSlab at (40, 30)). The scripted interruption/mark/escape sequence
-	# itself is still unbuilt (Phase 3) — for now the player simply begins here.
-	GameManager.player_data["_saved_grid_cell"] = [40, 29]
-
-	# Reset world/run state so a new game always starts fresh in the ritual
-	# chamber, regardless of where a previous playthrough ended.
-	GameManager.world_pos = Vector2i(-1, 15)
-	GameManager.world_layer = 0
-	GameManager.current_layer = 0
-	GameManager.explored_tiles = {}
-	GameManager.smoke_zones = []
-	GameManager.current_zone = null
-	GameManager.combat_mode = false
-	GameManager.tactical_mode = false
-	GameManager.is_sneaking = false
+	# This screen now finalizes a run already in progress (character creation
+	# moved to the end of the tutorial — see GameManager.start_new_tutorial_run()
+	# and _on_zone_entered_for_character_creation()), so only the identity/stat
+	# fields get filled in. Position, HP/spirit, inventory, equipment, quests,
+	# and world state all stay exactly as they were — GameManager already
+	# stashed _saved_* before sending the player here, so the next
+	# Player._ready() (back in main.tscn) picks up where they left off, just
+	# recomputed against these final stats.
+	GameManager.player_data["name"]     = _name_input.text.strip_edges()
+	GameManager.player_data["stats"]    = final_stats
+	GameManager.player_data["skills"]   = final_skills
+	GameManager.player_data["background"] = background
+	GameManager.player_data["max_hp"]   = _calc_max_hp()
+	GameManager.player_data["feats"]    = [{"id": _feats[selected_feat]["id"], "name": selected_feat, "description": _feats[selected_feat]["effect"]}] if selected_feat != "" else []
+	GameManager.player_data["character_created"] = true
 
 	GameManager.auto_save()
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
-
-func _build_starting_equipment() -> Dictionary:
-	return {
-		"hand_1":          null,
-		"hand_2":          null,
-		"head":            null,
-		"torso":           DataManager.get_item("tunic"),
-		"feet":            DataManager.get_item("sandals"),
-		"back":            null,
-		"right_upper_arm": null,
-		"left_upper_arm":  null,
-		"right_forearm":   null,
-		"left_forearm":    null,
-		"necklace":        null,
-		"ring_right_1":    null,
-		"ring_right_2":    null,
-		"ring_left_1":     null,
-		"ring_left_2":     null,
-	}
 
 # ── Refresh ────────────────────────────────────────────────────────────────────
 func _refresh_all() -> void:

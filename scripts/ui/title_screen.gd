@@ -47,7 +47,11 @@ func _spacer(parent: Control, h: int) -> void:
 	parent.add_child(s)
 
 func _on_new_game() -> void:
-	get_tree().change_scene_to_file("res://scenes/character_creation/character_creation.tscn")
+	# Character creation now happens at the end of the tutorial, not before it
+	# — see GameManager.start_new_tutorial_run() and
+	# _on_zone_entered_for_character_creation().
+	GameManager.start_new_tutorial_run()
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _on_continue() -> void:
 	var best = _most_recent_save_slot()

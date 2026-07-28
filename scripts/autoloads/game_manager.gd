@@ -692,6 +692,91 @@ func _ready() -> void:
 	}
 	EventBus.player_rested.connect(_on_player_rested)
 	EventBus.tutorial_popup_dismissed.connect(_on_tutorial_popup_dismissed)
+	EventBus.zone_entered.connect(_on_zone_entered_for_character_creation)
+
+# Character creation now happens at the END of the tutorial, not before it —
+# "New Game" starts the player with a light stat spread (just enough to
+# survive the escape route) via start_new_tutorial_run(), and player_data
+# carries character_created = false the whole way through. The first time the
+# player arrives in zone_ditch_lower (the tutorial's exit point) with that
+# flag still false, this fires the actual character_creation.tscn scene so
+# they build their real character having just lived through combat/sneaking.
+# Existing saves have no character_created key at all, and default (true)
+# there means this never fires for them.
+const _TUTORIAL_EXIT_ZONE: String = "res://scenes/world/zone_ditch_lower.tscn"
+func _on_zone_entered_for_character_creation() -> void:
+	if player_data.get("character_created", true):
+		return
+	if current_zone == null or not is_instance_valid(current_zone):
+		return
+	if current_zone.scene_file_path != _TUTORIAL_EXIT_ZONE:
+		return
+	# Stash live player state the same way a normal zone transition/save would —
+	# character_creation.tscn has no Player node, so this survives the trip and
+	# gets consumed by the next Player._ready() when we return to main.tscn.
+	if player != null and is_instance_valid(player):
+		player_data["_saved_grid_cell"]    = [player.grid_cell.x, player.grid_cell.y]
+		player_data["_saved_hp"]           = player.current_hp
+		player_data["_saved_spirit"]       = player.current_spirit
+		player_data["_saved_status_effects"] = player.status_effects.duplicate(true)
+		var oc = player.get("_oc_status_timer")
+		if oc != null:
+			player_data["_saved_oc_timer"] = oc
+	call_deferred("_go_to_character_creation")
+
+func _go_to_character_creation() -> void:
+	get_tree().change_scene_to_file("res://scenes/character_creation/character_creation.tscn")
+
+# "New Game" default — 6 STR/AGI (enough to actually fight/move well in the
+# roach and sneak tutorials), 5 in every other stat, no skills, no
+# background. Real character creation happens later, see
+# _on_zone_entered_for_character_creation() above.
+func start_new_tutorial_run() -> void:
+	var skill_names: Array = ["melee","ranged","dodge","convince","intimidate",
+		"sneak","sleight_of_hand","alchemy","occultism","smithing","survival","cooking"]
+	var default_stats: Dictionary = {
+		"strength": 6, "dexterity": 5, "agility": 6, "constitution": 5,
+		"intelligence": 5, "willpower": 5, "perception": 5,
+	}
+	var default_skills: Dictionary = {}
+	for s in skill_names: default_skills[s] = 0
+
+	player_data = {
+		"name":                   "",
+		"stats":                  default_stats,
+		"skills":                 default_skills,
+		"background":             "",
+		"max_hp":                 50,
+		"current_hp":             50,
+		"equipment": {
+			"hand_1": null, "hand_2": null, "head": null,
+			"torso": DataManager.get_item("tunic"), "feet": DataManager.get_item("sandals"),
+			"back": null, "right_upper_arm": null, "left_upper_arm": null,
+			"right_forearm": null, "left_forearm": null, "necklace": null,
+			"ring_right_1": null, "ring_right_2": null, "ring_left_1": null, "ring_left_2": null,
+		},
+		"inventory":              [],
+		"known_cooking_recipes":  ["simple_meal"],
+		"level":                  1,
+		"xp":                     0,
+		"unspent_skill_points":   0,
+		"unspent_stat_points":    0,
+		"feats":                  [],
+		"character_created":      false,
+	}
+	player_data["_saved_grid_cell"] = [40, 29]
+
+	world_pos = Vector2i(-1, 15)
+	world_layer = 0
+	current_layer = 0
+	explored_tiles = {}
+	smoke_zones = []
+	current_zone = null
+	combat_mode = false
+	tactical_mode = false
+	is_sneaking = false
+
+	auto_save()
 
 # The player starts the escape-route tutorial with an empty quest log —
 # find_spiritual_protection is granted once they've been given more context,

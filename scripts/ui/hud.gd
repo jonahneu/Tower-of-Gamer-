@@ -491,6 +491,12 @@ func _input(event: InputEvent) -> void:
 			_toggle_tooltip_pin()
 
 func _toggle(name: String) -> void:
+	# The Character panel shows real stats/skills — locked out until character
+	# creation actually happens (now at the end of the tutorial, not before it;
+	# see GameManager.start_new_tutorial_run()), so there's nothing worth
+	# peeking at yet.
+	if name == "stats" and not GameManager.player_data.get("character_created", true):
+		return
 	if _open == name:
 		_close_all()
 		return

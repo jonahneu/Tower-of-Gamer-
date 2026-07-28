@@ -18,6 +18,15 @@ class_name TutorialTrigger
 @export var tutorial_title: String = ""
 @export var tutorial_body: String = ""
 
+# Alternate/additional gate: if set, the trigger won't fire until every
+# sibling node named here is gone (dead — Enemy.queue_free()s itself on death).
+# Combined with grid_cell/trigger_radius so it fires on the player's next
+# approach once the whole named group is dead — e.g. a "corpses can be
+# carved" popup after a multi-enemy fight, since combat_ended alone fires as
+# soon as ANY single enemy's own combat instance resolves (enemies that never
+# joined that instance may still be alive), not when the whole group is dead.
+@export var wait_for_dead: PackedStringArray = []
+
 # Alternate trigger mode: instead of player proximity to grid_cell, fire the
 # first time the named cell enters the player's actual FOV this frame (e.g. a
 # ground item coming into view) rather than a fixed radius around a point.
@@ -36,6 +45,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _fired:
 		return
+	if not _wait_group_dead():
+		return
 	if trigger_on_visible_cell != _UNUSED_CELL:
 		if _tile_scene == null or not _tile_scene.is_cell_currently_visible(trigger_on_visible_cell):
 			return
@@ -51,6 +62,17 @@ func _process(_delta: float) -> void:
 	if maxi(absi(d.x), absi(d.y)) > trigger_radius:
 		return
 	_fire()
+
+func _wait_group_dead() -> bool:
+	if wait_for_dead.is_empty():
+		return true
+	var parent := get_parent()
+	if parent == null:
+		return true
+	for enemy_name in wait_for_dead:
+		if parent.get_node_or_null(String(enemy_name)) != null:
+			return false
+	return true
 
 func _fire() -> void:
 	_fired = true

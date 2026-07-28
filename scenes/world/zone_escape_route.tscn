@@ -167,6 +167,16 @@ tutorial_id = "alt_highlight"
 tutorial_title = "Spotting Interactables"
 tutorial_body = "Hold Alt to highlight everything nearby you can interact with — items, containers, doors, and levers — even ones easy to miss at a glance."
 
+[node name="CarveTutorialPopup" type="Node2D" parent="."]
+script = ExtResource("9")
+grid_cell = Vector2i(19, 29)
+trigger_radius = 8
+auto_save_on_trigger = false
+wait_for_dead = PackedStringArray("Roach1", "Roach2", "Roach3", "Roach4")
+tutorial_id = "carve_mechanic"
+tutorial_title = "Carving Corpses"
+tutorial_body = "Animal corpses can be carved for meat and other resources — right-click one and choose Carve. How much you get, and its quality, depends on your Survival skill."
+
 [node name="ExitTutorialMessage" type="Node2D" parent="."]
 script = ExtResource("9")
 grid_cell = Vector2i(74, 29)

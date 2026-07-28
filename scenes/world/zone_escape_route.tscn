@@ -219,10 +219,6 @@ tutorial_gate_body = "Combat is turn-based — the order everyone acts in is sho
 script = ExtResource("5")
 grid_cell = Vector2i(41, 25)
 
-[node name="RatB" type="Node2D" parent="."]
-script = ExtResource("5")
-grid_cell = Vector2i(42, 33)
-
 [node name="RatC" type="Node2D" parent="."]
 script = ExtResource("5")
 grid_cell = Vector2i(57, 27)

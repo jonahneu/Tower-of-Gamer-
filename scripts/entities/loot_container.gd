@@ -66,6 +66,27 @@ func _on_highlight_toggled(active: bool) -> void:
 	_highlighted = active
 	queue_redraw()
 
+const CRATE_W: float = 26.0
+const CRATE_H: float = 18.0
+
+# Placeholder box — plain crate silhouette so any container is at least
+# visible without holding Alt. Subclasses (e.g. LockedChest) can draw on top
+# to show extra state (a locked clasp, etc).
+func _draw() -> void:
+	_draw_crate_body()
+	if _highlighted:
+		var base_y: float = -CRATE_H * 0.5 + TileScene.TILE_H / 4.0
+		draw_circle(Vector2(0, base_y), 26.0, Color(1.0, 0.85, 0.0, 0.16))
+		draw_arc(Vector2(0, base_y), 26.0, 0, TAU, 32, Color(1.0, 0.85, 0.0), 2.0)
+		_draw_name_label(base_y - CRATE_H - 6.0)
+
+func _draw_crate_body() -> void:
+	var base_y: float = TileScene.TILE_H / 4.0
+	var rect := Rect2(-CRATE_W / 2.0, base_y - CRATE_H, CRATE_W, CRATE_H)
+	draw_rect(rect, Color(0.42, 0.30, 0.18))
+	draw_rect(Rect2(rect.position.x, rect.position.y, rect.size.x, rect.size.y * 0.35), Color(0.50, 0.37, 0.23))
+	draw_rect(rect, Color(0.22, 0.15, 0.08), false, 1.4)
+
 func _draw_name_label(label_y: float) -> void:
 	if entity_name == "":
 		return

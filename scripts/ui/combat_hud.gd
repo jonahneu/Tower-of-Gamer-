@@ -36,6 +36,11 @@ var _log_panel: Control     = null
 var _log_vbox: VBoxContainer = null
 var _log_scroll: ScrollContainer = null
 const LOG_MAX_ENTRIES: int = 60
+# Sticky-bottom autoscroll: follows new entries until the player manually
+# scrolls away, then leaves the view alone so they can keep reading. Only
+# re-pins once they scroll back down to the bottom themselves.
+var _log_pinned_to_bottom: bool = true
+var _log_programmatic_scroll: bool = false
 
 # ── Examine/object panel tracking (hides the combat info panel while open,
 # since both occupy the bottom band of the screen) ──────────────────────────
@@ -1075,6 +1080,7 @@ func _build_log_panel() -> Control:
 	_log_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_log_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(_log_scroll)
+	_log_scroll.get_v_scroll_bar().value_changed.connect(_on_log_scroll_changed)
 
 	_log_vbox = VBoxContainer.new()
 	_log_vbox.add_theme_constant_override("separation", 6)
@@ -1097,7 +1103,21 @@ func _on_combat_log(entry: String) -> void:
 		_log_vbox.remove_child(oldest)
 		oldest.queue_free()
 
-	_log_scroll.call_deferred("set_v_scroll", 999999)
+	if _log_pinned_to_bottom:
+		call_deferred("_scroll_log_to_bottom")
+
+func _scroll_log_to_bottom() -> void:
+	_log_programmatic_scroll = true
+	_log_scroll.scroll_vertical = 999999
+	_log_programmatic_scroll = false
+
+func _on_log_scroll_changed(value: float) -> void:
+	if _log_programmatic_scroll:
+		return
+	# User-driven scroll (wheel/drag/scrollbar) — stop following new entries
+	# unless they've scrolled back down near the bottom themselves.
+	var bar := _log_scroll.get_v_scroll_bar()
+	_log_pinned_to_bottom = value >= bar.max_value - bar.page - 4.0
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SIGNAL HANDLERS

@@ -10,7 +10,7 @@
 A bronze age fantasy world — ancient in feel, drawing from the spirit of early Mesopotamia, the Aegean Bronze Age, and the ancient Near East, filtered through a fantasy lens. Not a faithful historical simulation, but everything should *feel* old. Iron is rare and sacred. Cities are walled. The gods are real, and the line between ritual and magic is thin.
 
 ### The City-State — [City Name TBD]
-A prosperous, stratified society built on a river in the desert. The city sits against a large river — not the ocean, but large enough for significant trade. The surrounding land is marginally fertile by the river's grace; beyond that, desert.
+A prosperous, stratified society built around water in the desert — though not, as its inhabitants believe, a natural river. What the city calls "the river" is the largest trunk of an ancient, engineered waterway system — channels, drains, and aqueducts built by the same vanished civilization that raised the outer wall (2026-07-22, see §6) — silted and sprawling enough after so many centuries to be mistaken for nature. It's large enough for significant trade regardless of its origin. The surrounding land is marginally fertile by its grace; beyond that, desert.
 
 The city's outer wall is ancient beyond memory. It is larger in scale than anything current inhabitants could build. Nobody knows who made it. The palace is constructed from refurbished ruins and is physically part of the old structure — its foundations are something else's foundations. The whole city is squatting in the bones of something it does not understand.
 
@@ -153,7 +153,7 @@ Socially acceptable for hunters and warriors. Eyebrows raised if it's your entir
 
 **Mechanical effect on equipment:** As a practitioner gains more and better trophies, they fill clothing slots with them. The religion gradually pushes practitioners toward wearing less conventional clothing and more trophies. This is not a rule imposed on the player — it is an emergent result of wanting the best items in those slots.
 
-**The old hunter outside the gate:** An elderly man skinning an improbably large desert lizard outside the city. Too old to have done it. Clearly did. Exposition-dumps happily about the religion if the player asks questions. First available quest: kill any animal, return with any part of it. Basic survival roll required after the kill. Reward: basic trophy talisman and an introduction to the religion's logic, also a simple knife if you were unarmed.
+**The old hunter, out in the Outskirts:** An elderly man skinning an improbably large desert lizard among the ruins past the edge of the Ditch. Too old to have done it. Clearly did. Exposition-dumps happily about the religion if the player asks questions. First available quest: kill any animal, return with any part of it. Basic survival roll required after the kill. Reward: basic trophy talisman and an introduction to the religion's logic, also a simple knife if you were unarmed.
 
 **Ancient connection:** Probably the oldest surviving practice in the setting. It has no scholarly record because the religion does not encourage scholarship — knowledge passes through practice and oral tradition alone. Archaeological evidence of this practice exists in every recoverable layer except the sealed technological world, where it would have taken a different form. It predates the Layer 1 civilization. It likely predates the Layer 2 world. Ancient practitioners — people who understood intuitively that killing releases something, that claiming a life transfers power — may have been the original conceptual source for mass sacrifice: the logic that killing at scale releases something that can be channeled. That connection has never been made explicit in any surviving record.
 
@@ -307,47 +307,65 @@ Items do not wear out. Early game items simply become outclassed by what deeper 
 
 ## 6. City Layout — [City Name TBD]
 
+> **2026-07-22 restructure:** the starting area is bigger and more expansive than the old "Ditch = drainage channel, two nodes" framing. The city needs to read as the last bastion of civilization in a world that has ended many times — that doesn't work if the player can stroll out of it in the first five minutes. See below for the new structure. Docks geography is intentionally left TBD.
+
 ```
-[Desert Edge]
-      |
-[Residential District]
-      |          \
-   [Slums]      [Market District] — [Docks / River]
-      |               |                    |
-[Drainage Channel] [Temple District + Smiths/Crafters]
-      |               |
-[Undercity Access] [Castle District / Nobles / Palace-Temple]
-      |
-[Out of city — dry channel exit, unpoliced]
+                          [Outskirts]
+         (ruins of the old, larger city — crumbled, wild,
+          sparsely inhabited; the Old Hunter; Layer 1 ruins)
+                               |
+        ================ Ancient Outer Wall =================
+                               |
+                          [The Ditch]
+      (built into and along the base of the ancient wall —
+       Slums + Market as one inhabited stretch, water channels
+                  running down toward the river)
+               |                                   \
+    [Drainage Channel]                        [Docks / River]
+               |                                (geography TBD)
+       [Undercity Access]
+                               |
+        ================ Second, Inner Wall ==================
+                               |
+                          [Upper City]
+    [Residential District] — [Temple District + Smiths/Crafters]
+                               |
+                       [Castle District / Nobles / Palace-Temple]
 ```
 
 ### Districts
 
-**Slums**
-Built into a giant ancient drainage channel leading both out of the city and down into the undercity. Small stone and wood structures built up against ancient infrastructure that is out of use. The channel is dry now. So many people live here that the city does not attempt to police the exits — hunters, adventurers, smugglers, and anyone who doesn't want to be seen use the dry channel freely.
+**The Ditch**
+No longer just the drainage channel — this is the whole starting area, the entire lower city the player moves through after the tutorial and before the Undercity. Built into and along the base of the ancient outer wall itself: Blighttown, not a back alley. Ancient stone on both sides, colonized over generations by people with nowhere else to live — wooden platforms, rope bridges, lean-tos built against and between the old stone at every height. The Slums and the Market are one continuous inhabited stretch within it, not separate districts. The drainage channel proper leads down into the undercity.
 
-The slums have levels. Upper levels are just poor. Lower levels get stranger. The lowest accessible part connects to the undercity proper. The player starts in the upper slums.
+The Ditch has levels. Upper levels are just poor. Lower levels get stranger. The lowest accessible part connects to the undercity proper. The player starts in the upper Ditch.
 
-Worst spirit activity in the city at night. Cheapest wards sold by least skilled scribes. Fire cult most active here. The spiritually unprotected cluster here because they have nowhere else to go.
+Worst spirit activity in the city at night. Cheapest wards sold by the least skilled scribes. Fire cult most active here. The spiritually unprotected cluster here because they have nowhere else to go.
 
-**Market District**
-Nearest district to the slums. First step into the city proper. Trade, merchants, the daily business of the city.
+A channel of moving water runs through the Ditch, fed from further up in the city and flowing down and out through the Ditch, into the Outskirts, and on to the river — which is itself just the largest trunk of the same ancient waterway system, not a separate natural feature. The old drainage pipes are large enough that boats pass through them. This is the quiet way in or out of the city for smugglers, hunters, adventurers, and anyone who doesn't want to be seen at the main docks; the city doesn't attempt to police it.
+
+**Visually:** darker tiles toward the center of each Ditch/Outskirts area, with a blue channel running through the middle of the dark band to read as flowing water. **Open flag:** the water's path (from upper city, down through the Ditch, out through the Outskirts, to the river) may require repositioning some existing zones on the world map so the flow direction reads coherently — not resolved here, a job for whoever next touches the map layout.
+
+**The Market**
+Part of the Ditch, not a separate nicer district — this is the slums' market, and it should read that way: rougher goods, harder bargains, no illusions about wealth or refinement. First step into commerce for a player with nothing. The Scribe, the Smith, the Thief, and the Fixer all work out of here.
+
+**The Outskirts**
+Past the edge of the Ditch. The old, larger civilization that built the ancient wall clearly once filled far more ground than the current city does — its ruins stretch out this far, crumbled and half-reclaimed by desert. There is still civilization here, just sparse: squatters, hunters, the odd hermit, nothing like the density of the Ditch. This is where the Old Hunter lives, and where the Layer 1 ruins the Forge Master and Library Teacher send the player to are found. Wild, not empty — a fitting scale for a wall built by people who needed far more room than their descendants do.
 
 **Docks**
-Against the river. Trade by water. On the far side of the market from the slums. The lower stretches of the riverbank have stretches of salt-crusted shore — in the desert heat, river water wicks through the soil and evaporates, leaving mineral deposits. Salt is harvested and traded here. No ocean connection required; this is simply what a desert river does.
+Against the river — the ancient waterway's largest trunk. Trade by water. The lower stretches of the bank have stretches of salt-crusted shore — in the desert heat, water wicks through the soil and evaporates, leaving mineral deposits. Salt is harvested and traded here. Exact geography relative to the Ditch and its water channels is TBD — left for later.
 
 **Temple District**
-Adjacent to market and docks. The library-temple of the pictographic religion is here, open to the public. The smiths and crafters operate on the edge between temple district and market/docks — their forges are temples in their own right.
+Adjacent to the docks, inside the second wall. The library-temple of the pictographic religion is here, open to the public. The smiths and crafters operate on the edge between temple district and docks — their forges are temples in their own right.
 
 **Castle District**
 Accessible through the temple district. Where nobles live. The palace-temple is here — partially refurbished ruins, partially something much older. The king and his god live here. The most powerful divine lineage in the city.
 
-**Residential District**
-Borders market, docks, a little of the temple district, and the desert edge. Where ordinary citizens live.
+**Residential District — 2026-07-22: cut as a separate lower-city zone.** Ordinary citizens don't have their own district down here — they simply live spread throughout the Ditch, among the Slums and the Market, the same as everyone else without money or a patron. "Residential District" now refers only to the better neighborhoods behind the second wall, reserved for later (upper city).
 
-### The Upper City Gate
+### The Second Wall
 
-A guarded checkpoint divides the city into two zones. The lower city — the Ditch, the market, the docks, and the rougher parts of the residential quarter — is where the player begins and where Act 1 takes place. The upper city — the temple district, the smiths and crafters quarter, the castle district, and the better residential neighborhoods — is physically reachable by foot but guarded at a gate.
+Two walls, not one. The ancient outer wall is the one nobody remembers building — it's what the Ditch is built into, and what the Outskirts sprawl out past. Further in, a second, more central and elevated wall separates the upper city from everything else. This is the guarded checkpoint that actually gates the player: the lower city — the Ditch (Slums, Market, water channels), the Outskirts, and the docks — is where the player begins and where Act 1 takes place. The upper city — the temple district, the smiths and crafters quarter, the castle district, and the residential neighborhoods — sits behind the second wall, physically reachable by foot but guarded at a gate.
 
 The guards' reason is the same one that kept the player in chains: class. A slave with no money, no patron, and no god has no business in the upper city. This is not a locked door — it is a social boundary enforced by people with spears. The player cannot bluff, bribe, or fight their way through on day one.
 
@@ -377,21 +395,21 @@ The player emerges from the escape sequence (§13, "The Interrupted Sacrifice") 
 - Every background has at least one natural entry point that doesn't require skills they don't have.
 
 
-### The Old Hunter *(outside the gate)*
+### The Old Hunter *(the Outskirts)*
 An elderly man skinning an improbably large desert lizard — a big desert predator, alone, clearly his kill. Too old to have done it. Tells stories if asked. Will exposition-dump on the animal-part religion enthusiastically if prodded.
 
 **Quest:** Kill any animal. Return with any part of it. Survival roll required after the kill to dress the carcass properly.
-**The kill itself:** Handled by the combat system. Small animals near the city walls are feasible targets. The player will almost certainly be fighting unarmed unless they've completed another job first and bought or stolen a weapon. A combat-built character can manage this. A scribe who tries to punch a lizard first will learn quickly to find the courier job instead.
+**The kill itself:** Handled by the combat system. Small animals in the Outskirts are feasible targets. The player will almost certainly be fighting unarmed unless they've completed another job first and bought or stolen a weapon. A combat-built character can manage this. A scribe who tries to punch a lizard first will learn quickly to find the courier job instead.
 **Reward:** Basic trophy talisman. A simple knife — first weapon. Introduction to the religion and the hunter as a recurring character.
 **Natural entry point for:** Gladiator, Field Hand backgrounds. High STR or Melee investment.
 
-### The Scribe *(market district)*
+### The Scribe *(the Market, in the Ditch)*
 A scribe working the market — copying documents, writing letters, selling wards. Needs a document delivered to a business owner nearby. Simple errand, no skill check required, just legwork.
 **Reward:** Small coin. Introduction to the pictographic religion. The scribe is both an errand-giver and an early trainer — they can teach basic inscription and sell basic wards. They are also the first person to point the player toward the Library-Temple, which is in the upper city and currently inaccessible.
 **Natural entry point for:** Scribe, Domestic, Apothecary's Assistant backgrounds. Anyone with social skills or simply nowhere else to start.
 **The market contact:** A business owner who receives the document. Minor NPC, to be fleshed out later. May become a source of further work.
 
-### The Smith *(market district)*
+### The Smith *(the Market, in the Ditch)*
 Works a smithing stall in the market with a small forge and a home attached to the back. Needs a specific fire accelerant fetched from an alchemist in the market. The alchemist has fire cult connections — smiths and the fire cult have a known working relationship, and the smith orders his accelerant through the fire cult member in the Ditch.
 **Reward:** Coin. The smith is both an errand-giver and an early trainer — he practices the metal religion and can begin teaching it. He points the player toward the Great Forge in the upper city for deeper mastery, though the player can't reach it yet. After doing work for him the player can ask to sleep in the back — he's not warm about it, but he allows it.
 **Side effect:** The alchemist or someone nearby notices the player is running errands for a smith. The fire cult's approach later may feel less like a coincidence.
@@ -592,27 +610,27 @@ The player begins as a sacrifice victim, not a freed slave. A scripted sequence,
 
 ---
 
-### [The Old Hunter] — Outside the Gate
-An elderly man sitting outside the city gate skinning an improbably large desert lizard. Too old to have made that kill. Clearly did. Unhurried. Will talk at length about the animal-part religion if the player asks him anything — he's been waiting for someone to ask.
+### [The Old Hunter] — The Outskirts
+An elderly man sitting out in the Outskirts, among the crumbled ruins past the edge of the Ditch, skinning an improbably large desert lizard. Too old to have made that kill. Clearly did. Unhurried. Will talk at length about the animal-part religion if the player asks him anything — he's been waiting for someone to ask.
 
 **Role:** First available quest giver. Introduction to the animal-part religion. Recurring character encountered at intervals across the whole game, not a hub the player returns to regularly. More distant and casual than other teachers — he doesn't run a school, he crosses your path. For players following the Way of Beasts, he is a distant mentor figure: a model of what the path produces at its end, encountered rarely enough that each meeting feels significant.
 
 **Disposition:** Gruff but not unfriendly. Respects anyone willing to try something. Has seen enough to find most things amusing rather than threatening. Does not explain himself. Does not need to.
 
-**Quest:** Kill any animal. Return with any part of it. Survival roll required after the kill — small animals near the city walls are feasible unarmed or with improvised tools. Basic trophy talisman as reward, plus a simple knife if the player arrived unarmed.
+**Quest:** Kill any animal. Return with any part of it. Survival roll required after the kill — small animals in the Outskirts are feasible unarmed or with improvised tools. Basic trophy talisman as reward, plus a simple knife if the player arrived unarmed.
 
 **The Toad:** If the player slept at his fire, he'll mention in the morning that he's heard there's something large and strong that's recently made its home near the surface of the undercity — blocking the passage. He wants it dead. Not because it's in his way — he has his own routes, secret paths the toad doesn't cover, and he gets where he's going regardless. He wants it dead because if the player is the kind of person who can kill it, he'd like to meet them again deeper down. It's a statement of respect framed as mild personal interest. He won't press it.
 
 **Morning storyboard** *(after sleeping at his fire)*
 Dialogue opens after waking. First presented option prompts the player to bring up the dream — framed to make asking feel natural, skippable. If the player asks: he's heard of godless people seeing things, doesn't know what it means specifically, but his read is simple — go deeper, get strong enough to go there. Points toward the undercity without elaborating. Then, as a separate beat: he mentions casually that he's heard something large has recently made its home near the surface of the undercity, blocking the passage. Says it the way he'd mention interesting weather. Implies he's already thinking about going down himself. Then flows into the existing goodbye: *"Get strong enough to go below if you want to meet again."* He leaves after the player's next rest.
 
-**Recurring structure:** First encounter is outside the gate on day one. Later encounters are in the undercity and below — found rather than sought, in places that imply he was there long before the player arrived. Each meeting he has something new to say and something new to teach, but the player is never sent back to him on a schedule. He appears when the world opens up enough for him to be there.
+**Recurring structure:** First encounter is in the Outskirts on day one. Later encounters are in the undercity and below — found rather than sought, in places that imply he was there long before the player arrived. Each meeting he has something new to say and something new to teach, but the player is never sent back to him on a schedule. He appears when the world opens up enough for him to be there.
 
 **Notes:** The size of his kill is a passive signal — this is someone worth knowing more about. He doesn't explain himself. Players who ask will get stories.
 
 ---
 
-### [The Market Scribe] — Market District
+### [The Market Scribe] — The Market, in the Ditch
 A working scribe in the market — copying documents for merchants, writing letters for people who can't, selling inscribed wards to anyone who asks. Accessible, practical, and quietly proud of a craft that most people treat as a service trade.
 
 **Role:** First accessible contact for the pictographic religion path. An early trainer who can teach basic inscription technique and sell basic wards. Not a master — he will tell you directly that he is not. The Library-Teacher in the upper city is where the path eventually leads, but the player can't reach there yet, and this is not nothing.
@@ -627,7 +645,7 @@ A working scribe in the market — copying documents for merchants, writing lett
 
 ---
 
-### [The Market Smith] — Market District
+### [The Market Smith] — The Market, in the Ditch
 A smith working the market with a small forge built into his stall and a home attached to the back. Competent, deliberate, not given to small talk. Has a working relationship with the fire cult — the flame accelerant he uses is supplied through them, invoiced by the fire cult member in the Ditch. He doesn't advertise this.
 
 **Role:** First accessible contact for the metal religion path. An early trainer who can begin teaching the craft as spiritual practice. Not the Forge Master — he knows this and will say so. The Great Forge is where serious practitioners go, and the player can't reach it yet.
@@ -651,7 +669,7 @@ A senior practitioner of the metal religion, working at the Great Forge in the T
 
 **Role:** Teacher and quest giver for the metal religion path. More experienced than the market smith; treats the craft as serious spiritual practice, not just trade.
 
-**Quest:** Sends the player to a Layer 1 ruin that protrudes from the desert near the city. The ruin contains an ancient weapon — iron, from a previous civilization. The player reclaims the iron and returns it to the Forge Master, who repurposes and refurbishes it into the player's first iron weapon. Iron is sacred in the metal religion; this weapon has age and origin that practitioners read as spiritually significant.
+**Quest:** Sends the player to a Layer 1 ruin protruding from the sand out in the Outskirts. The ruin contains an ancient weapon — iron, from a previous civilization. The player reclaims the iron and returns it to the Forge Master, who repurposes and refurbishes it into the player's first iron weapon. Iron is sacred in the metal religion; this weapon has age and origin that practitioners read as spiritually significant.
 
 **Sleeping scene:** Player can stay at the Great Forge overnight. The forge works through the night — when the player wakes, it is already active, already loud. The Forge Master is at work or moving between tasks. He notices the player is awake but doesn't make an occasion of it.
 
@@ -660,7 +678,7 @@ If the player raises the dream: he listens without interrupting. Then is quiet �
 
 Separately or in the same beat: the quest. Brief, businesslike. *"Iron from that world is worth more than what's in my forge now. Not in coin. In what it is."*
 
-**Desert ruin connection:** Whether the ruin is the same one the scribes use is TBD. First physical evidence of Layer 1 the player encounters — ruins sticking out of the desert sand before they've descended underground.
+**Outskirts ruin connection:** Whether the ruin is the same one the scribes use is TBD. First physical evidence of Layer 1 the player encounters — ruins sticking out of the sand in the Outskirts, before they've descended underground.
 
 **Undercity hook:** After the desert ruin quest, the Forge Master sends the player into the shallow undercity to recover more ancient metalwork — tools or fragments from the Layer 1 civilization that are worth studying or reclaiming. The undercity has better and stranger examples than anything poking out of the desert. This is his path's reason to descend.
 
@@ -675,7 +693,7 @@ A senior scribe and practitioner at the library-temple of the pictographic relig
 
 **Role:** Teacher and quest giver for the pictographic religion path. More advanced than the market scribe; understands inscription as spiritual practice and genuine power, not just trade.
 
-**Quest:** Sends the player to a Layer 1 ruin in the desert near the city. The ruin contains ancient text — inscriptions from the previous civilization. The player transcribes the text and returns. The transcription gives the player their first inscription-based magical ability. They copy something they don't fully understand, and it works anyway. This is intentional — the knowledge-descent principle in action from day one.
+**Quest:** Sends the player to a Layer 1 ruin out in the Outskirts. The ruin contains ancient text — inscriptions from the previous civilization. The player transcribes the text and returns. The transcription gives the player their first inscription-based magical ability. They copy something they don't fully understand, and it works anyway. This is intentional — the knowledge-descent principle in action from day one.
 
 **Sleeping scene:** Player can stay at the library overnight — guest space for traveling scholars and devotees. The library doesn't have a silence-at-dawn quality; it is already active, already quiet in the productive way of a place people work. Others may be stirring — other scholars, devotees, travelers given space.
 
@@ -684,7 +702,7 @@ The Library Teacher seeks the player out, or the player finds her. If the player
 
 She frames the quest as collaborative: *"I want you to go to the ruin. Transcribe what you find. Bring it back. I will tell you if it connects to what you dreamed."* She isn't assigning an errand — she wants the information herself. This earns her the player who takes ideas seriously.
 
-**Desert ruin connection:** Same ruin as the Forge Master's quest, or a nearby one — TBD.
+**Outskirts ruin connection:** Same ruin as the Forge Master's quest, or a nearby one — TBD.
 
 **Undercity hook:** The transcription from the desert ruin is a fragment — a surface exposure of something older and more complete underground. After the player returns with it, she tells them directly: there are inscriptions in the shallow undercity that predate anything in the library, and she has been trying to get someone down there who can copy them. The player goes, transcribes, brings back. Each layer of descent produces older and stranger text. This is the pictographic religion's knowledge-descent principle in practice.
 
@@ -692,7 +710,7 @@ She frames the quest as collaborative: *"I want you to go to the ruin. Transcrib
 
 ---
 
-### [The Market Thief] — Market District
+### [The Market Thief] — The Market, in the Ditch
 A pickpocket working the market crowd. Not visible unless the player makes a successful Perception or Sleight of Hand check — attentive players and thief-builds find him naturally; everyone else walks past without knowing he exists. Once spotted the player can confront him or simply watch him work. Either is a valid path to introduction.
 
 **Role:** Entry point to the city's criminal economy. Replaces the removed urchin character and absorbs that role entirely. Knows the Ditch, knows the fence, knows which guards can be bought and which can't. Introduces the player to pickpocketing as a mechanic — his tutorial is him demonstrating it, which the player just watched.
@@ -724,14 +742,14 @@ Neither option is forced. A player who wants to stay in crime work can ignore th
 
 ---
 
-### [The Mercenary Fixer] — Market District
+### [The Mercenary Fixer] — The Market, in the Ditch
 Someone in the market who places fighters for coin. Has the look of a person who has seen too many capable people come and go. Approaches the player or is findable by asking around — someone always knows who to talk to about work.
 
 **Role:** Entry point to the mercenary path for combat-focused players who don't want to engage with the religious faction systems. First contact, audition, and ongoing quest giver as the player's reputation grows.
 
 **First meeting:** Clocks the player immediately as a nobody — no reputation, no known work, no referral. Gives them a job he expects to kill them: a group of bandits has made camp on a route near the city that people use regularly. They're preying on traffic. The fixer has a client who wants it handled. He sends the player solo when everyone in his world assumes you'd need a group for this.
 
-**The bandit camp:** Located near the city on a well-traveled route — desert or plains adjacent. A real combat challenge for an underprepared player. The bandits aren't just blocking a road; they have a camp, they have numbers, and clearing them is a meaningful fight. This is the mercenary path's Act 1 desert content.
+**The bandit camp:** Located out in the Outskirts, on a well-traveled route through the ruins. A real combat challenge for an underprepared player. The bandits aren't just blocking a road; they have a camp, they have numbers, and clearing them is a meaningful fight. This is the mercenary path's Act 1 Outskirts content.
 
 **After surviving:** The player returns. The fixer reassesses. From this point the player has a credential — someone who went to that camp alone and came back. More dangerous work becomes available. The mercenary path opens properly.
 
@@ -839,7 +857,7 @@ The current starting zone is a placeholder — a flat outdoor area with no meani
 ### Proposed zone structure
 
 ```
-[Desert Edge / Outside Gate]    ← Old Hunter just outside
+        [Outskirts]             ← Old Hunter here, past the Ditch's edge
          |
   [Ground Exit Path]            ← slopes upward, opens to daylight
          |
@@ -864,9 +882,9 @@ The current starting zone is a placeholder — a flat outdoor area with no meani
 
 The rest of the surface city connects laterally from the Upper Ditch:
 ```
-[Upper Ditch] → [City Streets] → [Market District]    ← Alchemist, Market Scribe, Market Smith
-                                        |
-                              ~~[Upper City Gate]~~    ← Guarded; story-gated, not open in Act 1
+[Upper Ditch] → [City Streets] → [The Market]          ← Alchemist, Market Scribe, Market Smith
+                                        |                  (part of the Ditch, not a separate district)
+                              ~~[Second Wall]~~         ← Guarded; story-gated, not open in Act 1
                                         |
                                [Temple District]       ← Library-Temple, Great Forge
                                         |
@@ -878,7 +896,7 @@ The rest of the surface city connects laterally from the Upper Ditch:
                                         |                  geography, exits down
                                         ↓                  into the Lower Ditch
                              [Lower Ditch / Apothecary]     directly (bypasses the
-                                                             Upper City Gate/Ditch
+                                                             Second Wall/Ditch
                                                              chain above — the
                                                              player starts already
                                                              past it, escaping)
@@ -886,21 +904,21 @@ The rest of the surface city connects laterally from the Upper Ditch:
 
 ### City Cardinal Orientation
 
-- **North** — nicer districts, castle, nobles, temple
+- **North** — nicer districts, castle, nobles, temple (behind the Second Wall)
 - **West** — river (large, trade-bearing; the city's reason for existing)
 - **South** — the Ditch, the descent, the undercity
-- **East** — desert edge, residential, the less interesting direction
+- **East** — the Outskirts, the less interesting direction
 
-The Ditch runs roughly north–south through the lower city. The river is close enough to the western wall that the Ditch's ground-level exit pipe emerges on a strip of land between the city wall and the water — dry ground, not the river itself.
+The Ditch runs roughly north–south through the lower city, built into and along the base of the ancient outer wall. The river is close enough to the western wall that the Ditch's ground-level exit pipe emerges near the edge of the Outskirts, on a strip of land between the old wall and the water — dry ground, not the river itself. Past that edge, the ruins of the old, larger city sprawl out into the Outskirts before finally giving way to open desert.
 
-**The Eastern Mountains — [Name TBD]:** Far across the desert to the east, a mountain range rises at the edge of the known world — the practical edge of the map. The desert simply runs out into foothills and then stone. Nobody from the city has mapped what's beyond it, and nothing in the design so far requires that they ever could. The foothills and the start of the range are explorable: a handful of visitable locations TBD (a watchtower, a mining camp, a hermit's perch — whatever fits once the area is built out). Distance and the journey there are the point; what's nestled at the base of the mountains is the reward for crossing the desert to find it.
+**The Eastern Mountains — [Name TBD]:** Far across the desert to the east, past the Outskirts, a mountain range rises at the edge of the known world — the practical edge of the map. The desert simply runs out into foothills and then stone. Nobody from the city has mapped what's beyond it, and nothing in the design so far requires that they ever could. The foothills and the start of the range are explorable: a handful of visitable locations TBD (a watchtower, a mining camp, a hermit's perch — whatever fits once the area is built out). Distance and the journey there are the point; what's nestled at the base of the mountains is the reward for crossing the desert to find it.
 
 ### Zone Edge Indicators
 
 Every zone transition that changes depth needs a visible edge marker so the player always knows which direction is deeper. Two components:
 
 - **Wall height gradient** — the primary signal; walls visibly taller/shorter as you approach the edge
-- **Edge marker** — a small directional indicator at the zone boundary (arrow or icon, style TBD) with a label: *"Deeper ↓"* / *"Surface ↑"* / *"Outside →"*
+- **Edge marker** — a small directional indicator at the zone boundary (arrow or icon, style TBD) with a label: *"Deeper ↓"* / *"Surface ↑"* / *"Outskirts →"*
 
 These should be diegetic where possible — an old carved marker in the stone, a hanging sign, something that fits the world. But a clean UI fallback is fine for the first build.
 
@@ -918,7 +936,7 @@ These should be diegetic where possible — an old carved marker in the stone, a
         walls shrink        walls grow, darkens
         daylight ahead      no NPCs past here
               |                    |
-     [↑ Outside / Old Hunter]  [↓ Undercity]
+    [↑ Outskirts / Old Hunter]  [↓ Undercity]
 ```
 
 For the initial build the Ditch only needs five connected nodes. Geometry is minimal; the goal is to establish the structure and transitions, not fill in every tile. **Drift flag:** this five-node stub predates a lot of what's actually built (`zone_ditch_lower.tscn` alone has the Apothecary and, per §13, the Fire Cult member/elder — well past the "no NPCs past the fork" line below). Not reconciling the whole section here, just flagging it and fixing the pieces this session's decisions directly touch.
@@ -933,7 +951,7 @@ The inhabited stretch between the manor wall and the fork. Walls already tall bu
 The channel visibly splits. Ancient stone, probably a collapsed arch or old channel marker — something that implies this junction was once deliberately built and controlled. The fork is close enough to the top that the player can see it almost immediately on entering the Ditch. Both paths are visible from here.
 
 **Node 4 — Ground Exit Path (southwest)**
-The fork branch that slopes upward toward the southwest. Walls decrease in height; daylight becomes visible ahead. The original surface drainage exit — the pipe mouth opens onto a strip of dry land between the outer city wall and the river. Transitions to the outside-gate area. Zone edge marker: *"Outside ↑"*. The Old Hunter is just outside.
+The fork branch that slopes upward toward the southwest. Walls decrease in height; daylight becomes visible ahead. The original surface drainage exit — the pipe mouth opens onto a strip of dry land at the edge of the Outskirts, between the ancient wall and the river. Transitions to the Outskirts. Zone edge marker: *"Outskirts ↑"*. The Old Hunter is out there.
 
 **Node 5 — Descending Path (south)**
 The fork branch that continues directly south. Darker immediately — the wall height jumps noticeably past the fork. ~~No NPCs past the fork on this path in the first build.~~ **Stale as of this build** — the Lower Ditch past this point now has the Apothecary and the Fire Cult member/elder (§13). Ends at the Undercity zone transition. The transition marker should feel like a threshold: older stone, different construction language, the channel becoming something not built for human habitation. Zone edge marker: *"Deeper ↓"*.
@@ -1093,7 +1111,7 @@ It has no name and isn't unique — it's an ordinary animal of its kind. Down at
 
 **Resolution paths:**
 - *Kill:* Combat method and required preparation TBD. The Old Hunter wants this outcome and will look forward to meeting the player again deeper down if they accomplish it.
-- *Appease:* Getting it to return home — not killing it, but removing it. Each method is a substantial errand comparable in scope to the smith/scribe ruin quests — this is Act 1 desert content, not a quick task. Poison cult method: see **Swallow** below — this is how the poison cult's appeasement actually resolves mechanically. Scribe method TBD. Possibly others.
+- *Appease:* Getting it to return home — not killing it, but removing it. Each method is a substantial errand comparable in scope to the smith/scribe ruin quests — this is Act 1 Outskirts content, not a quick task. Poison cult method: see **Swallow** below — this is how the poison cult's appeasement actually resolves mechanically. Scribe method TBD. Possibly others.
 
 **Swallow (combat ability, decided 2026-06-22):** Mid-fight, the toad can swallow the player whole. While swallowed, the player takes damage over time (being digested), but the toad itself becomes more vulnerable in return — a real risk/reward window rather than a death sentence. The interior will use the small-interior-room building block discussed long ago but never actually built — a literal tiny room representing the toad's stomach.
 

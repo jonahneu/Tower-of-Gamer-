@@ -271,7 +271,7 @@ package_id = "escape_route_rusty_key"
 
 [node name="EscapeChest" type="Node2D" parent="."]
 script = ExtResource("8")
-grid_cell = Vector2i(46, 18)
+grid_cell = Vector2i(72, 30)
 container_id = "escape_route_chest"
 loot_item_ids = PackedStringArray("coin", "coin", "coin", "coin", "coin")
 required_key_id = "rusty_key"

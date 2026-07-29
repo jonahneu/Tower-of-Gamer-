@@ -15,6 +15,11 @@ const TILE_H: int = 32
 # full 80×80 regardless of how small the room's walls actually were.
 @export var bounds: Rect2i = Rect2i(0, 0, GRID_COLS, GRID_ROWS)
 
+# Overrides the surface-layer-defaults-to-FULL / underground-defaults-to-DARK
+# rule below for a specific zone (e.g. an underground tunnel on layer 0 that
+# should still read as dim). -1 = unused, fall back to the normal rule.
+@export var light_level_override: int = -1
+
 var _range_ring_r: int = 0
 var _move_grey: Array = []
 var _move_yellow: Array = []
@@ -41,7 +46,10 @@ func _ready() -> void:
 	EventBus.show_attack_range_overlay.connect(_on_show_attack_range_overlay)
 	EventBus.hide_attack_range_overlay.connect(_on_hide_attack_range_overlay)
 	EventBus.blast_tag_detonation.connect(_on_blast_tag_detonation)
-	default_light_level = LightLevels.FULL if GameManager.world_layer == 0 else LightLevels.DARK
+	if light_level_override >= 0:
+		default_light_level = light_level_override
+	else:
+		default_light_level = LightLevels.FULL if GameManager.world_layer == 0 else LightLevels.DARK
 	_fog = FogOfWar.new()
 	_fog.name = "FogOfWar"
 	add_child(_fog)

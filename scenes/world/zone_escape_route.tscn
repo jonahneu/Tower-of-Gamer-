@@ -15,6 +15,7 @@
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
 bounds = Rect2i(1, 14, 79, 26)
+light_level_override = 1
 
 [node name="Player" type="Node2D" parent="."]
 script = ExtResource("2")
@@ -147,9 +148,18 @@ DOOR_Y = -1
 
 [node name="AutoSaveTrigger" type="Node2D" parent="."]
 script = ExtResource("9")
-grid_cell = Vector2i(14, 30)
-trigger_radius = 0
+grid_cell = Vector2i(1, 30)
+trigger_radius = 6
 auto_save_on_trigger = true
+
+[node name="LightTutorialPopup" type="Node2D" parent="."]
+script = ExtResource("9")
+grid_cell = Vector2i(1, 30)
+trigger_radius = 6
+auto_save_on_trigger = false
+tutorial_id = "light_mechanic"
+tutorial_title = "Darkness"
+tutorial_body = "This tunnel is dimly lit. Light comes in three levels — Full, Dim, and Dark — and they affect how far anyone can see: Dim roughly halves normal vision range, and Dark limits it to just a couple of tiles regardless of anything else. It cuts both ways — standing in dim or dark light makes you harder for enemies to spot too. Torches, campfires, and other light sources push back the dark around them."
 
 [node name="SneakTutorialPopup" type="Node2D" parent="."]
 script = ExtResource("9")

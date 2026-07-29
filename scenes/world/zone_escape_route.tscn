@@ -177,15 +177,6 @@ tutorial_id = "carve_mechanic"
 tutorial_title = "Carving Corpses"
 tutorial_body = "Animal corpses can be carved for meat and other resources — right-click one and choose Carve. How much you get, and its quality, depends on your Survival skill."
 
-[node name="ExitTutorialMessage" type="Node2D" parent="."]
-script = ExtResource("9")
-grid_cell = Vector2i(74, 29)
-trigger_radius = 2
-auto_save_on_trigger = false
-tutorial_id = "escape_route_exit"
-tutorial_title = "What Now"
-tutorial_body = "[PLACEHOLDER: exit tutorial message — tell the player to find spiritual protection and food/shelter for the night]"
-
 [node name="Roach1" type="Node2D" parent="."]
 script = ExtResource("4")
 grid_cell = Vector2i(16, 28)

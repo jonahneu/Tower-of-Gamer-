@@ -5,6 +5,9 @@ class_name Campfire
 @export var grid_cell: Vector2i = Vector2i(0, 0)
 @export var bright_radius: int = 5
 @export var dim_radius: int = 9
+# Unlit campfires (dead/unstarted) cast no light and draw no flame — just the
+# stone ring and cold coals.
+@export var lit: bool = true
 
 var blocks_movement: bool = false
 var is_interactable: bool = false
@@ -13,7 +16,7 @@ var _tile_scene: TileScene = null
 func _ready() -> void:
 	_tile_scene = get_parent() as TileScene
 	position = TileScene.grid_to_screen(grid_cell)
-	if _tile_scene != null:
+	if _tile_scene != null and lit:
 		_tile_scene.register_light_source(self, grid_cell, bright_radius, dim_radius)
 	queue_redraw()
 
@@ -31,6 +34,11 @@ func _draw() -> void:
 		var sx: float = cos(angle) * 7.0
 		var sy: float = sin(angle) * 3.5 + base_y
 		draw_circle(Vector2(sx, sy), 2.2, stone_col)
+
+	if not lit:
+		# Cold, dead coals — no ember glow, no flame.
+		draw_rect(Rect2(-4.0, base_y - 3.0, 8.0, 3.5), Color(0.20, 0.18, 0.16, 0.90))
+		return
 
 	# Embers / hot coals at base
 	draw_rect(Rect2(-4.0, base_y - 3.0, 8.0, 3.5), Color(0.88, 0.32, 0.05, 0.90))

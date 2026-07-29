@@ -1118,6 +1118,12 @@ func resolve_attack(attacker: Node, defender: Node, weapon: Dictionary) -> void:
 	var log_lines: PackedStringArray = []
 	if is_sneak_atk:
 		log_lines.append("── Sneak Attack ──")
+	# Flavor line — always distinct depending on which side is the player, so it
+	# never reads like the player is narrating their own incoming attack (or
+	# vice versa): "You slash at Coyote." / "Coyote bites at you."
+	var flavor_atk: String = "You" if attacker == GameManager.player else atk_name
+	var flavor_def: String = "you" if defender == GameManager.player else def_name
+	log_lines.append("%s %s %s." % [flavor_atk, weapon.get("verb", "attacks"), flavor_def])
 	log_lines.append_array(PackedStringArray([
 		"%s → %s  [%s]" % [atk_name, def_name, wpn_name],
 		"  %s %.1f vs %s %.1f → %d%% | roll %d — %s" % [
@@ -1530,7 +1536,10 @@ func _try_apply_bleed(defender: Node, attacker: Node = null, chance_mult: float 
 			defender.status_effects["bleed"].append(3)
 		EventBus.status_applied.emit(defender, "bleed")
 		EventBus.damage_floater.emit(defender, "bleed", Color(0.85, 0.12, 0.12))
-		return PackedStringArray(["  Bleed: roll %d%% vs %d%% — APPLIED" % [roll_pct, pct]])
+		return PackedStringArray([
+			"  The wound tears open, blood welling up.",
+			"  Bleed: roll %d%% vs %d%% — APPLIED" % [roll_pct, pct],
+		])
 	else:
 		return PackedStringArray(["  Bleed: roll %d%% vs %d%% — resisted" % [roll_pct, pct]])
 
@@ -1561,7 +1570,10 @@ func _try_apply_poison(defender: Node, chance_mult: float = 1.0) -> PackedString
 			defender.status_effects["poison"].append(3)
 		EventBus.status_applied.emit(defender, "poison")
 		EventBus.damage_floater.emit(defender, "poisoned", Color(0.25, 0.82, 0.25))
-		return PackedStringArray(["  Poison: roll %d%% vs %d%% — APPLIED" % [roll_pct, pct]])
+		return PackedStringArray([
+			"  A sickly poison seeps into the wound.",
+			"  Poison: roll %d%% vs %d%% — APPLIED" % [roll_pct, pct],
+		])
 	else:
 		return PackedStringArray(["  Poison: roll %d%% vs %d%% — resisted" % [roll_pct, pct]])
 
@@ -1586,7 +1598,10 @@ func _try_apply_burning(defender: Node, chance_mult: float = 1.0) -> PackedStrin
 		defender.status_effects["burning"] = [4]   # can't stack — always refreshes to 4
 		EventBus.status_applied.emit(defender, "burning")
 		EventBus.damage_floater.emit(defender, "burning!", Color(1.0, 0.45, 0.10))
-		return PackedStringArray(["  Burning: %d%% — APPLIED" % pct])
+		return PackedStringArray([
+			"  Flames catch and take hold.",
+			"  Burning: %d%% — APPLIED" % pct,
+		])
 	return PackedStringArray(["  Burning: %d%% — resisted" % pct])
 
 func _try_apply_burning_direct(defender: Node) -> void:
@@ -1615,7 +1630,10 @@ func _try_apply_heated(defender: Node, wil_mod: int, chance_mult: float = 1.0) -
 	defender.heated_wil_mod = wil_mod
 	EventBus.status_applied.emit(defender, "heated")
 	EventBus.damage_floater.emit(defender, "heated", Color(1.0, 0.65, 0.20))
-	return PackedStringArray(["  Heated: stack applied (%d stacks)" % stacks.size()])
+	return PackedStringArray([
+		"  The heat sinks in and lingers.",
+		"  Heated: stack applied (%d stacks)" % stacks.size(),
+	])
 
 # ── Damage floater color ─────────────────────────────────────────────────────
 # Interpolates grey → dark crimson based on damage, capping at 100.

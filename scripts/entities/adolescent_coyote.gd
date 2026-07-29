@@ -60,6 +60,7 @@ func _ready() -> void:
 		"governing":   ["strength", "dexterity"],
 		"damage_type": "physical",
 		"properties":  ["bleed"],
+		"verb":        "bites at",
 	}
 
 	super._ready()

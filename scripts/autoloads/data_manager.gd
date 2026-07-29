@@ -1148,6 +1148,7 @@ func _load_items() -> void:
 		"properties": [], "abilities": [],
 		# DEX only contributes half its modifier to damage (speed ≠ power for bare hands)
 		"half_dex_damage": true,
+		"verb": "swings a fist at",
 	}
 
 	items["knife"] = {
@@ -1159,6 +1160,7 @@ func _load_items() -> void:
 		"properties": ["bleed", "thrown"], "abilities": [],
 		"throw_range": 12,
 		"point_blank": "disadvantage",  # thrown at melee range: roll to-hit twice, take worse
+		"verb": "slashes at",
 	}
 
 	items["shortsword"] = {
@@ -1168,6 +1170,7 @@ func _load_items() -> void:
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical",
 		"properties": ["bleed"], "abilities": [],
+		"verb": "slashes at",
 	}
 
 	items["scimitar"] = {
@@ -1177,6 +1180,7 @@ func _load_items() -> void:
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical",
 		"properties": ["bleed"], "abilities": [],
+		"verb": "slashes at",
 	}
 
 	items["spear"] = {
@@ -1186,6 +1190,7 @@ func _load_items() -> void:
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical",
 		"properties": [], "abilities": [],
+		"verb": "thrusts at",
 	}
 
 	items["bronze_spear"] = {
@@ -1194,6 +1199,7 @@ func _load_items() -> void:
 		"damage": "1d6+1", "ap_cost": 3, "range": 2,
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical", "properties": [], "abilities": [],
+		"verb": "thrusts at",
 	}
 
 	items["stone_axe"] = {
@@ -1203,6 +1209,7 @@ func _load_items() -> void:
 		"skill": "melee", "governing": ["strength"],
 		"damage_type": "physical",
 		"properties": ["armor_pierce_light"], "abilities": [],
+		"verb": "hacks at",
 	}
 
 	items["whip"] = {
@@ -1212,6 +1219,7 @@ func _load_items() -> void:
 		"skill": "melee", "governing": ["dexterity"],
 		"damage_type": "physical",
 		"properties": [], "abilities": ["disarm"],
+		"verb": "cracks the whip at",
 	}
 
 	items["sword"] = {
@@ -1221,6 +1229,7 @@ func _load_items() -> void:
 		"skill": "melee", "governing": ["strength", "dexterity"],
 		"damage_type": "physical",
 		"properties": ["bleed"], "abilities": [],
+		"verb": "slashes at",
 	}
 
 	items["greataxe"] = {
@@ -1233,6 +1242,7 @@ func _load_items() -> void:
 		# weight_penalty: very heavy — same tier as a bronze shield.
 		"properties": ["armor_pierce", "heavy_weapon"], "abilities": [],
 		"weight_penalty": 5,
+		"verb": "swings the greataxe at",
 	}
 
 	items["sling"] = {
@@ -1243,6 +1253,7 @@ func _load_items() -> void:
 		"damage_type": "physical",
 		"properties": [], "abilities": [],
 		"point_blank": "blocked",
+		"verb": "slings a stone at",
 	}
 
 	items["shortbow"] = {
@@ -1254,6 +1265,7 @@ func _load_items() -> void:
 		"properties": [], "abilities": [],
 		"ammo": "quiver",
 		"point_blank": "blocked",   # cannot fire when an enemy is adjacent
+		"verb": "fires an arrow at",
 	}
 
 	items["longbow"] = {
@@ -1265,6 +1277,7 @@ func _load_items() -> void:
 		"properties": [], "abilities": [],
 		"ammo": "quiver",
 		"point_blank": "blocked",   # cannot fire when an enemy is adjacent
+		"verb": "fires an arrow at",
 	}
 
 	# ── Pyromancy spells ─────────────────────────────────────────────────────
@@ -1282,6 +1295,7 @@ func _load_items() -> void:
 		"bonus_fire_damage": "1d6",
 		"properties": ["burning", "use_melee_weapon_damage"], "abilities": [],
 		"weight": 0.0,
+		"verb": "strikes at with a burning palm",
 	}
 
 	items["heat"] = {
@@ -1295,6 +1309,7 @@ func _load_items() -> void:
 		"properties": ["heated", "effect_only"], "abilities": [],
 		"point_blank": "",
 		"weight": 0.0,
+		"verb": "channels heat toward",
 	}
 
 	# ── Ammo ─────────────────────────────────────────────────────────────────
@@ -1449,6 +1464,7 @@ func _load_items() -> void:
 		"armor_ignore_pct": 0.20, "harms_intangible": true, "weight": 1.5, "defense_flat": 0.0,
 		"description": "A short blade worked with metal-prayer. Something about it feels wrong to spirits.\n\nArmor ignore: 20%\nCan harm intangible enemies.",
 		"properties": ["blessed_weapon"], "abilities": [],
+		"verb": "slashes at",
 	}
 
 	items["bronze_helmet_barrier"] = {
@@ -1814,6 +1830,7 @@ func _load_items() -> void:
 		"properties": ["projected_melee", "unarmed_type"],
 		"bonus_scripture_damage": "1d6",
 		"abilities": [],
+		"verb": "channels a strike at",
 	}
 
 	# ── Trinkets (crafted from beast trophies) ────────────────────────────────

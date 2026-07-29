@@ -48,6 +48,7 @@ func _ready() -> void:
 		"damage_type":     "physical",
 		"properties":      [],
 		"half_dex_damage": true,
+		"verb":            "throws a heavy punch at",
 	}
 
 	feats.append("runner")

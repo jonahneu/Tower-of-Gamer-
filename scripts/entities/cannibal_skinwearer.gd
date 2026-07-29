@@ -83,6 +83,7 @@ func _try_grapple(player_typed: Player) -> void:
 	var success: bool = roll <= chance
 
 	var log_lines: PackedStringArray = [
+		"%s lunges to grapple you." % entity_name,
 		"%s → %s  [Grapple]" % [entity_name, player_typed.entity_name],
 		"  Melee %.1f vs Strength Resist %.1f → %d%% | roll %d — %s" % [
 			attacker_eff, defender_eff, chance, roll, "SUCCESS" if success else "FAIL"],

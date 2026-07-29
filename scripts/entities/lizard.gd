@@ -52,6 +52,7 @@ func _ready() -> void:
 		"governing":   ["strength"],
 		"damage_type": "physical",
 		"properties":  [],
+		"verb":        "bites at",
 	}
 
 	_spit_weapon = {
@@ -64,6 +65,7 @@ func _ready() -> void:
 		"governing":   ["perception", "dexterity"],
 		"damage_type": "acid",
 		"properties":  [],
+		"verb":        "spits acid at",
 	}
 
 	# Default attack weapon for lunge/icon purposes; overridden per-attack in AI

@@ -49,6 +49,7 @@ func _ready() -> void:
 		"governing":   ["strength"],
 		"damage_type": "physical",
 		"properties":  [],
+		"verb":        "snaps its mandibles at",
 	}
 
 	super._ready()
@@ -100,8 +101,8 @@ func _try_ram(player_typed: Player) -> bool:
 
 	var target_cell: Vector2i = player_typed.grid_cell - dir
 	EventBus.combat_log.emit(
-		"Sand Beetle → %s  [Ram]\n  Charging %d tiles!" % [
-			player_typed.entity_name, dist - 1])
+		"Sand Beetle charges you.\n%s → %s  [Ram]\n  Charging %d tiles!" % [
+			entity_name, player_typed.entity_name, dist - 1])
 	EventBus.attack_started.emit(self, player_typed)
 
 	# Animate the charge

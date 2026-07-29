@@ -743,7 +743,7 @@ func _go_to_character_creation() -> void:
 	get_tree().change_scene_to_file("res://scenes/character_creation/character_creation.tscn")
 
 # "New Game" default — 6 STR/AGI (enough to actually fight/move well in the
-# roach and sneak tutorials), 5 in every other stat, no skills, no
+# roach and sneak tutorials), 5 in every other stat, 10 in every skill, no
 # background. Real character creation happens later, see
 # _on_zone_entered_for_character_creation() above.
 func start_new_tutorial_run() -> void:
@@ -754,7 +754,7 @@ func start_new_tutorial_run() -> void:
 		"intelligence": 5, "willpower": 5, "perception": 5,
 	}
 	var default_skills: Dictionary = {}
-	for s in skill_names: default_skills[s] = 0
+	for s in skill_names: default_skills[s] = 10
 
 	player_data = {
 		"name":                   "",

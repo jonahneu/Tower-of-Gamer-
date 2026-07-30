@@ -31,6 +31,27 @@ var _blast_flash_alpha: float = 0.0
 var _blast_flash_cell: Vector2i = Vector2i(-1, -1)
 var _blast_flash_radius: int = 0
 
+# ── Highlight x-ray ───────────────────────────────────────────────────────────
+# While highlight mode (Alt) is held, an interactable the player has real line
+# of sight to (per has_line_of_sight/fog FOV — not just "reachable") should
+# stay visible even when a wall's tall extruded geometry happens to paint over
+# it on screen. This is distinct from Building's own translucency carve-out
+# (building.gd), which only ever affects the player's own sprite and only
+# while the player is near/inside that specific building; this instead reacts
+# to whatever the player can actually see, for any registered entity, from
+# anywhere on the map.
+const XRAY_Z_INDEX: int = 50
+var _highlight_active: bool = false
+var _last_xray_player_cell: Vector2i = Vector2i(-999999, -999999)
+
+# ── Zone-exit tint ────────────────────────────────────────────────────────────
+# Subtle red wash over the walkable border cells that actually lead somewhere
+# (per GameManager's world map), so a zone edge that's a real exit reads
+# differently from one that's just the map boundary. Walk-off exits only ever
+# fire from the four absolute grid edges (see player.gd's _get_exit_direction),
+# not from `bounds`, so this checks those same edges.
+const EXIT_TINT: Color = Color(0.75, 0.12, 0.12, 0.20)
+
 func _ready() -> void:
 	position = Vector2.ZERO
 	y_sort_enabled = true
@@ -46,6 +67,7 @@ func _ready() -> void:
 	EventBus.show_attack_range_overlay.connect(_on_show_attack_range_overlay)
 	EventBus.hide_attack_range_overlay.connect(_on_hide_attack_range_overlay)
 	EventBus.blast_tag_detonation.connect(_on_blast_tag_detonation)
+	EventBus.highlight_toggled.connect(_on_highlight_toggled_xray)
 	if light_level_override >= 0:
 		default_light_level = light_level_override
 	else:
@@ -62,6 +84,39 @@ func _ready() -> void:
 		_fog.compute_fov(GameManager.player.grid_cell)
 		_fog.update_entity_visibility()
 		_fog.redraw_all()
+	_apply_exit_tint()
+
+# Tints every walkable cell along the map-boundary edges that have a real
+# neighboring zone. Runs once at load — blocked_cells is already fully
+# populated by now (Building/etc. set it in their own _ready(), which Godot
+# runs before this parent _ready()) — so walls/rocks sitting on the border
+# correctly don't get tinted. Leaves any cell that already has a fill color
+# (e.g. a river tile) alone rather than overwriting it.
+func _apply_exit_tint() -> void:
+	for direction in ["north", "south", "east", "west"]:
+		if GameManager.get_adjacent_tile(direction) == Vector2i(-1, -1):
+			continue
+		for cell in _edge_cells_for(direction):
+			if cell_fill_colors.has(cell) or not is_walkable(cell):
+				continue
+			cell_fill_colors[cell] = EXIT_TINT
+
+func _edge_cells_for(direction: String) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	match direction:
+		"north":
+			for x in range(GRID_COLS):
+				cells.append(Vector2i(x, 0))
+		"south":
+			for x in range(GRID_COLS):
+				cells.append(Vector2i(x, GRID_ROWS - 1))
+		"east":
+			for y in range(GRID_ROWS):
+				cells.append(Vector2i(GRID_COLS - 1, y))
+		"west":
+			for y in range(GRID_ROWS):
+				cells.append(Vector2i(0, y))
+	return cells
 
 func update_entity_visibility() -> void:
 	if _fog != null:
@@ -142,7 +197,31 @@ func _process(delta: float) -> void:
 	if _blast_flash_alpha > 0.0:
 		_blast_flash_alpha = maxf(0.0, _blast_flash_alpha - delta * 2.5)
 		queue_redraw()
+	if _highlight_active and GameManager.player != null and is_instance_valid(GameManager.player):
+		var pc: Vector2i = GameManager.player.grid_cell
+		if pc != _last_xray_player_cell:
+			_last_xray_player_cell = pc
+			_refresh_xray_highlights()
 
+func _on_highlight_toggled_xray(active: bool) -> void:
+	_highlight_active = active
+	_refresh_xray_highlights()
+
+# Pushes every currently-visible interactable's z_index above wall/roof
+# geometry (both default to 0) so it draws on top instead of being painted
+# over, and drops everything else back to normal. Cheap: only runs while
+# highlight is held, and only again once the player actually moves.
+func _refresh_xray_highlights() -> void:
+	for entity in get_all_entities():
+		if not is_instance_valid(entity):
+			continue
+		if not entity.get("is_interactable"):
+			continue
+		var cell = entity.get("grid_cell")
+		if cell == null:
+			continue
+		var xray: bool = _highlight_active and is_cell_currently_visible(cell)
+		entity.z_index = XRAY_Z_INDEX if xray else 0
 
 # ── Internal state ────────────────────────────────────────────────────────────
 var blocked_cells: Dictionary = {}

@@ -27,6 +27,7 @@ grid_cell = Vector2i(2, 29)
 
 [node name="WestWall" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 10
 X2 = 10
 Y1 = 24
@@ -36,6 +37,7 @@ DOOR_Y = 30
 
 [node name="NorthWall_Room1" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 1
 X2 = 29
 Y1 = 24
@@ -45,6 +47,7 @@ DOOR_Y = -1
 
 [node name="SouthWall_Room1" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 1
 X2 = 29
 Y1 = 35
@@ -54,6 +57,7 @@ DOOR_Y = -1
 
 [node name="DoorWall" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 29
 X2 = 29
 Y1 = 14
@@ -67,6 +71,7 @@ grid_cell = Vector2i(29, 30)
 
 [node name="NorthWall_Room2" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 30
 X2 = 63
 Y1 = 20
@@ -76,6 +81,7 @@ DOOR_Y = -1
 
 [node name="SouthWall_Room2" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 30
 X2 = 63
 Y1 = 39
@@ -85,6 +91,7 @@ DOOR_Y = -1
 
 [node name="EastWall_Room2" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 64
 X2 = 64
 Y1 = 14
@@ -94,6 +101,7 @@ DOOR_Y = 33
 
 [node name="AlcoveWestWall" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 43
 X2 = 43
 Y1 = 14
@@ -103,6 +111,7 @@ DOOR_Y = -1
 
 [node name="AlcoveEastWall" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 49
 X2 = 49
 Y1 = 14
@@ -112,6 +121,7 @@ DOOR_Y = -1
 
 [node name="AlcoveNorthWall" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 44
 X2 = 48
 Y1 = 14
@@ -121,6 +131,7 @@ DOOR_Y = -1
 
 [node name="NorthWall_Room3" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 65
 X2 = 79
 Y1 = 24
@@ -130,6 +141,7 @@ DOOR_Y = -1
 
 [node name="SouthWall_Room3" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 65
 X2 = 79
 Y1 = 35
@@ -139,6 +151,7 @@ DOOR_Y = -1
 
 [node name="Baffle3" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 65
 X2 = 66
 Y1 = 24

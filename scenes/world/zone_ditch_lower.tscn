@@ -20,6 +20,7 @@ grid_cell = Vector2i(40, 4)
 
 [node name="WallWest" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 0
 X2 = 5
 Y1 = 0
@@ -29,6 +30,7 @@ DOOR_Y = 32
 
 [node name="WallEast" type="Node2D" parent="."]
 script = ExtResource("3")
+wall_height_mult = 5.0
 X1 = 74
 X2 = 79
 Y1 = 0

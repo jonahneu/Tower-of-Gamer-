@@ -10,6 +10,11 @@ class_name TrashChute
 
 @export var grid_cell: Vector2i = Vector2i(40, 40)
 @export var direction: String = ""
+# Overridable flavor text — same floor-opening mechanism gets reused for
+# non-refuse holes (e.g. a caved-in tunnel floor), which need their own name/
+# description without forking the script.
+@export var display_name: String = "Refuse Chute"
+@export var description_text: String = "A refuse chute cut into the floor, wide enough for a body. It drops into darkness below."
 
 const TILE_W := TileScene.TILE_W
 const TILE_H := TileScene.TILE_H
@@ -31,7 +36,7 @@ var _tile_scene: TileScene = null
 func _ready() -> void:
 	is_interactable = true
 	blocks_movement  = true
-	entity_name      = "Refuse Chute"
+	entity_name      = display_name
 	_tile_scene      = get_parent() as TileScene
 	if _tile_scene == null:
 		push_error("TrashChute: parent must be TileScene")
@@ -48,7 +53,7 @@ func get_interaction_options() -> Array:
 	]
 
 func get_description() -> String:
-	return "A refuse chute cut into the floor, wide enough for a body. It drops into darkness below."
+	return description_text
 
 func get_action_label() -> String:
 	return "Jump Down"

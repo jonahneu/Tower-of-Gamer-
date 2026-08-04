@@ -637,6 +637,11 @@ func _execute_ai_turn() -> void:
 					entity_name, str(p_cell), _unreachable_turns, str(GameManager.world_pos)])
 		else:
 			_unreachable_turns = 0
+			# A path opened back up — don't leave this entity permanently
+			# blind (see _entity_can_see_player's _gave_up_chase check)
+			# over what turned out to be a transient blockage (e.g. allies
+			# briefly crowding the only approach cells).
+			_gave_up_chase = false
 		var move_budget: int = CombatManager.current_mp() + maxi(0, CombatManager.current_ap() - attack_cost)
 		if move_budget > 0 and not path.is_empty():
 			var steps: int = mini(move_budget, path.size())

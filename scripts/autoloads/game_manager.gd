@@ -129,8 +129,8 @@ func _ready() -> void:
 			# intent ("not part of the normal explorable world"), corrected
 			# 2026-07-14 after initially being placed on the addressable grid.
 			# One-way: its own east wall is open (no door), so walking off that
-			# edge continues east into the rest alcove below (not directly into
-			# the Lower Ditch anymore, as of 2026-07-29) — same walk-off
+			# edge continues east into the drop alcove below (not directly into
+			# the rest alcove anymore, as of 2026-08-03) — same walk-off
 			# mechanism used everywhere else; deliberately has no return exit
 			# back toward the chamber.
 			Vector2i(-1, 18): {
@@ -139,20 +139,41 @@ func _ready() -> void:
 				"thumbnail_type": "slums",
 				"is_interior":    true,
 				"exits":          {
-					"east": Vector2i(-1, 19),
+					"east": Vector2i(-1, 17),
 				},
 			},
-			# Rest alcove — the escape route's final beat (2026-07-29): a small
-			# room between the tutorial dungeon and the Lower Ditch where the
-			# player is taught Make Camp (cooking + resting, both live on the
-			# same R-key panel) before setting out. Off-grid and one-way for the
-			# same reasons as the escape route above.
-			Vector2i(-1, 19): {
-				"scene":          "res://scenes/world/zone_escape_route_rest.tscn",
-				"label":          "Drainage Tunnel — Rest Alcove",
+			# Drop alcove (2026-08-03): a small one-tile connector room between
+			# the escape route and the rest alcove — forces the player through
+			# a deliberate "jump down the hole" beat (TrashChute, direction
+			# "fall") rather than walking straight into the rest alcove, so
+			# resting (and the exhaustion it hands out unprotected — see the
+			# rest alcove's required_protection_level below) reads as a real
+			# consequence of the drop, not just another room along the way.
+			Vector2i(-1, 17): {
+				"scene":          "res://scenes/world/zone_escape_route_drop.tscn",
+				"label":          "Drainage Tunnel — Drop",
 				"thumbnail_type": "slums",
 				"is_interior":    true,
 				"exits":          {
+					"fall": Vector2i(-1, 19),
+				},
+			},
+			# Rest alcove — the escape route's final beat (2026-07-29, re-routed
+			# behind the drop alcove 2026-08-03): a small room between the
+			# tutorial dungeon and the Lower Ditch where the player is taught
+			# Make Camp (cooking + resting, both live on the same R-key panel)
+			# before setting out. required_protection_level forces a fresh,
+			# unprotected character to pick up 1 exhaustion stack on this first
+			# rest — the tutorial's whole point is to make that consequence
+			# legible before the player is out in the world on their own. Off-
+			# grid and one-way for the same reasons as the escape route above.
+			Vector2i(-1, 19): {
+				"scene":                     "res://scenes/world/zone_escape_route_rest.tscn",
+				"label":                     "Drainage Tunnel — Rest Alcove",
+				"thumbnail_type":            "slums",
+				"is_interior":               true,
+				"required_protection_level": 1,
+				"exits":                     {
 					"east": Vector2i(10, 15),
 				},
 			},

@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3 uid="uid://zone_escape_route_drop"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/trash_chute.gd" id="4"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+bounds = Rect2i(0, 25, 10, 11)
+light_level_override = 1
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(2, 30)
+
+[node name="Walls" type="Node2D" parent="."]
+script = ExtResource("3")
+wall_height_mult = 5.0
+X1 = 1
+X2 = 8
+Y1 = 26
+Y2 = 34
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="CollapsedFloor" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(5, 30)
+direction = "fall"
+display_name = "Collapsed Floor"
+description_text = "The tunnel floor gave way here, opening into a drop below. No telling exactly where it lands, but it's the only way onward."

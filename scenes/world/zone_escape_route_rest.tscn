@@ -13,7 +13,7 @@ light_level_override = 1
 
 [node name="Player" type="Node2D" parent="."]
 script = ExtResource("2")
-grid_cell = Vector2i(1, 29)
+grid_cell = Vector2i(3, 30)
 
 [node name="NorthWall" type="Node2D" parent="."]
 script = ExtResource("3")
@@ -35,6 +35,26 @@ Y2 = 35
 DOOR_X = 999
 DOOR_Y = -1
 
+[node name="WestWall" type="Node2D" parent="."]
+script = ExtResource("3")
+wall_height_mult = 5.0
+X1 = 0
+X2 = 0
+Y1 = 24
+Y2 = 35
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="EastWall" type="Node2D" parent="."]
+script = ExtResource("3")
+wall_height_mult = 5.0
+X1 = 24
+X2 = 24
+Y1 = 24
+Y2 = 35
+DOOR_X = 24
+DOOR_Y = 34
+
 [node name="Campfire" type="Node2D" parent="."]
 script = ExtResource("5")
 grid_cell = Vector2i(12, 29)
@@ -49,11 +69,10 @@ tutorial_id = "make_camp_mechanic"
 tutorial_title = "Making Camp"
 tutorial_body = "Press R (or click the Rest button) to Make Camp. From there you can cook a meal if you have ingredients and a known recipe — you start knowing Simple Meal, and any meat you carved off the roaches works as an ingredient — then Rest to restore HP and Spirit. Cooking skill improves what a cooked meal does for you; higher Survival got you better carving results earlier, and it's worth resting here before heading out."
 
-[node name="ExitTutorialMessage" type="Node2D" parent="."]
+[node name="ExhaustionTutorialPopup" type="Node2D" parent="."]
 script = ExtResource("4")
-grid_cell = Vector2i(21, 29)
-trigger_radius = 3
+trigger_on_player_rested = true
 auto_save_on_trigger = false
-tutorial_id = "escape_route_exit"
-tutorial_title = "What Now"
-tutorial_body = "[PLACEHOLDER: exit tutorial message — tell the player to find spiritual protection and food/shelter for the night]"
+tutorial_id = "exhaustion_mechanic"
+tutorial_title = "Exhaustion"
+tutorial_body = "You rested without spiritual protection, so you're now Exhausted. Each stack of Exhaustion is a flat -10% to every dice roll and skill check you make — combat, crafting, all of it — until it's cleared. Resting again with adequate spiritual protection clears it completely; resting again without it only piles more stacks on. Worth finding real protection soon."

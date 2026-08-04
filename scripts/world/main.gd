@@ -235,8 +235,17 @@ func _entry_cell_for(exit_direction: String) -> Vector2i:
 			# one transition — every other "east" exit is untouched.
 			if GameManager.world_pos == Vector2i(-1, 15):
 				return Vector2i(1, py - 3)
+			# Escape route -> drop alcove: the drop alcove is a small fixed-size
+			# room, not sized to match the escape route's full corridor height,
+			# so land at a fixed point inside it instead of preserving row.
+			if GameManager.world_pos == Vector2i(-1, 18):
+				return Vector2i(2, 30)
 			return Vector2i(1, py)
 		"west":  return Vector2i(TileScene.GRID_COLS - 2, py)
 		"down":  return Vector2i(40, 16)
 		"up":    return Vector2i(40, 16)
+		# Drop alcove -> rest alcove: CollapsedFloor (trash_chute.gd, direction
+		# "fall") lands the player just inside the rest alcove, away from the
+		# campfire/tutorial-trigger cluster around x=8-12.
+		"fall":  return Vector2i(3, 30)
 	return Vector2i(40, 40)

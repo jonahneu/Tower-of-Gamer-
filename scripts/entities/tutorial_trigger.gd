@@ -34,6 +34,12 @@ class_name TutorialTrigger
 const _UNUSED_CELL: Vector2i = Vector2i(-9999, -9999)
 @export var trigger_on_visible_cell: Vector2i = _UNUSED_CELL
 
+# Alternate trigger mode: fire the next time the player finishes resting
+# (EventBus.player_rested), instead of proximity to grid_cell — for popups
+# that only make sense as a consequence of an action (e.g. explaining
+# exhaustion right after the rest that caused it), not a place.
+@export var trigger_on_player_rested: bool = false
+
 var _fired: bool = false
 var _tile_scene: TileScene = null
 
@@ -41,9 +47,18 @@ func _ready() -> void:
 	is_interactable = false
 	blocks_movement = false
 	_tile_scene = get_parent() as TileScene
+	if trigger_on_player_rested:
+		EventBus.player_rested.connect(_on_player_rested)
+
+func _on_player_rested() -> void:
+	if _fired or not _wait_group_dead():
+		return
+	_fire()
 
 func _process(_delta: float) -> void:
 	if _fired:
+		return
+	if trigger_on_player_rested:
 		return
 	if not _wait_group_dead():
 		return

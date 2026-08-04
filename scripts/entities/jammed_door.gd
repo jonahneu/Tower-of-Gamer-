@@ -75,9 +75,11 @@ func attempt_force_open() -> void:
 	else:
 		EventBus.combat_log.emit("Force Open: requires %d Strength (you have %d)." % [
 			FORCE_OPEN_STRENGTH, StatChecks.player_stat("strength")])
+		EventBus.damage_floater.emit(self, "Too heavy", Color(0.80, 0.45, 0.30))
 
 func _succeed(msg: String) -> void:
 	EventBus.combat_log.emit(msg)
+	EventBus.damage_floater.emit(self, "Forced open!", Color(0.45, 0.85, 0.45))
 	var key := _save_key()
 	var unlocked: Array = GameManager.player_data.get("unlocked_doors", [])
 	if key not in unlocked:

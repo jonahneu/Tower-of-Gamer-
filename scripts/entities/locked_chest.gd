@@ -52,11 +52,14 @@ func interact() -> void:
 	if _player_has_key():
 		_unlocked = true
 		EventBus.combat_log.emit("You unlock the chest with the %s." % DataManager.get_item(required_key_id).get("name", "key"))
+		EventBus.damage_floater.emit(self, "Unlocked!", Color(0.45, 0.85, 0.45))
 	elif _player_meets_sleight_of_hand():
 		_unlocked = true
 		EventBus.combat_log.emit("You work the lock open. [Sleight of Hand %d]" % sleight_of_hand_threshold)
+		EventBus.damage_floater.emit(self, "Unlocked!", Color(0.45, 0.85, 0.45))
 	else:
 		EventBus.combat_log.emit("The chest is locked. [Requires the key, or Sleight of Hand %d]" % sleight_of_hand_threshold)
+		EventBus.damage_floater.emit(self, "Locked", Color(0.80, 0.45, 0.30))
 	queue_redraw()
 
 func _draw() -> void:

@@ -1,12 +1,22 @@
 extends Entity
 class_name Door
 
-const DOOR_H: int = 28  # height of the door block in pixels
+const DOOR_H: int = 66  # height of the door block in pixels — just taller than Player.SPRITE_H (60)
 
 @export var grid_cell: Vector2i = Vector2i(40, 28)
 var is_open: bool = false
 var _highlighted: bool = false
 var _tile_scene: TileScene = null
+
+# Wall above the doorway, up to the ceiling — auto-matched to whichever
+# Building owns this door cell (same wall_height_mult + colors it uses for
+# its other walls) so the opening doesn't just stop at DOOR_H with a hole
+# above it. Falls back to the default building wall height if no owning
+# Building is found (freestanding door).
+var _lintel_h: float = Building.WALL_H * 3.0
+var _lintel_col_sw: Color = Color(0.50, 0.45, 0.38)
+var _lintel_col_se: Color = Color(0.38, 0.33, 0.26)
+var _lintel_col_top: Color = Color(0.62, 0.57, 0.50)
 
 # Tile diamond corners (relative to grid_to_screen center)
 const TOP    = Vector2(0,                        -TileScene.TILE_H / 2.0)  # (0,  -16)
@@ -23,7 +33,26 @@ func _ready() -> void:
 	_tile_scene.register_entity(grid_cell, self)
 	_tile_scene.los_blocked_cells[grid_cell] = true
 	EventBus.highlight_toggled.connect(_on_highlight_toggled)
+	_match_owning_building()
 	queue_redraw()
+
+# Finds the Building (sibling under TileScene) whose door opening sits at
+# this door's grid_cell, and copies its wall height/colors so the lintel
+# above the door reads as the same wall, not a mismatched patch.
+func _match_owning_building() -> void:
+	if _tile_scene == null:
+		return
+	for child in _tile_scene.get_children():
+		if not (child is Building):
+			continue
+		var b := child as Building
+		var door_cell := Vector2i(b.DOOR_X, b.DOOR_Y if b.DOOR_Y >= 0 else b.Y2)
+		if door_cell == grid_cell:
+			_lintel_h = Building.WALL_H * b.wall_height_mult
+			_lintel_col_sw = b.col_sw
+			_lintel_col_se = b.col_se
+			_lintel_col_top = b.col_top
+			return
 
 func get_click_polygon() -> PackedVector2Array:
 	# Full outer boundary of the raised block in TileScene-local coords
@@ -61,12 +90,26 @@ func interact() -> void:
 	EventBus.los_blockers_changed.emit()
 	queue_redraw()
 
+# The stretch of wall filling the gap between the top of the doorway and
+# the ceiling — present regardless of open/closed state, since it's the
+# building's wall, not part of the door itself.
+func _draw_lintel() -> void:
+	if _lintel_h <= float(DOOR_H):
+		return
+	var rb := Vector2(0, -float(DOOR_H))
+	var rt := Vector2(0, -_lintel_h)
+	draw_colored_polygon(PackedVector2Array([LEFT+rb, BOTTOM+rb, BOTTOM+rt, LEFT+rt]), _lintel_col_sw)
+	draw_colored_polygon(PackedVector2Array([BOTTOM+rb, RIGHT+rb, RIGHT+rt, BOTTOM+rt]), _lintel_col_se)
+	draw_colored_polygon(PackedVector2Array([TOP+rt, RIGHT+rt, BOTTOM+rt, LEFT+rt]), _lintel_col_top)
+
 func _on_highlight_toggled(active: bool) -> void:
 	_highlighted = active
 	queue_redraw()
 
 func _draw() -> void:
 	var h = float(DOOR_H)
+
+	_draw_lintel()
 
 	if is_open:
 		# Draw a faint filled diamond + clear outline so the tile is still clickable
@@ -90,8 +133,13 @@ func _draw() -> void:
 		draw_colored_polygon(
 			PackedVector2Array([TOP+rh, RIGHT+rh, BOTTOM+rh, LEFT+rh]),
 			Color(0.62, 0.36, 0.10))
-		# Outline
-		draw_polyline(PackedVector2Array([TOP+rh, RIGHT+rh, BOTTOM+rh, LEFT+rh, TOP+rh]), Color(0.20, 0.10, 0.02), 1.0)
+		# Cap outline — only when there's no lintel above: with one, this seam
+		# is where the wall continues, and outlining it here reads as a
+		# separate floating cap poking out of the wall instead of one
+		# continuous surface (the door's own vertical edges below still get
+		# outlined either way).
+		if _lintel_h <= h:
+			draw_polyline(PackedVector2Array([TOP+rh, RIGHT+rh, BOTTOM+rh, LEFT+rh, TOP+rh]), Color(0.20, 0.10, 0.02), 1.0)
 		draw_line(LEFT,   LEFT   + rh, Color(0.20, 0.10, 0.02), 1.0)
 		draw_line(BOTTOM, BOTTOM + rh, Color(0.20, 0.10, 0.02), 1.0)
 		draw_line(RIGHT,  RIGHT  + rh, Color(0.20, 0.10, 0.02), 1.0)

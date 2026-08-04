@@ -4649,7 +4649,7 @@ func _refresh_status_panel() -> void:
 		ex_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_status_rows.add_child(ex_panel)
 		var ex_lbl := Label.new()
-		ex_lbl.text = "Exhaustion ×%d  (-%d AP, -%d MP)" % [ex_stacks, ex_stacks, ex_stacks * 2]
+		ex_lbl.text = "Exhaustion ×%d  (-%d%% rolls/checks)" % [ex_stacks, ex_stacks * 10]
 		ex_lbl.add_theme_font_size_override("font_size", 13)
 		ex_lbl.add_theme_color_override("font_color", Color(0.85, 0.55, 0.20))
 		ex_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE

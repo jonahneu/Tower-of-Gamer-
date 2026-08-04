@@ -421,10 +421,11 @@ func roll_hit(attacker: Node, defender: Node, skill_name: String, extra_mod: int
 # ── Private helpers ────────────────────────────────────────────────────────────
 
 func _make_turn_state(entity: Node) -> Dictionary:
-	var ex: int  = _exhaustion_for(entity)
-	var base_mp: int = maxi(0, entity.stat_agility * 2 - ex * 2)
+	# Exhaustion no longer touches AP/MP directly — see _get_skill_total's
+	# flat -10%/stack applied to every player skill total instead.
+	var base_mp: int = entity.stat_agility * 2
 	var mp: int  = floori(base_mp * 0.2) if entity.is_overburdened() else base_mp
-	var ap: int = maxi(1, entity.stat_agility - ex)
+	var ap: int = maxi(1, entity.stat_agility)
 	return {
 		"ap":               ap,
 		"max_ap_this_turn": ap,
@@ -900,9 +901,8 @@ func _begin_turn() -> void:
 	var ts = turn_state.get(e)
 	if ts == null:
 		return
-	var ex: int = _exhaustion_for(e)
-	var base_mp: int = maxi(0, e.stat_agility * 2 - ex * 2)
-	ts["ap"] = maxi(1, e.stat_agility - ex)
+	var base_mp: int = e.stat_agility * 2
+	ts["ap"] = maxi(1, e.stat_agility)
 	ts["mp"] = floori(base_mp * 0.2) if e.is_overburdened() else base_mp
 	# Armor penalty (heavy armor, shields, unwieldy weapons) eats into AP/MP too,
 	# but only the portion above the floor — a baseline character never drops
@@ -1829,7 +1829,13 @@ func _get_skill_total(entity: Node, skill_name: String, mod_adj: int = 0) -> flo
 		var gov_bonus: int = entity.get_equipment_governing_bonus(skill_name) if entity.has_method("get_equipment_governing_bonus") else 0
 		var equip_skill: int = entity.get_equipment_skill_bonus(skill_name) if entity.has_method("get_equipment_skill_bonus") else 0
 		var mod: float = _player_governing_mod(skill_name, stats) + gov_bonus + mod_adj
-		return maxf(0.0, invested * (1.0 + mod * 0.1) + equip_skill)
+		var raw: float = maxf(0.0, invested * (1.0 + mod * 0.1) + equip_skill)
+		# Exhaustion: flat -10% per stack to every player skill total, i.e.
+		# every dice roll and skill check that derives from one (hit chance,
+		# convince/sneak/survival/etc. checks, ...). Replaces the old
+		# AP/MP drain, which was too punishing for how easily stacks pile up.
+		var ex: int = _exhaustion_for(entity)
+		return raw * maxf(0.0, 1.0 - ex * 0.1)
 	elif entity.has_method("get_skill_total"):
 		return entity.get_skill_total(skill_name)
 	return 0.0

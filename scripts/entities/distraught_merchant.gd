@@ -93,15 +93,20 @@ func _update_dialogue() -> void:
 		]
 		return
 
+	# The package's actual world placement is unresolved as of 2026-08-11 —
+	# it used to sit in zone_desert_den.tscn, which was removed when the
+	# Outskirts ruins chain was rebuilt. It has NOT been re-placed anywhere
+	# yet (pending a real location decision), so quest text below is
+	# deliberately vague rather than naming a location that doesn't hold it.
 	var accept_quest := func():
 		GameManager.add_quest({
 			"id":          "merchant_lost_cargo",
 			"title":       "The Merchant's Lost Cargo",
-			"summary":     "A merchant lost his cargo somewhere south of the Ditch after being abandoned by hired mercenaries during a coyote attack. He'll pay 25 coins on recovery.",
+			"summary":     "A merchant lost his cargo somewhere out in the desert after being abandoned by hired mercenaries during a coyote attack. He'll pay 25 coins on recovery.",
 		})
 		GameManager.add_quest_thread("merchant_lost_cargo", {
 			"id":    "recover_cargo",
-			"title": "Find the lost cargo somewhere to the south of the drainage pipe exit.",
+			"title": "Find the lost cargo out in the desert.",
 		})
 
 	dialogue_options = [
@@ -120,7 +125,7 @@ func _update_dialogue() -> void:
 				},
 				{
 					"label":    "I could find it for you.",
-					"response": "It is worth a lot to me if you can recover it. I would pay you 25 coins upon your return with it. It is somewhere to the south of here — we did not make it far before everything fell apart.",
+					"response": "It is worth a lot to me if you can recover it. I would pay you 25 coins upon your return with it. It's out there in the desert somewhere — we did not make it far before everything fell apart.",
 					"action":   accept_quest,
 					"next_options": [
 						{"label": "I'll look for it.", "closes": true},

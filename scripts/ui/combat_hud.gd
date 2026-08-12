@@ -780,6 +780,12 @@ func _compute_move_range() -> void:
 		var e_cell = entity.get("grid_cell")
 		if e_cell == null:
 			continue
+		# grid_cell updates the instant a move starts, but the sprite only
+		# catches up over the move's tween — skip enemies still mid-animation
+		# so this highlight never lands one tile ahead of where they're
+		# actually drawn (see Enemy.is_visually_settled()).
+		if entity.has_method("is_visually_settled") and not entity.is_visually_settled():
+			continue
 		var ec: Vector2i = e_cell
 		var dx: int = player_cell.x - ec.x
 		var dy: int = player_cell.y - ec.y

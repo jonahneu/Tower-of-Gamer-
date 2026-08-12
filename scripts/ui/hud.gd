@@ -6096,8 +6096,12 @@ func _do_rest() -> void:
 	if vial_left > 0:
 		GameManager.player_data["vial_protection_rests"] = vial_left - 1
 
-	# Handle exhaustion based on how far ward_level falls below zone_req
-	var shortfall: int = zone_req - ward_level  # 0 = met, 1 = one tier short, 2+ = unprotected
+	# Handle exhaustion based on how far ward_level falls below zone_req.
+	# ward_level's "none" case is -1 (see _player_spirit_ward_level), but a
+	# zone requiring protection level 1 should cost a fully unprotected
+	# character exactly 1 stack, not 2 — clamp to 0 so "no ward" reads as
+	# "tier zero" rather than double-counting the absence itself.
+	var shortfall: int = zone_req - maxi(ward_level, 0)  # 0 = met, 1 = one tier short, 2+ = badly unprotected
 	if _rest_hunter_camp or shortfall <= 0:
 		GameManager.player_data["exhaustion_stacks"] = 0
 	else:
@@ -7351,7 +7355,14 @@ func _on_map_cell_hover(tile_pos: Vector2i) -> void:
 	if not explored.get("visited", false) and not is_current:
 		return
 
-	var text = td.get("label", "Unknown")
+	# Player-facing tooltip shows the larger area (e.g. "The Outskirts") plus
+	# a letter/number grid coordinate, not the granular per-zone label —
+	# changed 2026-08-10 so map callouts read at the scale the player
+	# actually navigates by. A1 = bottom-left (column letter = 'A' + x,
+	# row number counts up from the bottom: MAP_ROWS - y).
+	var coord_text: String = "%s%d" % [char(65 + tile_pos.x), MAP_ROWS - tile_pos.y]
+	var area_text: String = td.get("area", td.get("label", "Unknown"))
+	var text = "%s — %s" % [area_text, coord_text]
 	var encounters: Array = explored.get("encounters", [])
 	if not encounters.is_empty():
 		text += "\n──────────"

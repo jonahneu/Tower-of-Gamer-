@@ -292,9 +292,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# ── Left click ────────────────────────────────────────────────────────────
 	if event.button_index == MOUSE_BUTTON_LEFT:
-		# In combat: left-click enemy = auto-attack with default weapon (range check)
+		# In combat: left-click enemy = auto-attack with default weapon (range check).
+		# Must be Humanoid (Player/Enemy/NPC), not just any Entity — inert world
+		# objects like doors, chutes, and rocks all extend Entity too, and were
+		# getting swept into this branch and "attacked" instead of interacted with.
 		if GameManager.combat_mode and CombatManager.is_player_turn() \
-				and entity != null and entity != self and entity is Entity and not (entity is Corpse):
+				and entity != null and entity != self and entity is Humanoid and not (entity is Corpse):
 			var weapon: Dictionary = _default_attack_weapon()
 			var e_cell: Vector2i = entity.get("grid_cell")
 			var weapon_range: int = weapon.get("range", 1)

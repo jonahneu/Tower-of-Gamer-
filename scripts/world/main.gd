@@ -73,6 +73,12 @@ func _on_zone_exit(direction: String) -> void:
 	if next_pos == Vector2i(-1, -1):
 		return  # No exit defined in this direction
 
+	# Escape route's Collapsed Ledge: the tutorial's forced "you took a real
+	# fall" beat. Player still exists in the OLD zone here, so the floater
+	# lands on-screen right where they jumped, before the transition.
+	if direction == "fall" and GameManager.world_pos == Vector2i(-1, 18):
+		_apply_tutorial_fall_damage()
+
 	# Vertical transitions change the world layer
 	var next_layer := GameManager.world_layer
 	if direction == "down":
@@ -210,6 +216,20 @@ func _restore_ground_items(zone: Node, scene_path: String) -> void:
 		gi.item_data = item_dict.duplicate()
 		zone.add_child(gi)
 
+# Drops the player to a flat 5 HP and shows a fall-damage floater, same as a
+# combat hit. Never heals — a player already at or below 5 HP takes no
+# damage and gets no floater, so this never lies about what happened.
+func _apply_tutorial_fall_damage() -> void:
+	var player := GameManager.player
+	if player == null or not is_instance_valid(player):
+		return
+	var target_hp: float = 5.0
+	var dmg: float = maxf(0.0, player.current_hp - target_hp)
+	if dmg <= 0.0:
+		return
+	player.current_hp = target_hp
+	EventBus.damage_floater.emit(player, "-%.0f fall dmg" % dmg, Color(0.85, 0.20, 0.20))
+
 # Returns where the player should appear in the new zone.
 # They enter from the opposite edge at the same column/row they exited on.
 # For underground zones, all corridors use the 10-cell window at positions
@@ -235,17 +255,23 @@ func _entry_cell_for(exit_direction: String) -> Vector2i:
 			# one transition — every other "east" exit is untouched.
 			if GameManager.world_pos == Vector2i(-1, 15):
 				return Vector2i(1, py - 3)
-			# Escape route -> drop alcove: the drop alcove is a small fixed-size
-			# room, not sized to match the escape route's full corridor height,
-			# so land at a fixed point inside it instead of preserving row.
-			if GameManager.world_pos == Vector2i(-1, 18):
-				return Vector2i(2, 30)
 			return Vector2i(1, py)
-		"west":  return Vector2i(TileScene.GRID_COLS - 2, py)
+		"west":
+			# Rest alcove's exit pipe -> Ruins Entry: same reasoning as the
+			# ritual chamber's "east" case above — Entry's arrival point is
+			# a fixed interior spot, nowhere near its own true edges, so the
+			# generic opposite-edge formula doesn't apply here. Landing spot
+			# sits right next to the pipe mouth on the east wall
+			# (EscapePipeMouth, grid_cell (54,70) in the .tscn), so the
+			# player emerges right where they climbed out.
+			if GameManager.world_pos == Vector2i(-1, 19):
+				return Vector2i(53, 70)
+			return Vector2i(TileScene.GRID_COLS - 2, py)
 		"down":  return Vector2i(40, 16)
 		"up":    return Vector2i(40, 16)
-		# Drop alcove -> rest alcove: CollapsedFloor (trash_chute.gd, direction
-		# "fall") lands the player just inside the rest alcove, away from the
-		# campfire/tutorial-trigger cluster around x=8-12.
-		"fall":  return Vector2i(3, 30)
+		# Escape route's Collapsed Ledge -> rest alcove: lands the player on
+		# the east side of the room, away from the campfire/tutorial-trigger
+		# cluster around x=8-12 — matching the room's own west-to-east flow
+		# now that its exit door sits on the west wall (2026-08-11).
+		"fall":  return Vector2i(20, 30)
 	return Vector2i(40, 40)

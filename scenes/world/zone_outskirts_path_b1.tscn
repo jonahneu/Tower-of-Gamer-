@@ -1,0 +1,178 @@
+[gd_scene load_steps=5 format=3 uid="uid://zone_outskirts_path_b1"]
+
+[ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/entities/rock.gd" id="4"]
+
+[node name="TileScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2")
+grid_cell = Vector2i(60, 49)
+
+[node name="WestWall" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.40, 0.38, 0.36, 1)
+col_se = Color(0.30, 0.28, 0.26, 1)
+col_top = Color(0.50, 0.48, 0.45, 1)
+wall_height_mult = 2.0
+rubble_style = true
+X1 = 0
+X2 = 0
+Y1 = 0
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="SouthWall" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.40, 0.38, 0.36, 1)
+col_se = Color(0.30, 0.28, 0.26, 1)
+col_top = Color(0.50, 0.48, 0.45, 1)
+wall_height_mult = 2.0
+rubble_style = true
+X1 = 0
+X2 = 79
+Y1 = 79
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="EastWallNorth" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.40, 0.38, 0.36, 1)
+col_se = Color(0.30, 0.28, 0.26, 1)
+col_top = Color(0.50, 0.48, 0.45, 1)
+wall_height_mult = 2.0
+rubble_style = true
+X1 = 79
+X2 = 79
+Y1 = 0
+Y2 = 44
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="EastWallSouth" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.40, 0.38, 0.36, 1)
+col_se = Color(0.30, 0.28, 0.26, 1)
+col_top = Color(0.50, 0.48, 0.45, 1)
+wall_height_mult = 2.0
+rubble_style = true
+X1 = 79
+X2 = 79
+Y1 = 55
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="NorthWallWest" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.40, 0.38, 0.36, 1)
+col_se = Color(0.30, 0.28, 0.26, 1)
+col_top = Color(0.50, 0.48, 0.45, 1)
+wall_height_mult = 2.0
+rubble_style = true
+X1 = 0
+X2 = 39
+Y1 = 0
+Y2 = 0
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="NorthWallEast" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.40, 0.38, 0.36, 1)
+col_se = Color(0.30, 0.28, 0.26, 1)
+col_top = Color(0.50, 0.48, 0.45, 1)
+wall_height_mult = 2.0
+rubble_style = true
+X1 = 50
+X2 = 79
+Y1 = 0
+Y2 = 0
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="RuinASouthWall" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.38, 0.34, 0.30, 1)
+col_se = Color(0.28, 0.25, 0.22, 1)
+col_top = Color(0.46, 0.42, 0.38, 1)
+wall_height_mult = 1.6
+rubble_style = true
+X1 = 52
+X2 = 64
+Y1 = 64
+Y2 = 64
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="RuinAWestWall" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.38, 0.34, 0.30, 1)
+col_se = Color(0.28, 0.25, 0.22, 1)
+col_top = Color(0.46, 0.42, 0.38, 1)
+wall_height_mult = 1.6
+rubble_style = true
+X1 = 52
+X2 = 52
+Y1 = 52
+Y2 = 64
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="RuinBNorthWall" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.38, 0.34, 0.30, 1)
+col_se = Color(0.28, 0.25, 0.22, 1)
+col_top = Color(0.46, 0.42, 0.38, 1)
+wall_height_mult = 1.6
+rubble_style = true
+X1 = 12
+X2 = 24
+Y1 = 10
+Y2 = 10
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="RuinBEastWall" type="Node2D" parent="."]
+script = ExtResource("3")
+col_sw = Color(0.38, 0.34, 0.30, 1)
+col_se = Color(0.28, 0.25, 0.22, 1)
+col_top = Color(0.46, 0.42, 0.38, 1)
+wall_height_mult = 1.6
+rubble_style = true
+X1 = 24
+X2 = 24
+Y1 = 10
+Y2 = 22
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="Rock1" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(30, 60)
+rock_size = "large"
+
+[node name="Rock2" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(65, 15)
+rock_size = "small"
+
+[node name="Rock3" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(15, 45)
+rock_size = "small"
+
+[node name="Rock4" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(35, 30)
+rock_size = "large"
+
+[node name="Rock5" type="Node2D" parent="."]
+script = ExtResource("4")
+grid_cell = Vector2i(60, 70)
+rock_size = "small"

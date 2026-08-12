@@ -13,6 +13,16 @@ var sprite_color: Color = Color(0.55, 0.45, 0.35)
 var _tile_scene: TileScene = null
 var _visual_pos: Vector2 = Vector2.ZERO
 
+# grid_cell updates the instant a move starts (so pathing/combat logic is
+# never stale), but _visual_pos only catches up gradually over the move's
+# tween — leaving a brief window where this enemy's logical cell is one step
+# ahead of where its sprite is actually drawn. Anything that highlights "the
+# enemy is here" for the player (e.g. combat_hud.gd's move-range preview)
+# should check this first, or it can show the highlight one tile off from
+# the visible sprite mid-move.
+func is_visually_settled() -> bool:
+	return _visual_pos.distance_to(TileScene.grid_to_screen(grid_cell)) < 1.0
+
 # ── Wander AI ─────────────────────────────────────────────────────────────────
 const WANDER_INTERVAL_MIN: float = 0.8
 const WANDER_INTERVAL_MAX: float = 2.5
@@ -207,8 +217,14 @@ func _process(delta: float) -> void:
 	# while they're stuck reading text they can't react to yet.
 	if GameManager.tutorial_popup_open:
 		return
-	# Freeze wander animation/movement during tactical and combat turns
-	if _in_combat or CombatManager.tactical_mode:
+	# Freeze wander animation/movement during actual combat turns — those have
+	# their own dedicated turn-based AI step elsewhere. Tactical mode (the
+	# "everyone moves turn by turn" toggle used to sneak/time past a patrol
+	# without a fight) used to be lumped in with this same early return, which
+	# skipped the detection check below entirely — making every enemy blind
+	# while tactical mode was on, with no way to ever get spotted. Tactical
+	# mode should still freeze wander movement (below), just not detection.
+	if _in_combat:
 		position = _visual_pos + _lunge_offset
 		return
 
@@ -248,6 +264,12 @@ func _process(delta: float) -> void:
 				# Player left aggro range — reset so the next approach gets a fresh check
 				_aggro_entered = false
 				_bump_entered  = false
+
+	# Tactical mode freezes wander movement (turn-based positioning only) —
+	# detection above has already run for this frame regardless.
+	if CombatManager.tactical_mode:
+		position = _visual_pos + _lunge_offset
+		return
 
 	# ── Wander movement ───────────────────────────────────────────────────────
 	if _visual_pos.distance_to(_wander_target_pos) > 1.0:
@@ -424,13 +446,19 @@ func _trigger_combat() -> void:
 			"dice":          all_dice,
 			"is_bump":       is_bump,
 		}
-		CombatManager.start_combat(combatants, stealth_info)
+		# force_start_combat (not start_combat) — detection can now fire while
+		# tactical mode is active but no fight has started yet (see the
+		# _process reordering above), and start_combat's own "if active:
+		# return" guard would silently no-op in that case since tactical mode
+		# already set active=true. force_start_combat cleanly exits tactical
+		# mode first, then starts real combat.
+		CombatManager.force_start_combat(combatants, stealth_info)
 		# Safety: if combat didn't actually start (e.g. CombatManager was already
 		# active from a stale state), un-mark ourselves so detection can retry.
 		if not CombatManager.active:
 			_in_combat = false
 		return
-	CombatManager.start_combat(combatants)
+	CombatManager.force_start_combat(combatants)
 	# Safety: if start_combat returned early because active was already true,
 	# reset _in_combat so this enemy doesn't freeze permanently.
 	if not CombatManager.active:

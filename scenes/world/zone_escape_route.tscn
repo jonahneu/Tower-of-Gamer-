@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/entities/tutorial_trigger.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/entities/door.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/entities/corpse_pile.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/entities/trash_chute.gd" id="12"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -158,6 +159,25 @@ Y1 = 24
 Y2 = 31
 DOOR_X = 999
 DOOR_Y = -1
+
+[node name="EastWall_Room3" type="Node2D" parent="."]
+script = ExtResource("3")
+wall_height_mult = 5.0
+X1 = 79
+X2 = 79
+Y1 = 24
+Y2 = 35
+DOOR_X = 79
+DOOR_Y = 30
+
+[node name="CollapsedLedge" type="Node2D" parent="."]
+script = ExtResource("12")
+grid_cell = Vector2i(79, 30)
+direction = "fall"
+display_name = "Collapsed Ledge"
+description_text = "The tunnel floor gives out here, crumbled away into open darkness. No telling exactly where it lands, but it's the only way onward."
+visual_style = "ledge"
+confirm_prompt = "A dark chute. Jump in?"
 
 [node name="AutoSaveTrigger" type="Node2D" parent="."]
 script = ExtResource("9")

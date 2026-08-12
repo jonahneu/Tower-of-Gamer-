@@ -1,44 +1,48 @@
 extends Entity
-class_name Door
+class_name ZoneDoor
+# A doorway sitting in a Building wall's DOOR_X/DOOR_Y gap that transitions to
+# an adjacent zone on interact, for rooms whose walls are too small (or too
+# fully enclosed) to ever let the player reach the true 80x80 grid edge for a
+# normal walk-off exit. Same mechanism as ladder.gd/trash_chute.gd — interact()
+# emits EventBus.zone_exit_requested(direction), which main.gd's existing
+# zone-exit funnel resolves via the CURRENT zone's world_map_data exits{}
+# entry. Unlike door.gd, this never toggles open/closed — walking up and
+# interacting always attempts the transition, so it stays drawn "closed."
 
-const DOOR_H: int = 66  # height of the door block in pixels — just taller than Player.SPRITE_H (60)
+const DOOR_H: int = 66  # matches door.gd — taller than Player.SPRITE_H (60)
 
-@export var grid_cell: Vector2i = Vector2i(40, 28)
-var is_open: bool = false
+@export var grid_cell: Vector2i = Vector2i(40, 40)
+@export var direction: String = ""
+@export var display_name: String = "Doorway"
+@export var action_label: String = "Go Through"
+
 var _highlighted: bool = false
 var _tile_scene: TileScene = null
 
-# Player-visibility translucency (mirrors WallCell/Building — see building.gd's
-# per-frame occlusion check and its "player must never lose track of their own
-# character" comment). The door's own solid faces are short enough to rarely
-# trigger this, but the lintel above it stands as tall as the rest of the
-# building's wall, so without this it stayed opaque while the wall around it
-# faded — reading as the door floating solid in front of a see-through wall.
+# Player-visibility translucency (mirrors door.gd/building.gd — see building.gd's
+# "player must never lose track of their own character" comment).
 const TRANSLUCENT_ALPHA: float = 0.14
 var _alpha: float = 1.0
 var _last_player_cell: Vector2i = Vector2i(-999999, -999999)
 
-# Wall above the doorway, up to the ceiling — auto-matched to whichever
-# Building owns this door cell (same wall_height_mult + colors it uses for
-# its other walls) so the opening doesn't just stop at DOOR_H with a hole
-# above it. Falls back to the default building wall height if no owning
-# Building is found (freestanding door).
 var _lintel_h: float = Building.WALL_H * 3.0
 var _lintel_col_sw: Color = Color(0.50, 0.45, 0.38)
 var _lintel_col_se: Color = Color(0.38, 0.33, 0.26)
 var _lintel_col_top: Color = Color(0.62, 0.57, 0.50)
 
-# Tile diamond corners (relative to grid_to_screen center)
-const TOP    = Vector2(0,                        -TileScene.TILE_H / 2.0)  # (0,  -16)
-const RIGHT  = Vector2( TileScene.TILE_W / 2.0,  0)                        # (32,   0)
-const BOTTOM = Vector2(0,                         TileScene.TILE_H / 2.0)  # (0,   16)
-const LEFT   = Vector2(-TileScene.TILE_W / 2.0,  0)                        # (-32,  0)
+const TOP    = Vector2(0,                        -TileScene.TILE_H / 2.0)
+const RIGHT  = Vector2( TileScene.TILE_W / 2.0,  0)
+const BOTTOM = Vector2(0,                         TileScene.TILE_H / 2.0)
+const LEFT   = Vector2(-TileScene.TILE_W / 2.0,  0)
 
 func _ready() -> void:
 	is_interactable = true
 	blocks_movement = true
-	entity_name = "Wooden Door"
+	entity_name = display_name
 	_tile_scene = get_parent() as TileScene
+	if _tile_scene == null:
+		push_error("ZoneDoor: parent must be TileScene")
+		return
 	position = TileScene.grid_to_screen(grid_cell)
 	_tile_scene.register_entity(grid_cell, self)
 	_tile_scene.los_blocked_cells[grid_cell] = true
@@ -90,7 +94,6 @@ func _match_owning_building() -> void:
 			return
 
 func get_click_polygon() -> PackedVector2Array:
-	# Full outer boundary of the raised block in TileScene-local coords
 	var rh := Vector2(0, -float(DOOR_H))
 	return PackedVector2Array([
 		position + LEFT  + rh,
@@ -103,31 +106,28 @@ func get_click_polygon() -> PackedVector2Array:
 
 func get_interaction_options() -> Array:
 	return [
-		{"label": "Close" if is_open else "Open", "id": "open", "priority": 100},
-		{"label": "Examine",                       "id": "examine", "priority": 50},
+		{"label": action_label, "id": "interact", "priority": 100},
+		{"label": "Examine",    "id": "examine",  "priority": 50},
 	]
 
 func get_description() -> String:
-	return "A sturdy wooden door. It is %s." % ("open" if is_open else "closed")
+	return "A doorway leading onward."
 
 func get_action_label() -> String:
-	return "Close" if is_open else "Open"
+	return action_label
 
 func interact() -> void:
-	is_open = not is_open
-	blocks_movement = not is_open
-	if is_open:
-		_tile_scene.blocked_cells.erase(grid_cell)
-		_tile_scene.los_blocked_cells.erase(grid_cell)
-	else:
-		_tile_scene.blocked_cells[grid_cell] = true
-		_tile_scene.los_blocked_cells[grid_cell] = true
-	EventBus.los_blockers_changed.emit()
+	if direction == "":
+		push_error("ZoneDoor: direction not set")
+		return
+	if GameManager.tactical_mode:
+		CombatManager.end_tactical()
+	EventBus.zone_exit_requested.emit(direction)
+
+func _on_highlight_toggled(active: bool) -> void:
+	_highlighted = active
 	queue_redraw()
 
-# The stretch of wall filling the gap between the top of the doorway and
-# the ceiling — present regardless of open/closed state, since it's the
-# building's wall, not part of the door itself.
 func _draw_lintel() -> void:
 	if _lintel_h <= float(DOOR_H):
 		return
@@ -137,55 +137,30 @@ func _draw_lintel() -> void:
 	draw_colored_polygon(PackedVector2Array([BOTTOM+rb, RIGHT+rb, RIGHT+rt, BOTTOM+rt]), _a(_lintel_col_se))
 	draw_colored_polygon(PackedVector2Array([TOP+rt, RIGHT+rt, BOTTOM+rt, LEFT+rt]), _a(_lintel_col_top))
 
-func _on_highlight_toggled(active: bool) -> void:
-	_highlighted = active
-	queue_redraw()
-
 func _draw() -> void:
 	var h = float(DOOR_H)
-
 	_draw_lintel()
-
-	if is_open:
-		# Draw a faint filled diamond + clear outline so the tile is still clickable
-		draw_colored_polygon(
-			PackedVector2Array([TOP, RIGHT, BOTTOM, LEFT]),
-			_a(Color(0.62, 0.36, 0.10, 0.18)))
-		draw_polyline(
-			PackedVector2Array([TOP, RIGHT, BOTTOM, LEFT, TOP]),
-			_a(Color(0.62, 0.36, 0.10, 0.75)), 2.0)
-	else:
-		# South-west face (left → bottom, raised)
-		draw_colored_polygon(
-			PackedVector2Array([LEFT, BOTTOM, BOTTOM + Vector2(0,-h), LEFT + Vector2(0,-h)]),
-			_a(Color(0.42, 0.22, 0.06)))
-		# South-east face (bottom → right, raised)
-		draw_colored_polygon(
-			PackedVector2Array([BOTTOM, RIGHT, RIGHT + Vector2(0,-h), BOTTOM + Vector2(0,-h)]),
-			_a(Color(0.35, 0.18, 0.04)))
-		# Top face — raised by h so corners exactly cap the side faces
-		var rh := Vector2(0, -h)
-		draw_colored_polygon(
-			PackedVector2Array([TOP+rh, RIGHT+rh, BOTTOM+rh, LEFT+rh]),
-			_a(Color(0.62, 0.36, 0.10)))
-		# Cap outline — only when there's no lintel above: with one, this seam
-		# is where the wall continues, and outlining it here reads as a
-		# separate floating cap poking out of the wall instead of one
-		# continuous surface (the door's own vertical edges below still get
-		# outlined either way).
-		if _lintel_h <= h:
-			draw_polyline(PackedVector2Array([TOP+rh, RIGHT+rh, BOTTOM+rh, LEFT+rh, TOP+rh]), _a(Color(0.20, 0.10, 0.02)), 1.0)
-		draw_line(LEFT,   LEFT   + rh, _a(Color(0.20, 0.10, 0.02)), 1.0)
-		draw_line(BOTTOM, BOTTOM + rh, _a(Color(0.20, 0.10, 0.02)), 1.0)
-		draw_line(RIGHT,  RIGHT  + rh, _a(Color(0.20, 0.10, 0.02)), 1.0)
+	draw_colored_polygon(
+		PackedVector2Array([LEFT, BOTTOM, BOTTOM + Vector2(0,-h), LEFT + Vector2(0,-h)]),
+		_a(Color(0.42, 0.22, 0.06)))
+	draw_colored_polygon(
+		PackedVector2Array([BOTTOM, RIGHT, RIGHT + Vector2(0,-h), BOTTOM + Vector2(0,-h)]),
+		_a(Color(0.35, 0.18, 0.04)))
+	var rh := Vector2(0, -h)
+	draw_colored_polygon(
+		PackedVector2Array([TOP+rh, RIGHT+rh, BOTTOM+rh, LEFT+rh]),
+		_a(Color(0.62, 0.36, 0.10)))
+	if _lintel_h <= h:
+		draw_polyline(PackedVector2Array([TOP+rh, RIGHT+rh, BOTTOM+rh, LEFT+rh, TOP+rh]), _a(Color(0.20, 0.10, 0.02)), 1.0)
+	draw_line(LEFT,   LEFT   + rh, _a(Color(0.20, 0.10, 0.02)), 1.0)
+	draw_line(BOTTOM, BOTTOM + rh, _a(Color(0.20, 0.10, 0.02)), 1.0)
+	draw_line(RIGHT,  RIGHT  + rh, _a(Color(0.20, 0.10, 0.02)), 1.0)
 
 	if _highlighted:
 		var rh2 := Vector2(0, -float(DOOR_H))
-		# Overlay all three visible faces
 		draw_colored_polygon(PackedVector2Array([LEFT, BOTTOM, BOTTOM+rh2, LEFT+rh2]),   Color(1.0, 0.85, 0.0, 0.25))
 		draw_colored_polygon(PackedVector2Array([BOTTOM, RIGHT, RIGHT+rh2, BOTTOM+rh2]), Color(1.0, 0.85, 0.0, 0.25))
 		draw_colored_polygon(PackedVector2Array([TOP+rh2, RIGHT+rh2, BOTTOM+rh2, LEFT+rh2]), Color(1.0, 0.85, 0.0, 0.25))
-		# Outline the full block perimeter
 		draw_polyline(PackedVector2Array([LEFT+rh2, TOP+rh2, RIGHT+rh2, RIGHT, BOTTOM, LEFT, LEFT+rh2]),
 			Color(1.0, 0.85, 0.0), 2.0)
 		_draw_name_label(TOP.y - float(DOOR_H) - 4)

@@ -1,24 +1,25 @@
-[gd_scene load_steps=6 format=3 uid="uid://zone_escape_route_rest"]
+[gd_scene load_steps=7 format=3 uid="uid://zone_escape_route_rest"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/entities/building.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/entities/tutorial_trigger.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/entities/campfire.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/entities/pipe_mouth.gd" id="6"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
-bounds = Rect2i(1, 14, 26, 26)
+bounds = Rect2i(0, 14, 25, 26)
 light_level_override = 1
 
 [node name="Player" type="Node2D" parent="."]
 script = ExtResource("2")
-grid_cell = Vector2i(3, 30)
+grid_cell = Vector2i(20, 30)
 
 [node name="NorthWall" type="Node2D" parent="."]
 script = ExtResource("3")
 wall_height_mult = 5.0
-X1 = 1
+X1 = 0
 X2 = 24
 Y1 = 24
 Y2 = 24
@@ -28,7 +29,7 @@ DOOR_Y = -1
 [node name="SouthWall" type="Node2D" parent="."]
 script = ExtResource("3")
 wall_height_mult = 5.0
-X1 = 1
+X1 = 0
 X2 = 24
 Y1 = 35
 Y2 = 35
@@ -42,8 +43,8 @@ X1 = 0
 X2 = 0
 Y1 = 24
 Y2 = 35
-DOOR_X = 999
-DOOR_Y = -1
+DOOR_X = 0
+DOOR_Y = 30
 
 [node name="EastWall" type="Node2D" parent="."]
 script = ExtResource("3")
@@ -52,8 +53,13 @@ X1 = 24
 X2 = 24
 Y1 = 24
 Y2 = 35
-DOOR_X = 24
-DOOR_Y = 34
+DOOR_X = 999
+DOOR_Y = -1
+
+[node name="ExitPipeMouth" type="Node2D" parent="."]
+script = ExtResource("6")
+grid_cell = Vector2i(0, 30)
+wall_h = 48.0
 
 [node name="Campfire" type="Node2D" parent="."]
 script = ExtResource("5")

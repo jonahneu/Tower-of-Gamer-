@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://zone_ditch_lower"]
+[gd_scene load_steps=12 format=3 uid="uid://zone_ditch_lower"]
 
 [ext_resource type="Script" path="res://scripts/world/tile_scene.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/entities/campfire.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/entities/apothecary.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/entities/sign.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/entities/zone_door.gd" id="11"]
 
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
@@ -27,6 +28,13 @@ Y1 = 0
 Y2 = 79
 DOOR_X = 5
 DOOR_Y = 32
+
+[node name="WestExitDoor" type="Node2D" parent="."]
+script = ExtResource("11")
+grid_cell = Vector2i(5, 32)
+direction = "west"
+display_name = "Outskirts Passage"
+action_label = "Head West"
 
 [node name="WallEast" type="Node2D" parent="."]
 script = ExtResource("3")

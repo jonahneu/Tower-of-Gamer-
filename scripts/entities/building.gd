@@ -24,6 +24,13 @@ const WALL_H: float = 28.0
 @export var DOOR_X: int = 40
 @export var DOOR_Y: int = -1  # -1 = south face (Y2); else door is at (DOOR_X, DOOR_Y)
 
+# Collapsed/rubble barrier instead of a smooth built wall — most cells render
+# as an irregular broken mound (RubbleWallCell), a minority as a flat
+# standing-wall remnant. Same blocking/door/occlusion logic either way, only
+# the visual per-cell node changes. Use for outdoor ruins barriers; leave
+# false for actual intact buildings/rooms.
+@export var rubble_style: bool = false
+
 var _wall_nodes: Array = []
 var _roof_node: RoofCap = null
 var _tile_scene: TileScene = null
@@ -52,7 +59,7 @@ func _spawn_wall_cells() -> void:
 	var wall_h: float = WALL_H * wall_height_mult
 	var door := _get_door_cell()
 	for cell in _compute_wall_cells(door):
-		var wc := WallCell.new()
+		var wc := RubbleWallCell.new() if rubble_style else WallCell.new()
 		wc.wall_h    = wall_h
 		wc.grid_cell = cell
 		wc.col_sw  = col_sw

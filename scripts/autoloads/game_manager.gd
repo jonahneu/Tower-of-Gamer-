@@ -46,6 +46,7 @@ func _ready() -> void:
 			Vector2i(10, 14): {
 				"scene":          "res://scenes/world/zone_ditch.tscn",
 				"label":          "The Ditch",
+				"area":           "The Ditch",
 				"thumbnail_type": "slums",
 				"exits":          {
 					"north": Vector2i(10, 13),
@@ -53,29 +54,22 @@ func _ready() -> void:
 					"west":  Vector2i(9, 14),
 				},
 			},
-			Vector2i(10, 11): {
-				"scene":          "res://scenes/world/zone_residential.tscn",
-				"label":          "Residential District",
-				"thumbnail_type": "city",
-				"exits":          {
-					"south": Vector2i(10, 12),
-					"east":  Vector2i(11, 11),
-				},
-			},
-			Vector2i(11, 11): {
-				"scene":          "res://scenes/world/zone_residential_east.tscn",
-				"label":          "Residential District — East",
-				"thumbnail_type": "city",
-				"exits":          {
-					"west": Vector2i(10, 11),
-				},
-			},
+			# Residential District (10,11)/(11,11) removed 2026-08-10: the
+			# Residential District as a separate lower-city zone was cut
+			# 2026-07-22 (ordinary citizens live spread throughout the Ditch
+			# instead — see project_starting_area_scale_reframe memory), and
+			# this cleanup was deferred until the next map rebuild. That's
+			# now. KNOWN BREAKAGE: scribe.gd's "scribe_delivery" quest still
+			# sends the player to "the residential district, north east
+			# corner" for an NPC whose name was already a "[TBD]" placeholder
+			# — that quest destination no longer exists anywhere and needs a
+			# new home before it can be completed.
 			Vector2i(10, 12): {
 				"scene":          "res://scenes/world/zone_market.tscn",
 				"label":          "Market District",
+				"area":           "The Ditch",
 				"thumbnail_type": "city",
 				"exits":          {
-					"north": Vector2i(10, 11),
 					"south": Vector2i(10, 13),
 					"west":  Vector2i(9, 12),
 				},
@@ -83,6 +77,7 @@ func _ready() -> void:
 			Vector2i(9, 12): {
 				"scene":          "res://scenes/world/zone_market_gate.tscn",
 				"label":          "Market District — Gate",
+				"area":           "The Ditch",
 				"thumbnail_type": "city",
 				"exits":          {
 					"west":  Vector2i(8, 12),
@@ -94,6 +89,7 @@ func _ready() -> void:
 			Vector2i(8, 12): {
 				"scene":                    "res://scenes/world/zone_desert_road.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -105,6 +101,7 @@ func _ready() -> void:
 			Vector2i(10, 13): {
 				"scene":          "res://scenes/world/zone_market_lower.tscn",
 				"label":          "Lower Market District",
+				"area":           "The Ditch",
 				"thumbnail_type": "slums",
 				"exits":          {
 					"north": Vector2i(10, 12),
@@ -114,10 +111,12 @@ func _ready() -> void:
 			Vector2i(10, 15): {
 				"scene":          "res://scenes/world/zone_ditch_lower.tscn",
 				"label":          "The Ditch — Lower",
+				"area":           "The Ditch",
 				"thumbnail_type": "slums",
 				"exits":          {
 					"north": Vector2i(10, 14),
 					"south": Vector2i(10, 16),
+					"west":  Vector2i(9, 15),
 				},
 			},
 			# Escape-route tutorial dungeon (opening-hook rewrite, see
@@ -128,45 +127,33 @@ func _ready() -> void:
 			# world-map screen even after being visited — this was always the
 			# intent ("not part of the normal explorable world"), corrected
 			# 2026-07-14 after initially being placed on the addressable grid.
-			# One-way: its own east wall is open (no door), so walking off that
-			# edge continues east into the drop alcove below (not directly into
-			# the rest alcove anymore, as of 2026-08-03) — same walk-off
-			# mechanism used everywhere else; deliberately has no return exit
-			# back toward the chamber.
+			# One-way: its final room ends at a Collapsed Ledge (TrashChute,
+			# visual_style "ledge", direction "fall") instead of a walked-off
+			# edge — the separate drop-alcove connector room was folded away
+			# 2026-08-04, so the hallway itself now ends in the drop straight
+			# into the rest alcove below. Deliberately has no return exit back
+			# toward the chamber.
 			Vector2i(-1, 18): {
 				"scene":          "res://scenes/world/zone_escape_route.tscn",
 				"label":          "Drainage Tunnel",
 				"thumbnail_type": "slums",
 				"is_interior":    true,
 				"exits":          {
-					"east": Vector2i(-1, 17),
-				},
-			},
-			# Drop alcove (2026-08-03): a small one-tile connector room between
-			# the escape route and the rest alcove — forces the player through
-			# a deliberate "jump down the hole" beat (TrashChute, direction
-			# "fall") rather than walking straight into the rest alcove, so
-			# resting (and the exhaustion it hands out unprotected — see the
-			# rest alcove's required_protection_level below) reads as a real
-			# consequence of the drop, not just another room along the way.
-			Vector2i(-1, 17): {
-				"scene":          "res://scenes/world/zone_escape_route_drop.tscn",
-				"label":          "Drainage Tunnel — Drop",
-				"thumbnail_type": "slums",
-				"is_interior":    true,
-				"exits":          {
 					"fall": Vector2i(-1, 19),
 				},
 			},
-			# Rest alcove — the escape route's final beat (2026-07-29, re-routed
-			# behind the drop alcove 2026-08-03): a small room between the
-			# tutorial dungeon and the Lower Ditch where the player is taught
-			# Make Camp (cooking + resting, both live on the same R-key panel)
-			# before setting out. required_protection_level forces a fresh,
-			# unprotected character to pick up 1 exhaustion stack on this first
-			# rest — the tutorial's whole point is to make that consequence
-			# legible before the player is out in the world on their own. Off-
-			# grid and one-way for the same reasons as the escape route above.
+			# Rest alcove — the escape route's final beat (2026-07-29; the
+			# drop-alcove connector room that used to sit between this and the
+			# escape route above was removed 2026-08-04, so the ledge at the
+			# end of the escape route now drops straight in here). A small
+			# room between the tutorial dungeon and the Lower Ditch where the
+			# player is taught Make Camp (cooking + resting, both live on the
+			# same R-key panel) before setting out. required_protection_level
+			# forces a fresh, unprotected character to pick up 1 exhaustion
+			# stack on this first rest — the tutorial's whole point is to make
+			# that consequence legible before the player is out in the world
+			# on their own. Off-grid and one-way for the same reasons as the
+			# escape route above.
 			Vector2i(-1, 19): {
 				"scene":                     "res://scenes/world/zone_escape_route_rest.tscn",
 				"label":                     "Drainage Tunnel — Rest Alcove",
@@ -174,7 +161,17 @@ func _ready() -> void:
 				"is_interior":               true,
 				"required_protection_level": 1,
 				"exits":                     {
-					"east": Vector2i(10, 15),
+					# Exits into the Outskirts ruins chain (2026-08-10), not
+					# directly into Lower Ditch — see the "Outskirts ruins
+					# chain" block below. Plain "west" walk-off (2026-08-11):
+					# the door gap sits at x=0, the true west edge, so no
+					# ZoneDoor/interact step is needed — just a rubble pipe
+					# mouth to look at (see pipe_mouth.gd) and step through.
+					# Landing point is still hand-placed, not the generic
+					# formula — see the world_pos check in main.gd's
+					# _entry_cell_for() — since Ruins Entry's arrival point
+					# doesn't sit anywhere near its own true edges.
+					"west": Vector2i(9, 18),
 				},
 			},
 			# The ritual chamber (opening-hook rewrite, §13 "The Interrupted
@@ -201,6 +198,7 @@ func _ready() -> void:
 			Vector2i(10, 16): {
 				"scene":          "res://scenes/world/zone_ditch_undercity.tscn",
 				"label":          "The Ditch — Undercity Entrance",
+				"area":           "The Ditch",
 				"thumbnail_type": "slums",
 				"exits":          {
 					"north": Vector2i(10, 15),
@@ -210,6 +208,7 @@ func _ready() -> void:
 			Vector2i(9, 14): {
 				"scene":          "res://scenes/world/zone_outside_gate.tscn",
 				"label":          "The Ditch — Exit Drain",
+				"area":           "The Ditch",
 				"thumbnail_type": "slums",
 				"exits":          {
 					"north": Vector2i(9, 13),
@@ -221,18 +220,19 @@ func _ready() -> void:
 			Vector2i(8, 14): {
 				"scene":                    "res://scenes/world/zone_desert.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
 					"north": Vector2i(8, 13),
 					"east":  Vector2i(9, 14),
 					"west":  Vector2i(7, 14),
-					"south": Vector2i(8, 15),
 				},
 			},
 			Vector2i(7, 14): {
 				"scene":                    "res://scenes/world/zone_river.tscn",
 				"label":                    "Riverbank",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -244,6 +244,7 @@ func _ready() -> void:
 			Vector2i(7, 12): {
 				"scene":                    "res://scenes/world/zone_docks.tscn",
 				"label":                    "Riverbank — Docks",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -255,6 +256,7 @@ func _ready() -> void:
 			Vector2i(7, 11): {
 				"scene":                    "res://scenes/world/zone_river_bend.tscn",
 				"label":                    "Riverbank — Bend",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -266,6 +268,7 @@ func _ready() -> void:
 			Vector2i(8, 11): {
 				"scene":                    "res://scenes/world/zone_desert_flats.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -278,6 +281,7 @@ func _ready() -> void:
 			Vector2i(9, 11): {
 				"scene":                    "res://scenes/world/zone_desert_outpost.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -289,6 +293,7 @@ func _ready() -> void:
 			Vector2i(7, 10): {
 				"scene":                    "res://scenes/world/zone_river_headwaters.tscn",
 				"label":                    "Riverbank — Headwaters",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -300,6 +305,7 @@ func _ready() -> void:
 			Vector2i(8, 10): {
 				"scene":                    "res://scenes/world/zone_desert_scrub.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -312,6 +318,7 @@ func _ready() -> void:
 			Vector2i(7, 9): {
 				"scene":                    "res://scenes/world/zone_desert_camp_southwest.tscn",
 				"label":                    "Riverbank",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -323,6 +330,7 @@ func _ready() -> void:
 			Vector2i(7, 8): {
 				"scene":                    "res://scenes/world/zone_desert_camp_west.tscn",
 				"label":                    "Riverbank",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -333,6 +341,7 @@ func _ready() -> void:
 			Vector2i(8, 9): {
 				"scene":                    "res://scenes/world/zone_desert_camp_south.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -345,6 +354,7 @@ func _ready() -> void:
 			Vector2i(9, 10): {
 				"scene":                    "res://scenes/world/zone_desert_borderlands.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -356,6 +366,7 @@ func _ready() -> void:
 			Vector2i(9, 9): {
 				"scene":                    "res://scenes/world/zone_desert_north_pass.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -367,6 +378,7 @@ func _ready() -> void:
 			Vector2i(9, 8): {
 				"scene":                    "res://scenes/world/zone_desert_north_flat.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -377,6 +389,7 @@ func _ready() -> void:
 			Vector2i(8, 8): {
 				"scene":                    "res://scenes/world/zone_desert_bandit_camp.tscn",
 				"label":                    "The Desert — Bandit Camp",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -388,6 +401,7 @@ func _ready() -> void:
 			Vector2i(7, 13): {
 				"scene":                    "res://scenes/world/zone_river_north.tscn",
 				"label":                    "Riverbank — North",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -399,6 +413,7 @@ func _ready() -> void:
 			Vector2i(8, 13): {
 				"scene":                    "res://scenes/world/zone_desert_mid.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -410,6 +425,7 @@ func _ready() -> void:
 			Vector2i(9, 13): {
 				"scene":                    "res://scenes/world/zone_desert_north.tscn",
 				"label":                    "The Desert",
+				"area":           "The Outskirts",
 				"thumbnail_type":           "desert",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -418,113 +434,176 @@ func _ready() -> void:
 					"north": Vector2i(9, 12),
 				},
 			},
+			# River zones (column 7) cut off from the Outskirts ruins chain
+			# 2026-08-10 — their old "east" exits led into zone_desert_east/
+			# _deep/_wastes, now replaced below. Each gets a bit of ruin
+			# dressed onto its east edge (see the .tscn files) so the dead
+			# end reads as deliberate rather than an unfinished exit.
 			Vector2i(7, 15): {
 				"scene":                    "res://scenes/world/zone_river_south.tscn",
 				"label":                    "Riverbank — South",
+				"area":                     "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
 					"north": Vector2i(7, 14),
-					"east":  Vector2i(8, 15),
 					"south": Vector2i(7, 16),
-				},
-			},
-			Vector2i(8, 15): {
-				"scene":                    "res://scenes/world/zone_desert_east.tscn",
-				"label":                    "The Desert",
-				"thumbnail_type":           "desert",
-				"required_protection_level": 1,
-				"exits":                    {
-					"north": Vector2i(8, 14),
-					"west":  Vector2i(7, 15),
-					"east":  Vector2i(9, 15),
-					"south": Vector2i(8, 16),
-				},
-			},
-			Vector2i(9, 15): {
-				"scene":                    "res://scenes/world/zone_desert_south.tscn",
-				"label":                    "The Desert",
-				"thumbnail_type":           "desert",
-				"required_protection_level": 1,
-				"exits":                    {
-					"north": Vector2i(9, 14),
-					"west":  Vector2i(8, 15),
-					"south": Vector2i(9, 16),
 				},
 			},
 			Vector2i(7, 16): {
 				"scene":                    "res://scenes/world/zone_riverbank_deep.tscn",
 				"label":                    "Riverbank — Deep",
+				"area":                     "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
 					"north": Vector2i(7, 15),
-					"east":  Vector2i(8, 16),
 					"south": Vector2i(7, 17),
 				},
 			},
 			Vector2i(7, 17): {
 				"scene":                    "res://scenes/world/zone_river_marshes.tscn",
 				"label":                    "Riverbank — Marshes",
+				"area":                     "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
 					"north": Vector2i(7, 16),
-					"east":  Vector2i(8, 17),
 					"south": Vector2i(7, 18),
 				},
 			},
 			Vector2i(7, 18): {
 				"scene":                    "res://scenes/world/zone_river_delta.tscn",
 				"label":                    "Riverbank — Delta",
+				"area":                     "The Outskirts",
 				"thumbnail_type":           "wilderness",
 				"required_protection_level": 1,
 				"exits":                    {
 					"north": Vector2i(7, 17),
 				},
 			},
-			Vector2i(8, 16): {
-				"scene":                    "res://scenes/world/zone_desert_deep.tscn",
-				"label":                    "The Desert — Deep",
-				"thumbnail_type":           "desert",
+			# Outskirts ruins chain, added 2026-08-10, rebuilt four times same
+			# day after user feedback: (1) wide-open no-wall zones looked
+			# like empty desert with no visible fork; (2) building.gd
+			# interior "Door" entities at every connection, wrong for an
+			# outdoor rubble path; (3) right walk-off idea but wrong compass
+			# layout; (4) this version — direction keys didn't actually
+			# match the real relative position of the coordinates they
+			# pointed to (e.g. Entry "west" pointed at a tile that was
+			# actually northwest of it), which reads as nonsensical once
+			# you're navigating it, even though each individual zone's
+			# internal geometry was fine. Every hop below is now a genuine
+			# single-cell cardinal step between its Vector2i and its
+			# target's, same as every other zone pair in this file — no
+			# more "west" that's actually diagonal.
+			#
+			# Layout: rest alcove's exit pipe (one-way, matches the escape
+			# route's own convention) drops the player at Ruins Entry
+			# (9,18). Entry forks: north to Path A (9,17, coyotes), or west
+			# to Path B1 (8,18) — an all-new 3-zone climb (8,18)->(8,17)->
+			# (8,16), the last of which holds a rock pile worth checking
+			# (nothing hidden there yet — that's a separate open item, not
+			# this zone's fault) — before turning east into Convergence
+			# (9,16), where Path A's own "north" hop also lands. Convergence
+			# opens north into Drainage Mouth (9,15), which opens east into
+			# Lower Ditch (how the player returns to the city) and
+			# separately north into the pre-existing zone_outside_gate.
+			# Fully bidirectional throughout (real, revisitable Outskirts
+			# terrain, not another one-way tutorial corridor) — only the
+			# rest-alcove -> Entry hand-off itself stays one-way.
+			#
+			# Walls throughout use Building's rubble_style=true
+			# (scripts/entities/rubble_wall_cell.gd) — jagged broken-rubble
+			# mounds for most cells, occasional flat "standing wall remnant"
+			# cells mixed in, instead of smooth built walls.
+			#
+			# Replaces the old zone_desert_east/_south/_deep/_wall/_wastes/
+			# _den (columns 8-9, rows 15-17) — everything in those six zones
+			# was generic dressing (rocks, coyote/beetle spawns, unnamed
+			# harvestables) with one exception: the Merchant's Package
+			# WorldItem for the Distraught Merchant quest. NOT yet re-placed
+			# anywhere (2026-08-11) — pulled from zone_desert_den without a
+			# new home yet; distraught_merchant.gd's quest text was loosened
+			# to not name a specific location until one is chosen.
+			# Deliberately a separate stretch of ruins from the Old
+			# Hunter/Ground-Exit-Path Outskirts cluster further north/west.
+			Vector2i(9, 18): {
+				"scene":                    "res://scenes/world/zone_outskirts_ruins_entry.tscn",
+				"label":                    "Outskirts Ruins — Entry",
+				"area":                     "The Outskirts",
+				"thumbnail_type":           "ruins",
 				"required_protection_level": 1,
 				"exits":                    {
-					"north": Vector2i(8, 15),
-					"west":  Vector2i(7, 16),
-					"east":  Vector2i(9, 16),
-					"south": Vector2i(8, 17),
-				},
-			},
-			Vector2i(9, 16): {
-				"scene":                    "res://scenes/world/zone_desert_wall.tscn",
-				"label":                    "The Desert — City Wall",
-				"thumbnail_type":           "desert",
-				"required_protection_level": 1,
-				"exits":                    {
-					"north": Vector2i(9, 15),
-					"west":  Vector2i(8, 16),
-					"south": Vector2i(9, 17),
-				},
-			},
-			Vector2i(8, 17): {
-				"scene":                    "res://scenes/world/zone_desert_wastes.tscn",
-				"label":                    "The Desert — Wastes",
-				"thumbnail_type":           "desert",
-				"required_protection_level": 1,
-				"exits":                    {
-					"north": Vector2i(8, 16),
-					"east":  Vector2i(9, 17),
-					"west":  Vector2i(7, 17),
+					"north": Vector2i(9, 17),
+					"west":  Vector2i(8, 18),
 				},
 			},
 			Vector2i(9, 17): {
-				"scene":                    "res://scenes/world/zone_desert_den.tscn",
-				"label":                    "The Desert — Coyote Den",
-				"thumbnail_type":           "desert",
+				"scene":                    "res://scenes/world/zone_outskirts_path_a.tscn",
+				"label":                    "Outskirts Ruins — Path A",
+				"area":                     "The Outskirts",
+				"thumbnail_type":           "ruins",
 				"required_protection_level": 1,
 				"exits":                    {
 					"north": Vector2i(9, 16),
-					"west":  Vector2i(8, 17),
+					"south": Vector2i(9, 18),
+				},
+			},
+			Vector2i(8, 18): {
+				"scene":                    "res://scenes/world/zone_outskirts_path_b1.tscn",
+				"label":                    "Outskirts Ruins — Path B (Lower)",
+				"area":                     "The Outskirts",
+				"thumbnail_type":           "ruins",
+				"required_protection_level": 1,
+				"exits":                    {
+					"east":  Vector2i(9, 18),
+					"north": Vector2i(8, 17),
+				},
+			},
+			Vector2i(8, 17): {
+				"scene":                    "res://scenes/world/zone_outskirts_path_b.tscn",
+				"label":                    "Outskirts Ruins — Path B (Mid)",
+				"area":                     "The Outskirts",
+				"thumbnail_type":           "ruins",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 18),
+					"north": Vector2i(8, 16),
+				},
+			},
+			Vector2i(8, 16): {
+				"scene":                    "res://scenes/world/zone_outskirts_path_b3.tscn",
+				"label":                    "Outskirts Ruins — Path B (Upper)",
+				"area":                     "The Outskirts",
+				"thumbnail_type":           "ruins",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(8, 17),
+					"east":  Vector2i(9, 16),
+				},
+			},
+			Vector2i(9, 16): {
+				"scene":                    "res://scenes/world/zone_outskirts_convergence.tscn",
+				"label":                    "Outskirts Ruins — Convergence",
+				"area":                     "The Outskirts",
+				"thumbnail_type":           "ruins",
+				"required_protection_level": 1,
+				"exits":                    {
+					"south": Vector2i(9, 17),
+					"west":  Vector2i(8, 16),
+					"north": Vector2i(9, 15),
+				},
+			},
+			Vector2i(9, 15): {
+				"scene":                    "res://scenes/world/zone_outskirts_drainage_mouth.tscn",
+				"label":                    "Outskirts Ruins — Drainage Mouth",
+				"area":                     "The Outskirts",
+				"thumbnail_type":           "ruins",
+				"required_protection_level": 1,
+				"exits":                    {
+					"east":  Vector2i(10, 15),
+					"north": Vector2i(9, 14),
+					"south": Vector2i(9, 16),
 				},
 			},
 		},
@@ -532,6 +611,7 @@ func _ready() -> void:
 			Vector2i(10, 16): {
 				"scene":                    "res://scenes/world/zone_undercity_depth1.tscn",
 				"label":                    "Undercity — Depth One",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -542,6 +622,7 @@ func _ready() -> void:
 			Vector2i(10, 15): {
 				"scene":                    "res://scenes/world/zone_undercity_room1.tscn",
 				"label":                    "Undercity — Chamber",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -552,6 +633,7 @@ func _ready() -> void:
 			Vector2i(10, 14): {
 				"scene":                    "res://scenes/world/zone_undercity_fork.tscn",
 				"label":                    "Undercity — Crossroads",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_x",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -564,6 +646,7 @@ func _ready() -> void:
 			Vector2i(11, 14): {
 				"scene":                    "res://scenes/world/zone_undercity_east_arm.tscn",
 				"label":                    "Undercity — East Passage",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_nw",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -574,6 +657,7 @@ func _ready() -> void:
 			Vector2i(11, 13): {
 				"scene":                    "res://scenes/world/zone_undercity_east_s1.tscn",
 				"label":                    "Undercity — East Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -584,6 +668,7 @@ func _ready() -> void:
 			Vector2i(11, 12): {
 				"scene":                    "res://scenes/world/zone_undercity_east_bypass.tscn",
 				"label":                    "Undercity — East Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -595,6 +680,7 @@ func _ready() -> void:
 			Vector2i(11, 11): {
 				"scene":                    "res://scenes/world/zone_undercity_east_u1.tscn",
 				"label":                    "Undercity — East Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -605,6 +691,7 @@ func _ready() -> void:
 			Vector2i(11, 10): {
 				"scene":                    "res://scenes/world/zone_undercity_east_exit.tscn",
 				"label":                    "Undercity — East Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ts",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -616,6 +703,7 @@ func _ready() -> void:
 			Vector2i(12, 10): {
 				"scene":                    "res://scenes/world/zone_undercity_east_camp.tscn",
 				"label":                    "Undercity — Cannibal Camp",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_sw",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -625,6 +713,7 @@ func _ready() -> void:
 			Vector2i(10, 13): {
 				"scene":                    "res://scenes/world/zone_undercity_north1.tscn",
 				"label":                    "Undercity — Main Passage",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -635,6 +724,7 @@ func _ready() -> void:
 			Vector2i(10, 12): {
 				"scene":                    "res://scenes/world/zone_undercity_north2.tscn",
 				"label":                    "Undercity — The Cave-In",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ts",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -646,6 +736,7 @@ func _ready() -> void:
 			Vector2i(10, 11): {
 				"scene":                    "res://scenes/world/zone_undercity_north3.tscn",
 				"label":                    "Undercity — Main Passage",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -655,6 +746,7 @@ func _ready() -> void:
 			Vector2i(10, 10): {
 				"scene":                    "res://scenes/world/zone_undercity_north4.tscn",
 				"label":                    "Undercity — The Toad's Lair",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ts",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -666,6 +758,7 @@ func _ready() -> void:
 			Vector2i(9, 14): {
 				"scene":                    "res://scenes/world/zone_undercity_west_arm.tscn",
 				"label":                    "Undercity — West Passage",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -676,6 +769,7 @@ func _ready() -> void:
 			Vector2i(9, 13): {
 				"scene":                    "res://scenes/world/zone_undercity_west_s1.tscn",
 				"label":                    "Undercity — West Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -686,6 +780,7 @@ func _ready() -> void:
 			Vector2i(9, 12): {
 				"scene":                    "res://scenes/world/zone_undercity_west_bypass.tscn",
 				"label":                    "Undercity — West Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -697,6 +792,7 @@ func _ready() -> void:
 			Vector2i(9, 11): {
 				"scene":                    "res://scenes/world/zone_undercity_west_u1.tscn",
 				"label":                    "Undercity — West Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ns",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -707,6 +803,7 @@ func _ready() -> void:
 			Vector2i(9, 10): {
 				"scene":                    "res://scenes/world/zone_undercity_west_exit.tscn",
 				"label":                    "Undercity — West Tunnels",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_ts",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -718,6 +815,7 @@ func _ready() -> void:
 			Vector2i(8, 10): {
 				"scene":                    "res://scenes/world/zone_undercity_west_den.tscn",
 				"label":                    "Undercity — Animal Den",
+				"area":           "The Undercity",
 				"thumbnail_type":           "tunnel_se",
 				"required_protection_level": 1,
 				"exits":                    {
@@ -734,12 +832,15 @@ func _ready() -> void:
 # "New Game" starts the player with a light stat spread (just enough to
 # survive the escape route) via start_new_tutorial_run(), and player_data
 # carries character_created = false the whole way through. The first time the
-# player arrives in zone_ditch_lower (the tutorial's exit point) with that
-# flag still false, this fires the actual character_creation.tscn scene so
-# they build their real character having just lived through combat/sneaking.
+# player arrives in zone_outskirts_ruins_entry (the tutorial's actual exit
+# point, moved 2026-08-10 from zone_ditch_lower when the Outskirts ruins
+# chain was added between the rest alcove and the Ditch) with that flag
+# still false, this fires the actual character_creation.tscn scene so they
+# build their real character having just lived through combat/sneaking, and
+# before facing the coyotes on the ruins path ahead.
 # Existing saves have no character_created key at all, and default (true)
 # there means this never fires for them.
-const _TUTORIAL_EXIT_ZONE: String = "res://scenes/world/zone_ditch_lower.tscn"
+const _TUTORIAL_EXIT_ZONE: String = "res://scenes/world/zone_outskirts_ruins_entry.tscn"
 func _on_zone_entered_for_character_creation() -> void:
 	if player_data.get("character_created", true):
 		return

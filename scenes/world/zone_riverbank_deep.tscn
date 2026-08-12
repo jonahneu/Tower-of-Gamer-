@@ -11,6 +11,19 @@
 [node name="TileScene" type="Node2D"]
 script = ExtResource("1")
 
+[node name="EastRuinWall" type="Node2D" parent="."]
+script = ExtResource("7")
+col_sw = Color(0.40, 0.38, 0.36, 1)
+col_se = Color(0.30, 0.28, 0.26, 1)
+col_top = Color(0.50, 0.48, 0.45, 1)
+wall_height_mult = 1.5
+X1 = 79
+X2 = 79
+Y1 = 0
+Y2 = 79
+DOOR_X = 999
+DOOR_Y = -1
+
 [node name="Player" type="Node2D" parent="."]
 script = ExtResource("2")
 grid_cell = Vector2i(40, 5)
